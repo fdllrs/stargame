@@ -3,6 +3,7 @@ package engine.graphics;
 import engine.utils.FileUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.IOException;
@@ -32,6 +33,14 @@ public class ShaderProgram {
 
     }
 
+    public static ShaderProgram initShader(String vertexPath, String fragmentPath) {
+        try {
+            return new ShaderProgram("/shaders/" + vertexPath, "/shaders/" + fragmentPath);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize shader", e);
+        }
+    }
+
     public void bind() {
         glUseProgram(programId);
     }
@@ -43,6 +52,35 @@ public class ShaderProgram {
     public void cleanup() {
         unbind();
         glDeleteProgram(programId);
+    }
+
+    private int compileShader(String shaderPath, int shaderType) throws Exception {
+        String vertexShader = loadShader(shaderPath);
+        int shaderId = glCreateShader(shaderType);
+        glShaderSource(shaderId, vertexShader);
+        glCompileShader(shaderId);
+
+        if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == GL_FALSE) {
+            String info = glGetShaderInfoLog(shaderId, glGetShaderi(shaderId, GL_INFO_LOG_LENGTH));
+            throw new RuntimeException("shader compilation failed: " + info);
+        }
+        return shaderId;
+    }
+
+    private String loadShader(String shaderPath) throws IOException {
+
+        FileUtils utils = new FileUtils();
+        return utils.readFile(shaderPath);
+    }
+
+    private static void assertValidLocation(String uniformName, int location) {
+        if (location == -1) {
+            System.err.println("Uniform not found: " + uniformName);
+        }
+    }
+
+    public void setUniform(String uniformName, int value) {
+        glUniform1i(glGetUniformLocation(programId, uniformName), value);
     }
 
     public void setUniform(String uniformName, Matrix4f value) {
@@ -59,27 +97,6 @@ public class ShaderProgram {
         }
     }
 
-
-    private int compileShader(String shaderPath, int shaderType) throws Exception {
-        String vertexShader = loadShader(shaderPath);
-        int shaderId = glCreateShader(shaderType);
-        glShaderSource(shaderId, vertexShader);
-        glCompileShader(shaderId);
-
-        if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == GL_FALSE) {
-            String info = glGetShaderInfoLog(shaderId, glGetShaderi(shaderId, GL_INFO_LOG_LENGTH));
-            throw new RuntimeException("shader compilation failed: " + info);
-        }
-        return shaderId;
-    }
-
-
-    private String loadShader(String shaderPath) throws IOException {
-
-        FileUtils utils = new FileUtils();
-        return utils.readFile(shaderPath);
-    }
-
     public void setUniform(String uniformName, Vector3f value) {
         int location = glGetUniformLocation(programId, uniformName);
         assertValidLocation(uniformName, location);
@@ -92,13 +109,18 @@ public class ShaderProgram {
         }
     }
 
-    private static void assertValidLocation(String uniformName, int location) {
-        if (location == -1) {
-            System.err.println("Uniform not found: " + uniformName);
-        }
+    public void setUniform(String uniformName, Float value) {
+        int location = glGetUniformLocation(programId, uniformName);
+        assertValidLocation(uniformName, location);
+
+        glUniform1f(location, value);
+
     }
 
-    public void setUniform(String uniformName, int value) {
-        glUniform1i(glGetUniformLocation(programId, uniformName), value);
+    public void setUniform(String uniformName, Vector4f value) {
+        int location = glGetUniformLocation(programId, uniformName);
+        assertValidLocation(uniformName, location);
+
+        glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 }

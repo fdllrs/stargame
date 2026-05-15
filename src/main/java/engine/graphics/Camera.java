@@ -8,21 +8,40 @@ public class Camera {
 
     public Vector3f position;
     public Vector3f rotation;
+    private Vector3f velocity = new Vector3f();
     Matrix4f viewMatrix;
-    private final float cameraSpeed = 15f;
+    private final float acceleration = 100f;
+    private final float turboMultiplier = 2f;
+
     private float mouseSensitivity = 0.15f;
-    private float distanceFromPlayer = 15f;
+    private final float distanceFromPlayer = 15f;
+    private final float maxSpeed = 800f;
+    private final float brakeStrength = 0.95f;
+    private Matrix4f cameraProjection;
 
     public Camera() {
         position = new Vector3f(0, 0, 100f); // Start backed away from the planet
         rotation = new Vector3f();
         viewMatrix = new Matrix4f();
+        cameraProjection = new Matrix4f().perspective(
+                (float) Math.toRadians(45.0f),
+                1280f / 720f,
+                10f,
+                100_000.0f
+        );
+
     }
+
     public void updateViewMatrix(){
         viewMatrix = new Matrix4f().identity();
 
         viewMatrix.translate(0, 0, -distanceFromPlayer);
-
+        cameraProjection = new Matrix4f().perspective(
+                (float) Math.toRadians(45 + (velocity.length() * 0.07f)),
+                1280f / 720f,
+                10f,
+                100_000.0f
+        );
         viewMatrix.rotateX((float) Math.toRadians(rotation.x));
         viewMatrix.rotateY((float) Math.toRadians(rotation.y));
 
@@ -35,34 +54,45 @@ public class Camera {
 
     }
 
+    public void accelerateWithTurbo(float deltaTime){
 
-    public void moveBackwards() {
-        position.sub(localForwardDirection().mul(cameraSpeed));
+        velocity.add(localForwardDirection().mul(acceleration * turboMultiplier * deltaTime));
     }
 
-    public void moveForwards(){
-        position.add(localForwardDirection().mul(cameraSpeed));
+    public void accelerateForwards(float deltaTime) {
+        velocity.add(localForwardDirection().mul(acceleration * deltaTime));
     }
 
-    public void moveLeft(){
-        position.sub(localRightDirection().mul(cameraSpeed));
-    }
-    public void moveRight(){
-        position.add(localRightDirection().mul(cameraSpeed));
+    public void accelerateBackwards(float deltaTime) {
+        velocity.sub(localForwardDirection().mul(acceleration * deltaTime));
     }
 
-    public void moveUp() {
-        position.y += cameraSpeed;
+    public void accelerateLeft(float deltaTime) {
+        velocity.sub(localRightDirection().mul(acceleration * deltaTime));
     }
 
-    public void moveDown() {
-        position.y -= cameraSpeed;
+    public void accelerateRight(float deltaTime) {
+        velocity.add(localRightDirection().mul(acceleration * deltaTime));
+    }
+
+
+    public void applyMovement(float deltaTime){
+        if (velocity.length() > maxSpeed) {
+            velocity.normalize(maxSpeed);
+        }
+
+        position.add(new Vector3f(velocity).mul(deltaTime));
+
     }
 
     public Matrix4f getViewMatrix(){
         return viewMatrix;
     }
 
+    public void moveTo(Vector3f position){
+        this.position = position;
+        zeroAcceleration(true);
+    }
     private Vector3f localRightDirection() {
         return new Vector3f(localForwardDirection().cross(new Vector3f(0, 1, 0)).normalize());
     }
@@ -82,5 +112,18 @@ public class Camera {
 
         return forward.normalize();
     }
+
+    public void zeroAcceleration(boolean hardBrake) {
+        if (hardBrake) {
+            velocity.zero();
+        } else {
+            velocity.mul(brakeStrength);
+        }
+    }
+
+    public Matrix4f getCameraProjection() {
+        return cameraProjection;
+    }
+
 
 }

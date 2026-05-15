@@ -13,27 +13,33 @@ import java.util.List;
 public class Scene {
 
     private final Player player;
-
     private final List<Planet> planets;
     private final List<Star> stars;
+
+
 
     public Scene() {
 
         planets = new ArrayList<>();
         stars = new ArrayList<>();
+        player = new Player();
 
         createSolarSystem();
 
-        player = new Player();
     }
 
     public void update(Camera camera, Boolean isMoving) {
-        player.updateFromCamera(camera, isMoving);
+        player.syncWithCamera(camera, isMoving);
 
-
+        Vector3f playerPosition = player.getPosition();
         for (Planet planet : planets) {
             planet.orbit();
+            float planetRadius = planet.getPlanetRadius();
+            float planetOrbitInfluence = planetRadius +5f;
 
+            if (planet.getPosition().distance(playerPosition) < planetOrbitInfluence) {
+                camera.zeroAcceleration(true);
+            }
         }
     }
 
@@ -70,6 +76,15 @@ public class Scene {
         for (int i = 0; i < 6; i++) {
             planets.add(new Planet(stars.getFirst()));
         }
+    }
+
+    public List<Planet> getPlanets() {
+        return planets;
+    }
+
+
+    public List<Star> getStars() {
+        return stars;
     }
 
 

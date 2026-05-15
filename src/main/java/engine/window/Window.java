@@ -1,7 +1,12 @@
 package engine.window;
 
+import org.joml.Vector2i;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11C.GL_DEPTH_TEST;
@@ -10,6 +15,20 @@ import static org.lwjgl.opengl.GL11C.glEnable;
 public class Window {
 
     public long windowHandle;
+
+    public static Vector2i getWindowSize(long windowHandle) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer pWidth = stack.mallocInt(1);
+            IntBuffer pHeight = stack.mallocInt(1);
+
+            // Use glfwGetWindowSize for screen coordinates
+            glfwGetWindowSize(windowHandle, pWidth, pHeight);
+
+            int width = pWidth.get(0);
+            int height = pHeight.get(0);
+            return new Vector2i(width, height);
+        }
+    }
 
     public void init(int width, int height) {
         try {
@@ -34,5 +53,12 @@ public class Window {
         glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glEnable(GL_DEPTH_TEST);
     }
+
+
+    public void cleanup() {
+        glfwDestroyWindow(windowHandle);
+        glfwTerminate();
+    }
+
 
 }

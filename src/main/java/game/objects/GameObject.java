@@ -23,11 +23,17 @@ public class GameObject {
 
     public void render(ShaderProgram shader) {
         shader.setUniform("model", modelMatrix);
-        shader.setUniform("objectColor", color);
+        shader.setUniform("colorA", color);
+        shader.setUniform("colorB", color);
+        shader.setUniform("noiseScale", 0.0f);
         mesh.render();
     }
 
     public void cleanup() {
         mesh.cleanup();
+    }
+
+    public Vector3f getPosition() {
+        return modelMatrix.getTranslation(new Vector3f());
     }
 }

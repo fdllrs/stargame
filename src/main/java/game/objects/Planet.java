@@ -1,6 +1,5 @@
 package game.objects;
 
-import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import game.geometry.PlanetGeometry;
 import org.joml.Vector3f;
@@ -21,7 +20,14 @@ public class Planet extends GameObject {
     private final Star homeStar;
     private final float orbitSpeed;
     private float orbitAngle;
+    private float planetRadius;
     private final float orbitRadius;
+    private final Vector3f colorA;
+    private final Vector3f colorB;
+
+    public float getPlanetRadius() {
+        return planetRadius;
+    }
 
     public Planet(Star homeStar) {
         this(
@@ -56,6 +62,10 @@ public class Planet extends GameObject {
         this.orbitSpeed = orbitSpeed;
         this.orbitAngle = orbitAngle;
         this.orbitRadius = homeStar.getPosition().distance(position);
+        this.colorA = color;
+        this.colorB = randomColor();
+        this.planetRadius = radius;
+
     }
 
     private static float randomRadius() {
@@ -94,8 +104,12 @@ public class Planet extends GameObject {
 
     public void render(ShaderProgram shader) {
         shader.setUniform("isLightSource", 0);
-        shader.setUniform("objectColor", color);
         shader.setUniform("model", modelMatrix);
+
+        shader.setUniform("colorA", colorA);
+        shader.setUniform("colorB", colorB);
+        shader.setUniform("noiseScale", 2.0f);
+
         mesh.render();
     }
 
@@ -108,4 +122,6 @@ public class Planet extends GameObject {
         modelMatrix.rotateY(orbitAngle);
         modelMatrix.translate(orbitRadius, 0, 0);
     }
+
+
 }
