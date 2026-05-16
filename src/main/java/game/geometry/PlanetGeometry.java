@@ -53,7 +53,7 @@ public class PlanetGeometry {
         int[] indArray = ArrayUtils.convertToIntArray(indices);
         float[] normArray = ArrayUtils.convertToFloatArray(normals);
 
-        return new Mesh(vertArray, indArray, normArray, new float[0]);
+        return new Mesh(vertArray, indArray, normArray, new float[0], 3);
     }
 
 

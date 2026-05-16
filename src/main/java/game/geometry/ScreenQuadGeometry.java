@@ -23,7 +23,7 @@ public class ScreenQuadGeometry {
                 1.0f, 1.0f
         };
 
-        return new Mesh(vertices, indices, normals, uvs);
+        return new Mesh(vertices, indices, normals, uvs, 3);
     }
 
     public static Mesh generateUIRect() {
@@ -38,6 +38,6 @@ public class ScreenQuadGeometry {
         float[] uvs = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f};
 
         // Pass to your Mesh constructor (Normals are empty)
-        return new Mesh(vertices, indices, new float[0], uvs);
+        return new Mesh(vertices, indices, new float[0], uvs, 2);
     }
 }

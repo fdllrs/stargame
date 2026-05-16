@@ -22,7 +22,7 @@ public class Mesh {
 
 
 
-    public Mesh(float[] vertexArray, int[] indicesArray, float[] normalsArray, float[] uvsArray) {
+    public Mesh(float[] vertexArray, int[] indicesArray, float[] normalsArray, float[] uvsArray, int dim) {
         vertices = vertexArray;
         indices = indicesArray;
         normals = normalsArray;
@@ -43,7 +43,7 @@ public class Mesh {
             vboId = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+            glVertexAttribPointer(0, dim, GL_FLOAT, false, 0, 0);
             glEnableVertexAttribArray(0);
 
             eboId = glGenBuffers();
@@ -51,10 +51,12 @@ public class Mesh {
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
 
             normalVboId = glGenBuffers();
+            if (dim == 3) {
             glBindBuffer(GL_ARRAY_BUFFER, normalVboId);
             glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
             glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
             glEnableVertexAttribArray(1);
+            }
 
             int uvVboId = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, uvVboId);

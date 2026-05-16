@@ -2,6 +2,7 @@ package engine.graphics;
 
 import engine.utils.FileUtils;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
@@ -79,10 +80,6 @@ public class ShaderProgram {
         }
     }
 
-    public void setUniform(String uniformName, int value) {
-        glUniform1i(glGetUniformLocation(programId, uniformName), value);
-    }
-
     public void setUniform(String uniformName, Matrix4f value) {
         int location = glGetUniformLocation(programId, uniformName);
         assertValidLocation(uniformName, location);
@@ -97,6 +94,27 @@ public class ShaderProgram {
         }
     }
 
+
+    public void setUniform(String uniformName, int value) {
+        glUniform1i(glGetUniformLocation(programId, uniformName), value);
+    }
+
+    public void setUniform(String uniformName, Float value) {
+        int location = glGetUniformLocation(programId, uniformName);
+        assertValidLocation(uniformName, location);
+
+        glUniform1f(location, value);
+
+    }
+
+
+    public void setUniform(String uniformName, Vector2f value) {
+        int location = glGetUniformLocation(programId, uniformName);
+        assertValidLocation(uniformName, location);
+
+        glUniform2f(location, value.x, value.y);
+    }
+
     public void setUniform(String uniformName, Vector3f value) {
         int location = glGetUniformLocation(programId, uniformName);
         assertValidLocation(uniformName, location);
@@ -109,18 +127,11 @@ public class ShaderProgram {
         }
     }
 
-    public void setUniform(String uniformName, Float value) {
-        int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-
-        glUniform1f(location, value);
-
-    }
-
     public void setUniform(String uniformName, Vector4f value) {
         int location = glGetUniformLocation(programId, uniformName);
         assertValidLocation(uniformName, location);
 
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
+
 }

@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class Camera {
@@ -117,7 +118,13 @@ public class Camera {
         if (hardBrake) {
             velocity.zero();
         } else {
-            velocity.mul(brakeStrength);
+
+            if (velocity.length() < 0.1f) {
+                velocity.zero();
+            } else {
+                velocity.mul(brakeStrength);
+            }
+
         }
     }
 
@@ -126,4 +133,7 @@ public class Camera {
     }
 
 
+    public float getVelocity() {
+        return velocity.length();
+    }
 }

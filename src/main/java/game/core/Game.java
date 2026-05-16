@@ -1,8 +1,9 @@
 package game.core;
 
 import engine.graphics.*;
+import engine.ui.UIManager;
+import engine.ui.UIText;
 import engine.window.Window;
-import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector4f;
 
@@ -23,7 +24,7 @@ public class Game {
 
     private ShaderProgram shaderUi;
     Mesh uiRect;
-    private UI ui;
+    private UIManager uiManager;
 
     private Camera camera;
     private Input input;
@@ -41,6 +42,12 @@ public class Game {
     private void gameLoop() {
         double lastTime = glfwGetTime();
         float deltaTime;
+        Texture fontAtlas = new Texture("src/main/resources/fonts/charmap-oldschool.png");
+
+        UIText ammoText = new UIText("speed: " + camera.getVelocity(), 20, 650, 20, 30, new Vector4f(1, 1, 1,
+                1),
+                fontAtlas);
+        uiManager.addElement(ammoText);
         while (!glfwWindowShouldClose(windowHandle)) {
             double currentTime = glfwGetTime();
             deltaTime = (float) (currentTime - lastTime);
@@ -49,9 +56,11 @@ public class Game {
 
             update(deltaTime);
 
+            ammoText.setText("speed: " + camera.getVelocity());
             render();
 
             glfwSwapBuffers(windowHandle);
+
         }
     }
 
@@ -59,6 +68,11 @@ public class Game {
         createComponents();
         initShaders();
         placePlayerInRandomPlanet();
+
+
+
+
+
     }
 
     private void initShaders() {
@@ -68,7 +82,7 @@ public class Game {
         fbo = new Framebuffer(320, 180);
         screenQuad = generateScreenQuad();
 
-        shaderUi = ShaderProgram.initShader("/UI/ui.vert", "/UI/ui.frag");
+        shaderUi = uiManager.getUiShader();
         uiRect = generateUIRect();
     }
 
@@ -82,7 +96,7 @@ public class Game {
         camera = new Camera();
         input = new Input(windowHandle);
         scene = new Scene();
-        ui = new UI(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, windowHandle);
+        uiManager = new UIManager(windowHandle);
 
     }
 
@@ -107,26 +121,7 @@ public class Game {
         performUIRendering();
     }
     private void performUIRendering() {
-        glDisable(GL_DEPTH_TEST);
-
-        // 2. Enable Alpha Blending (So crosshairs can have see-through backgrounds)
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        shaderUi.bind();
-        shaderUi.setUniform("projection", ui.getProjection());
-
-        // --- DRAW A CROSSHAIR IN THE CENTER OF THE SCREEN ---
-        Matrix4f crosshairModel = ui.crosshair();
-
-        shaderUi.setUniform("model", crosshairModel);
-        shaderUi.setUniform("useTexture", 0); // Draw a solid block
-        shaderUi.setUniform("uiColor", new Vector4f(1.0f, 1.0f, 0.0f, 1f)); // Semi-transparent Red
-
-        generateScreenQuad().render();
-
-        shaderUi.unbind();
-        glDisable(GL_BLEND); // Clean up state
+        uiManager.renderAll();
     }
     private void performSecondPassRendering() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -156,7 +151,6 @@ public class Game {
 
         shader3D.unbind();
         Vector2i screenSize = Window.getWindowSize(windowHandle);
-        System.out.println(screenSize);
         fbo.unbind(screenSize.x, screenSize.y);
     }
 
