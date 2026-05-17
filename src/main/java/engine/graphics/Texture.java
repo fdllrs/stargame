@@ -4,6 +4,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
@@ -31,7 +32,7 @@ public class Texture {
                 IntBuffer comp = stack.mallocInt(1);
 
                 stbi_set_flip_vertically_on_load(true);
-                ByteBuffer image = STBImage.stbi_load(path, w, h, comp, 4);
+                ByteBuffer image = STBImage.stbi_load(Path.of(path).toString(), w, h, comp, 4);
                 if (image == null) {
                     throw new RuntimeException("Failed to load texture: " + STBImage.stbi_failure_reason());
             }

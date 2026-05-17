@@ -33,8 +33,7 @@ public class InfoPanel extends UIElement{
                 this.location,
                 x,
                 y,
-                10,
-                12,
+                0.1f,
                 new Vector4f(1,1,1,1));
 
         title.render(shader, uiQuad);
@@ -47,8 +46,7 @@ public class InfoPanel extends UIElement{
                 this.title,
                 (width - 20* this.title.length()) /2  ,
                 height - 30 ,
-                20,
-                30,
+                0.5f,
                 new Vector4f(1,1,1,1));
     }
 

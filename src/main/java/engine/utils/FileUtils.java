@@ -7,15 +7,15 @@ import java.nio.charset.StandardCharsets;
 public class FileUtils {
 
 
-    public String readFile(String path) throws IOException {
+    public String readFile(String path) {
 
         try (InputStream pathStream = FileUtils.class.getResourceAsStream(path)) {
             assertPathStreamExists(path, pathStream);
-
             return new String(pathStream.readAllBytes(), StandardCharsets.UTF_8);
 
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
 
     }
 

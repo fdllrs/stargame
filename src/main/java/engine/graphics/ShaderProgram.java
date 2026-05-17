@@ -17,7 +17,7 @@ public class ShaderProgram {
     private final int programId;
     private final int vertexId;
     private final int fragmentId;
-    public ShaderProgram(String vertexPath, String fragmentPath) throws Exception {
+    public ShaderProgram(String vertexPath, String fragmentPath) {
         programId = glCreateProgram();
 
         vertexId = compileShader(vertexPath, GL_VERTEX_SHADER);
@@ -55,7 +55,7 @@ public class ShaderProgram {
         glDeleteProgram(programId);
     }
 
-    private int compileShader(String shaderPath, int shaderType) throws Exception {
+    private int compileShader(String shaderPath, int shaderType) {
         String vertexShader = loadShader(shaderPath);
         int shaderId = glCreateShader(shaderType);
         glShaderSource(shaderId, vertexShader);
@@ -68,7 +68,7 @@ public class ShaderProgram {
         return shaderId;
     }
 
-    private String loadShader(String shaderPath) throws IOException {
+    private String loadShader(String shaderPath)  {
 
         FileUtils utils = new FileUtils();
         return utils.readFile(shaderPath);
