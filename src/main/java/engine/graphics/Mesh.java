@@ -1,100 +1,107 @@
 package engine.graphics;
 
 import org.lwjgl.system.MemoryUtil;
-
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL20C.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.*;
 
 public class Mesh {
 
-    private final float[] vertices;
-    private final int[] indices;
-    private final float[] normals;
     private final int vaoId;
-    private final int vboId;
-    private final int eboId;
-    private final int normalVboId;
+    private final int vertexCount;
+    private final List<Integer> vboIdList;
+
+    private Mesh(float[] positions, int[] indices, float[] normals, float[] uvs, int dim) {
+        this.vertexCount = indices.length;
+        this.vboIdList = new ArrayList<>();
+
+        this.vaoId = glGenVertexArrays();
+        glBindVertexArray(vaoId);
+
+        createIntBuffer(indices);
+        createFloatVbo(0, dim, positions);
+
+        if (normals != null && normals.length > 0) {
+            createFloatVbo(1, 3, normals);
+        }
+
+        if (uvs != null && uvs.length > 0) {
+            createFloatVbo(2, 2, uvs);
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
 
 
+    /**
+     * Builds a standard 3D model (requires Normals for lighting).
+     */
+    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs) {
+        return new Mesh(positions, indices, normals, uvs, 3);
+    }
 
-    public Mesh(float[] vertexArray, int[] indicesArray, float[] normalsArray, float[] uvsArray, int dim) {
-        vertices = vertexArray;
-        indices = indicesArray;
-        normals = normalsArray;
+    /**
+     * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
+     */
+    public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
+        // Pass null for normals, and 2 for dimensions
+        return new Mesh(positions, indices, null, uvs, 2);
+    }
 
-        FloatBuffer verticesBuffer = MemoryUtil.memAllocFloat(vertices.length);
-        IntBuffer indicesBuffer = MemoryUtil.memAllocInt(indices.length);
-        FloatBuffer normalsBuffer = MemoryUtil.memAllocFloat(normals.length);
-        FloatBuffer uvsBuffer = MemoryUtil.memAllocFloat(uvsArray.length);
+    private void createFloatVbo(int attribute, int size, float[] data) {
+        int vboId = glGenBuffers();
+        vboIdList.add(vboId);
+
+        FloatBuffer buffer = MemoryUtil.memAllocFloat(data.length);
         try {
-            verticesBuffer.put(vertices).flip();
-            indicesBuffer.put(indices).flip();
-            normalsBuffer.put(normals).flip();
-            uvsBuffer.put(uvsArray).flip();
-
-            vaoId = glGenVertexArrays();
-            glBindVertexArray(vaoId);
-
-            vboId = glGenBuffers();
+            buffer.put(data).flip();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, dim, GL_FLOAT, false, 0, 0);
-            glEnableVertexAttribArray(0);
-
-            eboId = glGenBuffers();
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
-
-            normalVboId = glGenBuffers();
-            if (dim == 3) {
-            glBindBuffer(GL_ARRAY_BUFFER, normalVboId);
-            glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-            glEnableVertexAttribArray(1);
-            }
-
-            int uvVboId = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, uvVboId);
-            glBufferData(GL_ARRAY_BUFFER, uvsBuffer, GL_STATIC_DRAW);
-            glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
-            glEnableVertexAttribArray(2);
-
-            glBindVertexArray(0);
-        } catch (Exception e) {
-            cleanup();
-            throw e;
+            glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+            glVertexAttribPointer(attribute, size, GL_FLOAT, false, 0, 0);
+            glEnableVertexAttribArray(attribute);
         } finally {
-            MemoryUtil.memFree(verticesBuffer);
-            MemoryUtil.memFree(indicesBuffer);
-            MemoryUtil.memFree(normalsBuffer);
-            MemoryUtil.memFree(uvsBuffer);
+            MemoryUtil.memFree(buffer);
         }
     }
 
-    public int vertexCount() {
-        return indices.length;
+    private void createIntBuffer(int[] data) {
+        int eboId = glGenBuffers();
+        vboIdList.add(eboId);
+
+        IntBuffer buffer = MemoryUtil.memAllocInt(data.length);
+        try {
+            buffer.put(data).flip();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
+        } finally {
+            MemoryUtil.memFree(buffer);
+        }
     }
 
-    public void render() {
+    // --- 4. ENGINE METHODS ---
 
+    public void render() {
         glBindVertexArray(vaoId);
-        glDrawElements(GL_TRIANGLES, vertexCount(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
+
         glBindVertexArray(0);
     }
 
     public void cleanup() {
-        glDeleteBuffers(vboId);
-        glDeleteBuffers(eboId);
-
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
-        glDeleteVertexArrays(vaoId);
-        glDeleteBuffers(normalVboId);
-    }
+        glDisableVertexAttribArray(2);
+        glBindVertexArray(0);
 
+        for (int vboId : vboIdList) {
+            glDeleteBuffers(vboId);
+        }
+        glDeleteVertexArrays(vaoId);
+    }
 }

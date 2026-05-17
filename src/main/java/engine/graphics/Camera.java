@@ -1,7 +1,6 @@
 package engine.graphics;
 
 import org.joml.Matrix4f;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class Camera {
@@ -18,13 +17,13 @@ public class Camera {
     private final float distanceFromPlayer = 15f;
     private final float maxSpeed = 800f;
     private final float brakeStrength = 0.95f;
-    private Matrix4f cameraProjection;
+    private Matrix4f projectionMatrix;
 
     public Camera() {
         position = new Vector3f(0, 0, 100f); // Start backed away from the planet
         rotation = new Vector3f();
         viewMatrix = new Matrix4f();
-        cameraProjection = new Matrix4f().perspective(
+        projectionMatrix = new Matrix4f().perspective(
                 (float) Math.toRadians(45.0f),
                 1280f / 720f,
                 10f,
@@ -37,7 +36,7 @@ public class Camera {
         viewMatrix = new Matrix4f().identity();
 
         viewMatrix.translate(0, 0, -distanceFromPlayer);
-        cameraProjection = new Matrix4f().perspective(
+        projectionMatrix = new Matrix4f().perspective(
                 (float) Math.toRadians(45 + (velocity.length() * 0.07f)),
                 1280f / 720f,
                 10f,
@@ -128,11 +127,13 @@ public class Camera {
         }
     }
 
-    public Matrix4f getCameraProjection() {
-        return cameraProjection;
+    public Matrix4f getProjectionMatrix() {
+        return projectionMatrix;
     }
 
-
+    public Vector3f getPosition() {
+        return position;
+    }
     public float getVelocity() {
         return velocity.length();
     }

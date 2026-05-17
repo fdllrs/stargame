@@ -7,10 +7,15 @@ import engine.graphics.ShaderProgram;
 import engine.graphics.Texture;
 
 public class UIText extends UIElement {
+    public static final String DEFAULT_FONT_PATH = "src/main/resources/fonts/charmap-oldschool.png";
     private String text;
     private Texture fontTexture;
     private int columns = 16;
     private int rows = 8;
+
+    public UIText(String text, float x, float y, float letterWidth, float letterHeight, Vector4f color) {
+        this(text, x, y, letterWidth, letterHeight, color, new Texture(DEFAULT_FONT_PATH));
+    }
 
     public UIText(String text, float x, float y, float letterWidth, float letterHeight, Vector4f color, Texture fontTexture) {
         super(x, y, letterWidth, letterHeight, color);

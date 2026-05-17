@@ -31,6 +31,6 @@ public class PlayerGeometry {
             normals[i+2] = vertices[i+2] / length;
         }
 
-        return new Mesh(vertices, indices, normals, new float[0], 3);
+        return Mesh.create3D(vertices, indices, normals, new float[0]);
     }
 }
