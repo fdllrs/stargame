@@ -10,5 +10,6 @@ public record PlanetInfo(
         float planetRadius,
         float orbitDistance,
         Vector3f colorA,
-        Vector3f colorB
+        Vector3f colorB,
+        String name
 ) {}

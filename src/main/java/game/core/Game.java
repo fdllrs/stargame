@@ -3,8 +3,11 @@ package game.core;
 import engine.graphics.*;
 import engine.ui.InfoPanel;
 import engine.ui.UIManager;
+import engine.ui.text.FontAtlas;
 import engine.window.Window;
+import game.objects.GameObject;
 import game.objects.Planet;
+import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector4f;
 
@@ -14,6 +17,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class Game {
+    private static final String DEFAULT_FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
+    private static final String DEFAULT_FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
 
     private long windowHandle;
 
@@ -33,7 +38,7 @@ public class Game {
     private Window window;
 
     private InfoPanel infoPanel;
-
+    private FontAtlas fontAtlas;
 
     public void run() throws Exception {
         init();
@@ -89,12 +94,14 @@ public class Game {
         scene = new Scene();
         input = new Input(windowHandle, camera, scene);
         uiManager = new UIManager(windowHandle);
+        fontAtlas = new FontAtlas(DEFAULT_FONT_FILE, DEFAULT_FONT_TEXTURE);
         infoPanel = new InfoPanel(
-                0,
-                0,
-                200,
-                200,
-                new Vector4f(0.2f,0.2f,0.2f,0.5f));
+                20,
+                20,
+                400,
+                500,
+                new Vector4f(0.2f,0.2f,0.2f,0.5f),
+                fontAtlas);
         uiManager.addElement(infoPanel);
 
     }
@@ -112,9 +119,18 @@ public class Game {
         if(input.consumeLeftClick()){
             float mouseX = input.getMouseX();
             float mouseY = input.getMouseY();
-            Planet planetClicked = scene.planetClicked(mouseX, mouseY, windowHandle, camera);
-            infoPanel.setTarget(planetClicked);
+            GameObject objectClicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            infoPanel.setTarget(objectClicked);
 
+        }
+
+        if(glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {
+            Vector2f panelSize = infoPanel.getSize();
+            infoPanel.setSize(panelSize.x + 5, panelSize.y);
+        }
+        if(glfwGetKey(windowHandle, GLFW_KEY_K) == GLFW_PRESS) {
+            Vector2f panelSize = infoPanel.getSize();
+            infoPanel.setSize(panelSize.x - 5, panelSize.y);
         }
 
         camera.applyMovement(deltaTime);
