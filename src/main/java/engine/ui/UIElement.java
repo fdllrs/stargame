@@ -1,6 +1,7 @@
 package engine.ui;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector4f;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
@@ -35,6 +36,22 @@ public abstract class UIElement {
         updateMatrix();
     }
 
+    public Vector2f getSize() {
+        return new Vector2f(width, height);
+    }
+    public Vector2f getPosition() {
+        return new Vector2f(x, y);
+    }
+
+
     // The method every specific UI element must implement
     public abstract void render(ShaderProgram shader, Mesh uiQuad);
+
+    public void setSize(float width, float height) {
+        this.width = width;
+        this.height = height;
+        updateMatrix();
+    }
+
+    public abstract float getBoundingHeight();
 }

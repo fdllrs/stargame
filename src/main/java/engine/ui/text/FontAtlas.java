@@ -1,6 +1,7 @@
-package engine.ui;
+package engine.ui.text;
 
 import engine.graphics.Texture;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -61,4 +62,5 @@ public class FontAtlas {
     public Texture getTexture() { return texture; }
     public float getScaleW() { return scaleW; }
     public float getScaleH() { return scaleH; }
+
 }

@@ -1,4 +1,4 @@
-package engine.ui;
+package engine.ui.text;
 
 public record CharacterInfo(
         int id,
