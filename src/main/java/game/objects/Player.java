@@ -8,7 +8,6 @@ import org.joml.Vector3f;
 public class Player extends GameObject{
 
     Vector3f playerRotation = new Vector3f(0,0,0);
-
     private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
 
     public Player(){

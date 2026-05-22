@@ -11,23 +11,24 @@ import java.util.List;
 public class Scene {
 
     private final Player player;
-    private final StarSystem starSystem;
+    private StarSystem starSystem;
+    private CelestialBody selectedObject;
 
     public Scene() {
         player = new Player();
         starSystem = new StarSystem(8);
     }
 
-    private GameObject pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
+    private CelestialBody pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
         Vector3f rayOrigin = calculateRayOrigin(camera);
         Vector3f rayDirection = calculateMouseRay(mouseX, mouseY, windowHandle, camera);
 
         return calculateClosestObject(rayOrigin, rayDirection);
     }
 
-    private GameObject calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
+    private CelestialBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
         float closestDistance = Float.MAX_VALUE;
-        GameObject closestObject = null;
+        CelestialBody closestObject = null;
 
         for (Planet planet : starSystem.getPlanets()) {
             Vector3f planetCenter = planet.getPosition();
@@ -121,7 +122,23 @@ public class Scene {
         return starSystem.getPlanets();
     }
 
-    public GameObject objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
+    public CelestialBody objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
         return pickObject(mouseX, mouseY, windowHandle, camera);
+    }
+
+    public void testRecreateStarSystem() {
+        this.starSystem = new StarSystem(10);
+
+    }
+
+    public void updateSelectedObject(CelestialBody objectClicked) {
+
+        if (objectClicked != null) {
+            selectedObject = objectClicked;
+            selectedObject.setSelected(true);
+            return;
+        }
+        selectedObject.setSelected(false);
+        selectedObject = null;
     }
 }

@@ -5,7 +5,7 @@ import game.geometry.PlanetGeometry;
 import game.info.PlanetInfo;
 import org.joml.Vector3f;
 
-public class Planet extends GameObject {
+public class Planet extends CelestialBody {
     private static final int PLANET_RESOLUTION = 4;
     private static final float MAX_ORBIT_ANGLE = (float) (Math.PI * 2.0);
 
@@ -53,13 +53,15 @@ public class Planet extends GameObject {
     }
 
     public void render(ShaderProgram shader) {
+        super.render(shader);
+
         shader.setUniform("isLightSource", 0);
         shader.setUniform("model", modelMatrix);
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", 2.0f);
-
         mesh.render();
+
     }
 
     public void orbit() {

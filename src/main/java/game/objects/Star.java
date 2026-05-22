@@ -5,7 +5,7 @@ import game.geometry.PlanetGeometry;
 import game.info.StarInfo;
 import org.joml.Vector3f;
 
-public class Star extends GameObject {
+public class Star extends CelestialBody {
 
     private float noiseScale = 5.0f;
     private float noiseScaleOffset = 0.001f;

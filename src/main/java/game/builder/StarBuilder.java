@@ -55,13 +55,13 @@ public class StarBuilder {
 
     private float generateRadiusForType(StarType type) {
         return switch (type) {
-            case O -> 80f + RANDOM.nextFloat() * 40f;
-            case B -> 50f + RANDOM.nextFloat() * 30f;
-            case A -> 35f + RANDOM.nextFloat() * 15f;
-            case F -> 25f + RANDOM.nextFloat() * 10f;
-            case G -> 20f + RANDOM.nextFloat() * 5f;   // Sun-like
-            case K -> 15f + RANDOM.nextFloat() * 5f;
-            case M -> 8f + RANDOM.nextFloat() * 7f;    // Red Dwarf
+            case O -> 800f + RANDOM.nextFloat() * 40f;
+            case B -> 500f + RANDOM.nextFloat() * 30f;
+            case A -> 350f + RANDOM.nextFloat() * 15f;
+            case F -> 250f + RANDOM.nextFloat() * 10f;
+            case G -> 200f + RANDOM.nextFloat() * 5f;   // Sun-like
+            case K -> 150f + RANDOM.nextFloat() * 5f;
+            case M -> 80f + RANDOM.nextFloat() * 7f;    // Red Dwarf
         };
     }
 

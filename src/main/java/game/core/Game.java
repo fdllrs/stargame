@@ -1,12 +1,15 @@
 package game.core;
 
-import engine.graphics.*;
+import engine.graphics.Camera;
+import engine.graphics.Framebuffer;
+import engine.graphics.Mesh;
+import engine.graphics.ShaderProgram;
 import engine.ui.InfoPanel;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
+import game.objects.CelestialBody;
 import game.objects.GameObject;
-import game.objects.Planet;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector4f;
@@ -19,17 +22,13 @@ import static org.lwjgl.opengl.GL11C.*;
 public class Game {
     private static final String DEFAULT_FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
     private static final String DEFAULT_FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
-
-    private long windowHandle;
-
-    private ShaderProgram shader3D;
-
-    private ShaderProgram shaderPixelArt;
     Framebuffer fbo;
     Mesh screenQuad;
-
-    private ShaderProgram shaderUi;
     Mesh uiRect;
+    private long windowHandle;
+    private ShaderProgram shader3D;
+    private ShaderProgram shaderPixelArt;
+    private ShaderProgram shaderUi;
     private UIManager uiManager;
 
     private Camera camera;
@@ -77,12 +76,13 @@ public class Game {
         int PIXEL_ART_DOWNSCALE_FACTOR = 3;
         Vector2i screenSize = Window.getWindowSize(windowHandle);
 
-        fbo = new Framebuffer(screenSize.x/PIXEL_ART_DOWNSCALE_FACTOR, screenSize.y/PIXEL_ART_DOWNSCALE_FACTOR);
+        fbo = new Framebuffer(screenSize.x / PIXEL_ART_DOWNSCALE_FACTOR, screenSize.y / PIXEL_ART_DOWNSCALE_FACTOR);
         screenQuad = generateScreenQuad();
 
         shaderUi = uiManager.getUiShader();
         uiRect = generateUIRect();
     }
+
     private void createComponents() {
         int INITIAL_WINDOW_WIDTH = 1280;
         int INITIAL_WINDOW_HEIGHT = 720;
@@ -95,42 +95,43 @@ public class Game {
         input = new Input(windowHandle, camera, scene);
         uiManager = new UIManager(windowHandle);
         fontAtlas = new FontAtlas(DEFAULT_FONT_FILE, DEFAULT_FONT_TEXTURE);
-        infoPanel = new InfoPanel(
-                20,
-                20,
-                400,
-                500,
-                new Vector4f(0.2f,0.2f,0.2f,0.5f),
-                fontAtlas);
+        infoPanel = new InfoPanel(20, 20, 400, 500, new Vector4f(0.2f, 0.2f, 0.2f, 0.5f), fontAtlas);
         uiManager.addElement(infoPanel);
 
     }
+
     private void placePlayerInRandomPlanet() {
         scene.update(camera, false);
         camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0));
     }
-
 
     private void update(float deltaTime) {
         Boolean isMoving = input.isForwardMovementPressed();
 
         input.handleCameraInput(deltaTime);
 
-        if(input.consumeLeftClick()){
+        if (input.consumeLeftClick()) {
             float mouseX = input.getMouseX();
             float mouseY = input.getMouseY();
-            GameObject objectClicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            CelestialBody objectClicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+
+            scene.updateSelectedObject(objectClicked);
+
             infoPanel.setTarget(objectClicked);
 
         }
 
-        if(glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {
+        if (glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {
             Vector2f panelSize = infoPanel.getSize();
             infoPanel.setSize(panelSize.x + 5, panelSize.y);
         }
-        if(glfwGetKey(windowHandle, GLFW_KEY_K) == GLFW_PRESS) {
+        if (glfwGetKey(windowHandle, GLFW_KEY_K) == GLFW_PRESS) {
             Vector2f panelSize = infoPanel.getSize();
             infoPanel.setSize(panelSize.x - 5, panelSize.y);
+        }
+
+        if (glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS) {
+            scene.testRecreateStarSystem();
         }
 
         camera.applyMovement(deltaTime);
@@ -144,6 +145,7 @@ public class Game {
         performSecondPassRendering();
         performUIRendering();
     }
+
     private void performFirstPassRendering() {
         fbo.bind();
         shader3D.bind();
@@ -160,6 +162,7 @@ public class Game {
         Vector2i screenSize = Window.getWindowSize(windowHandle);
         fbo.unbind(screenSize.x, screenSize.y);
     }
+
     private void performSecondPassRendering() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -172,6 +175,7 @@ public class Game {
 
         shaderPixelArt.unbind();
     }
+
     private void performUIRendering() {
         uiManager.renderAll();
     }
@@ -188,6 +192,5 @@ public class Game {
         window.cleanup();
 
     }
-
 
 }

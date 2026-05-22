@@ -48,12 +48,12 @@ public class InfoPanel extends UIElement {
     }
 
     private void setTitle(String starNameText) {
-        elements.add(new UIText(starNameText, this, UIText.Alignment.CENTER, new Vector4f(1, 1, 1, 1), 24, 5, font));
+        elements.add(new UIText(starNameText, this, UIText.Alignment.CENTER, new Vector4f(1, 1, 1, 1), 24, 1, 15, font));
     }
 
     private void setInfo(String[] info) {
         for (String infoText : info) {
-            elements.add(new UIText(infoText, this, UIText.Alignment.LEFT, new Vector4f(1, 1, 1, 1), 20, 15, font));
+            elements.add(new UIText(infoText, this, UIText.Alignment.LEFT, new Vector4f(1, 1, 1, 1), 20, 15, 10,font));
         }
     }
 
