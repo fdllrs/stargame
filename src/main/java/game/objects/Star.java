@@ -1,18 +1,27 @@
 package game.objects;
 
 import engine.graphics.ShaderProgram;
+import engine.ui.Describable;
 import game.geometry.PlanetGeometry;
 import game.info.StarInfo;
 import org.joml.Vector3f;
 
-public class Star extends CelestialBody {
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Map;
 
-    private float noiseScale = 5.0f;
-    private float noiseScaleOffset = 0.001f;
+public class Star extends GameObject implements Describable {
+
+    /** Range of the pulsing noise scale, driven by elapsed time. */
+    private static final float NOISE_SCALE_MIN  = 4.0f;
+    private static final float NOISE_SCALE_MAX  = 8.0f;
+    private static final float NOISE_PULSE_SPEED = 0.8f; // full oscillations per second
+
+    private float elapsedTime = 0f;
 
     private final Vector3f colorA;
     private final Vector3f colorB;
-    private final String name;
+    private final String   name;
     private final StarInfo starInfo;
 
     public Star(StarInfo info) {
@@ -22,37 +31,50 @@ public class Star extends CelestialBody {
                 new Vector3f(0, 0, 0)
         );
         this.starInfo = info;
-        this.name = info.name();
-        this.colorA = info.colorA();
-        this.colorB = info.colorB();
+        this.name     = info.name();
+        this.colorA   = info.colorA();
+        this.colorB   = info.colorB();
     }
 
+    /** Advances the star's animation state. Must be called from the game loop with delta time. */
+    public void update(float deltaTime) {
+        elapsedTime += deltaTime;
+    }
+
+    @Override
     public void render(ShaderProgram shader) {
+        // Noise scale oscillates smoothly between MIN and MAX using sin(), independent of frame rate.
+        float t = (float) Math.sin(elapsedTime * NOISE_PULSE_SPEED * Math.PI);
+        float noiseScale = NOISE_SCALE_MIN + (t * 0.5f + 0.5f) * (NOISE_SCALE_MAX - NOISE_SCALE_MIN);
+
         shader.setUniform("isLightSource", 1);
-
-        // Feed the dynamic colors to the shader instead of hardcoding orange
-        shader.setUniform("colorA", this.colorA);
-        shader.setUniform("colorB", this.colorB);
-
-        shader.setUniform("noiseScale", noiseScale);
-
-        noiseScale += noiseScaleOffset;
-        if (noiseScale > 8.0f || noiseScale < 4.0f) noiseScaleOffset *= -1.0f;
-
-        shader.setUniform("model", modelMatrix);
+        shader.setUniform("colorA",        colorA);
+        shader.setUniform("colorB",        colorB);
+        shader.setUniform("noiseScale",    noiseScale);
+        shader.setUniform("model",         modelMatrix);
+        shader.setUniform("normalMatrix",  computeNormalMatrix());
         mesh.render();
+
+        if (isSelected) {
+            renderSelectionShell(shader);
+        }
     }
 
+    public float getRadius()     { return starInfo.radius(); }
+    public String getName()      { return name; }
+    public StarInfo getStarInfo(){ return starInfo; }
 
-    public float getRadius() {
-        return starInfo.radius();
+    @Override
+    public String getDisplayName() {
+        return "Star: " + name;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public StarInfo getStarInfo() {
-        return starInfo;
+    @Override
+    public List<Map.Entry<String, String>> getDisplayProperties() {
+        return List.of(
+                new AbstractMap.SimpleEntry<>("Type",   starInfo.type().name()),
+                new AbstractMap.SimpleEntry<>("Radius", String.format("%.1f", starInfo.radius())),
+                new AbstractMap.SimpleEntry<>("Mass",   String.format("%.1f", starInfo.mass()))
+        );
     }
 }

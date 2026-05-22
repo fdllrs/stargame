@@ -10,22 +10,25 @@ import java.util.Random;
 public class PlanetBuilder {
     private static final Random RANDOM = new Random();
 
-    private static final float MIN_ORBIT_SPEED = 0.001f;
+    private static final float MIN_ORBIT_SPEED      = 0.001f;
     private static final float MAX_EXTRA_ORBIT_SPEED = 0.4f;
-    private static final float MAX_POSITION_DISTANCE = 6000f;
-    private static final float MIN_RADIUS = 10f;
-    private static final float MAX_EXTRA_RADIUS = 20f;
+    private static final float MIN_RADIUS           = 10f;
+    private static final float MAX_EXTRA_RADIUS     = 20f;
+
+    /** Planets must start at least this many units past the star's edge + planet max radius. */
+    private static final float ORBIT_DISTANCE_PADDING = 50f;
+    private static final float MAX_ORBIT_DISTANCE     = 6000f;
 
     private final Star homeStar;
-    private Float orbitSpeed = null;
-    private Float orbitAngle = null;
-    private Float radius = null;
+    private Float orbitSpeed    = null;
+    private Float orbitAngle    = null;
+    private Float radius        = null;
     private Float orbitDistance = null;
-    private Vector3f colorA = null;
-    private Vector3f colorB = null;
+    private Vector3f colorA     = null;
+    private Vector3f colorB     = null;
 
     /**
-     * The Constructor requires the absolute bare minimum data for a planet to exist.
+     * The constructor requires the absolute bare minimum data for a planet to exist.
      */
     public PlanetBuilder(Star homeStar) {
         this.homeStar = homeStar;
@@ -60,26 +63,26 @@ public class PlanetBuilder {
     // --- THE BUILD TRIGGER ---
 
     public Planet build() {
-        // Fallback to random generation for anything the user didn't explicitly set
-        float finalRadius = (this.radius != null) ? this.radius : randomRadius();
-        float finalDistance = (this.orbitDistance != null) ? this.orbitDistance : randomOrbitDistance();
-        float finalSpeed = (this.orbitSpeed != null) ? this.orbitSpeed : randomOrbitSpeed();
-        float finalAngle = (this.orbitAngle != null) ? this.orbitAngle : randomOrbitAngle();
-        Vector3f finalColorA = (this.colorA != null) ? this.colorA : randomColor();
-        Vector3f finalColorB = (this.colorB != null) ? this.colorB : randomColor();
+        float finalRadius   = (this.radius != null)        ? this.radius        : randomRadius();
+        float finalDistance = (this.orbitDistance != null)  ? this.orbitDistance : randomOrbitDistance();
+        float finalSpeed    = (this.orbitSpeed != null)     ? this.orbitSpeed    : randomOrbitSpeed();
+        float finalAngle    = (this.orbitAngle != null)     ? this.orbitAngle    : randomOrbitAngle();
+        Vector3f finalColorA = (this.colorA != null)        ? this.colorA        : randomColor();
+        Vector3f finalColorB = (this.colorB != null)        ? this.colorB        : randomColor();
 
-        // Pack the Data Transfer Object
-        PlanetInfo info = new PlanetInfo(homeStar, finalSpeed, finalAngle, finalRadius, finalDistance, finalColorA,
-                finalColorB, null);
+        PlanetInfo info = new PlanetInfo(
+                homeStar, finalSpeed, finalAngle, finalRadius, finalDistance,
+                finalColorA, finalColorB, null);
 
-        // Return the active entity
         return new Planet(info);
     }
 
     // --- PRIVATE RANDOMIZERS ---
 
     private float randomOrbitDistance() {
-        return (RANDOM.nextFloat() * MAX_POSITION_DISTANCE) - (MAX_POSITION_DISTANCE / 2);
+        // Always positive: starts past the star edge + planet radius + padding.
+        float minDistance = homeStar.getRadius() + MAX_EXTRA_RADIUS + ORBIT_DISTANCE_PADDING;
+        return minDistance + RANDOM.nextFloat() * (MAX_ORBIT_DISTANCE - minDistance);
     }
 
     private float randomRadius() {

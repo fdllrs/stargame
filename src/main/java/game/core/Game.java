@@ -1,43 +1,38 @@
 package game.core;
 
 import engine.graphics.Camera;
-import engine.graphics.Framebuffer;
-import engine.graphics.Mesh;
-import engine.graphics.ShaderProgram;
+import engine.ui.Describable;
 import engine.ui.InfoPanel;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
-import game.objects.CelestialBody;
 import game.objects.GameObject;
 import org.joml.Vector2f;
-import org.joml.Vector2i;
 import org.joml.Vector4f;
 
-import static game.geometry.ScreenQuadGeometry.generateScreenQuad;
-import static game.geometry.ScreenQuadGeometry.generateUIRect;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11C.*;
 
+/**
+ * The top-level game orchestrator: owns the game loop and wires all subsystems together.
+ * Rendering internals live in {@link Renderer}; scene logic lives in {@link Scene}.
+ */
 public class Game {
-    private static final String DEFAULT_FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
-    private static final String DEFAULT_FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
-    Framebuffer fbo;
-    Mesh screenQuad;
-    Mesh uiRect;
+
+    private static final String FONT_FILE    = "src/main/resources/fonts/fontfile.fnt";
+    private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
+
+    private static final int INITIAL_WIDTH  = 1280;
+    private static final int INITIAL_HEIGHT = 720;
+
     private long windowHandle;
-    private ShaderProgram shader3D;
-    private ShaderProgram shaderPixelArt;
-    private ShaderProgram shaderUi;
-    private UIManager uiManager;
 
-    private Camera camera;
-    private Input input;
-    private Scene scene;
-    private Window window;
-
-    private InfoPanel infoPanel;
-    private FontAtlas fontAtlas;
+    private Window     window;
+    private Camera     camera;
+    private Input      input;
+    private Scene      scene;
+    private Renderer   renderer;
+    private UIManager  uiManager;
+    private InfoPanel  infoPanel;
 
     public void run() throws Exception {
         init();
@@ -45,152 +40,88 @@ public class Game {
         cleanup();
     }
 
-    private void gameLoop() {
-        double lastTime = glfwGetTime();
-        float deltaTime;
-
-        while (!glfwWindowShouldClose(windowHandle)) {
-            double currentTime = glfwGetTime();
-            deltaTime = (float) (currentTime - lastTime);
-            lastTime = currentTime;
-            glfwPollEvents();
-
-            update(deltaTime);
-            render();
-            glfwSwapBuffers(windowHandle);
-
-        }
-    }
-
-    private void init() throws Exception {
-        createComponents();
-        initShaders();
-        placePlayerInRandomPlanet();
-    }
-
-    private void initShaders() {
-        shader3D = ShaderProgram.initShader("/game/basic.vert", "/game/basic.frag");
-
-        shaderPixelArt = ShaderProgram.initShader("/game/screen.vert", "/game/screen.frag");
-
-        int PIXEL_ART_DOWNSCALE_FACTOR = 3;
-        Vector2i screenSize = Window.getWindowSize(windowHandle);
-
-        fbo = new Framebuffer(screenSize.x / PIXEL_ART_DOWNSCALE_FACTOR, screenSize.y / PIXEL_ART_DOWNSCALE_FACTOR);
-        screenQuad = generateScreenQuad();
-
-        shaderUi = uiManager.getUiShader();
-        uiRect = generateUIRect();
-    }
-
-    private void createComponents() {
-        int INITIAL_WINDOW_WIDTH = 1280;
-        int INITIAL_WINDOW_HEIGHT = 720;
-
-        window = new Window();
-        window.init(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
+    private void init() {
+        window      = new Window();
+        window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
         windowHandle = window.windowHandle;
-        camera = new Camera();
-        scene = new Scene();
-        input = new Input(windowHandle, camera, scene);
+
+        camera    = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
+        scene     = new Scene();
+        renderer  = new Renderer(windowHandle);
+        input     = new Input(windowHandle, camera, scene);
+
+        FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
-        fontAtlas = new FontAtlas(DEFAULT_FONT_FILE, DEFAULT_FONT_TEXTURE);
         infoPanel = new InfoPanel(20, 20, 400, 500, new Vector4f(0.2f, 0.2f, 0.2f, 0.5f), fontAtlas);
         uiManager.addElement(infoPanel);
 
+        registerResizeCallback();
+        placePlayerAtFirstPlanet();
     }
 
-    private void placePlayerInRandomPlanet() {
-        scene.update(camera, false);
+    private void registerResizeCallback() {
+        glfwSetFramebufferSizeCallback(windowHandle, (win, width, height) -> {
+            camera.onResize(width, height);
+            uiManager.onResize(width, height);
+            renderer.onResize(width, height);
+        });
+    }
+
+    private void placePlayerAtFirstPlanet() {
+        scene.update(camera, false, 0f);
         camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0));
     }
 
+    private void gameLoop() {
+        double lastTime = glfwGetTime();
+
+        while (!glfwWindowShouldClose(windowHandle)) {
+            double currentTime = glfwGetTime();
+            float  deltaTime   = (float) (currentTime - lastTime);
+            lastTime = currentTime;
+
+            glfwPollEvents();
+            update(deltaTime);
+            renderer.render(scene, camera, windowHandle);
+            uiManager.renderAll();
+            glfwSwapBuffers(windowHandle);
+        }
+    }
+
     private void update(float deltaTime) {
-        Boolean isMoving = input.isForwardMovementPressed();
+        boolean isMoving = input.isForwardMovementPressed();
 
         input.handleCameraInput(deltaTime);
 
         if (input.consumeLeftClick()) {
-            float mouseX = input.getMouseX();
-            float mouseY = input.getMouseY();
-            CelestialBody objectClicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            GameObject clicked = scene.objectClicked(
+                    input.getMouseX(), input.getMouseY(), windowHandle, camera);
 
-            scene.updateSelectedObject(objectClicked);
-
-            infoPanel.setTarget(objectClicked);
-
+            // Deselect the previous target, select the new one.
+            infoPanel.setTarget(clicked instanceof Describable d ? d : null);
         }
 
         if (glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {
-            Vector2f panelSize = infoPanel.getSize();
-            infoPanel.setSize(panelSize.x + 5, panelSize.y);
+            Vector2f size = infoPanel.getSize();
+            infoPanel.setSize(size.x + 5, size.y);
         }
         if (glfwGetKey(windowHandle, GLFW_KEY_K) == GLFW_PRESS) {
-            Vector2f panelSize = infoPanel.getSize();
-            infoPanel.setSize(panelSize.x - 5, panelSize.y);
+            Vector2f size = infoPanel.getSize();
+            infoPanel.setSize(size.x - 5, size.y);
         }
-
         if (glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS) {
-            scene.testRecreateStarSystem();
+            scene.recreateStarSystem();
         }
 
         camera.applyMovement(deltaTime);
         camera.updateViewMatrix();
-        scene.update(camera, isMoving);
-
-    }
-
-    private void render() {
-        performFirstPassRendering();
-        performSecondPassRendering();
-        performUIRendering();
-    }
-
-    private void performFirstPassRendering() {
-        fbo.bind();
-        shader3D.bind();
-        glEnable(GL_DEPTH_TEST);
-        glClearColor(0.05f, 0.05f, 0.1f, 1f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shader3D.setUniform("view", camera.getViewMatrix());
-        shader3D.setUniform("projection", camera.getProjectionMatrix());
-
-        scene.render(shader3D);
-
-        shader3D.unbind();
-        Vector2i screenSize = Window.getWindowSize(windowHandle);
-        fbo.unbind(screenSize.x, screenSize.y);
-    }
-
-    private void performSecondPassRendering() {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
-
-        shaderPixelArt.bind();
-
-        glBindTexture(GL_TEXTURE_2D, fbo.textureId);
-        screenQuad.render();
-
-        shaderPixelArt.unbind();
-    }
-
-    private void performUIRendering() {
-        uiManager.renderAll();
+        scene.update(camera, isMoving, deltaTime);
     }
 
     private void cleanup() {
         scene.cleanup();
-
-        shader3D.cleanup();
-        shaderPixelArt.cleanup();
-        shaderUi.cleanup();
-
-        uiRect.cleanup();
-        fbo.cleanup();
+        renderer.cleanup();
+        uiManager.cleanup();
         window.cleanup();
-
     }
-
 }

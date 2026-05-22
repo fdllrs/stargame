@@ -12,97 +12,26 @@ public class Scene {
 
     private final Player player;
     private StarSystem starSystem;
-    private CelestialBody selectedObject;
 
     public Scene() {
-        player = new Player();
+        player    = new Player();
         starSystem = new StarSystem(8);
     }
 
-    private CelestialBody pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
-        Vector3f rayOrigin = calculateRayOrigin(camera);
-        Vector3f rayDirection = calculateMouseRay(mouseX, mouseY, windowHandle, camera);
-
-        return calculateClosestObject(rayOrigin, rayDirection);
-    }
-
-    private CelestialBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
-        float closestDistance = Float.MAX_VALUE;
-        CelestialBody closestObject = null;
-
-        for (Planet planet : starSystem.getPlanets()) {
-            Vector3f planetCenter = planet.getPosition();
-            float planetRadius = planet.getPlanetRadius();
-
-            Vector2f intersectionResult = new Vector2f();
-
-            boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, planetCenter, planetRadius * planetRadius, intersectionResult);
-            if (!hit) {
-                continue;
-            }
-
-            float hitDistance = intersectionResult.x;
-
-            if (hitDistance >= 0 && hitDistance < closestDistance) {
-                closestDistance = hitDistance;
-                closestObject = planet;
-            }
-        }
-
-        Star star = starSystem.getStar();
-        Vector3f starCenter = star.getPosition();
-        float starRadius = star.getRadius();
-        Vector2f intersectionResult = new Vector2f();
-
-        boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, starCenter, starRadius * starRadius, intersectionResult);
-
-        if (hit) {
-            float hitDistance = intersectionResult.x;
-
-            if (hitDistance >= 0 && hitDistance < closestDistance) {
-                closestObject = star;
-            }
-        }
-
-        return closestObject;
-    }
-
-    private Vector3f calculateMouseRay(float mouseX, float mouseY, long windowHandle, Camera camera) {
-        Vector2i screenSize = Window.getWindowSize(windowHandle);
-
-        float ndcX = (2.0f * mouseX) / screenSize.x - 1.0f;
-        float ndcY = 1.0f - (2.0f * mouseY) / screenSize.y;
-
-        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix()).invert();
-
-        Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
-        Vector4f farPoint = new Vector4f(ndcX, ndcY, 1.0f, 1.0f);
-
-        inverseViewProjection.transform(nearPoint);
-        inverseViewProjection.transform(farPoint);
-
-        nearPoint.div(nearPoint.w);
-        farPoint.div(farPoint.w);
-
-        return new Vector3f(farPoint.x - nearPoint.x, farPoint.y - nearPoint.y, farPoint.z - nearPoint.z).normalize();
-    }
-
-    private Vector3f calculateRayOrigin(Camera camera) {
-        Matrix4f inverseView = new Matrix4f(camera.getViewMatrix()).invert();
-
-        return inverseView.transformPosition(new Vector3f(0, 0, 0));
-    }
-
-    public void update(Camera camera, Boolean isMoving) {
+    public void update(Camera camera, boolean isMoving, float deltaTime) {
         player.syncWithCamera(camera, isMoving);
 
         Vector3f playerPosition = player.getPosition();
-        for (Planet planet : starSystem.getPlanets()) {
-            planet.orbit();
-            float planetRadius = planet.getPlanetRadius();
-            float planetOrbitInfluence = planetRadius + 5f;
 
-            if (planet.getPosition().distance(playerPosition) < planetOrbitInfluence) {
+        starSystem.getStar().update(deltaTime);
+
+        for (Planet planet : starSystem.getPlanets()) {
+            planet.orbit(deltaTime);
+
+            float planetRadius = planet.getPlanetRadius();
+            float orbitInfluence = planetRadius + 5f;
+
+            if (planet.getPosition().distance(playerPosition) < orbitInfluence) {
                 camera.zeroAcceleration(true);
             }
         }
@@ -122,23 +51,83 @@ public class Scene {
         return starSystem.getPlanets();
     }
 
-    public CelestialBody objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
+    public GameObject objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
         return pickObject(mouseX, mouseY, windowHandle, camera);
     }
 
-    public void testRecreateStarSystem() {
-        this.starSystem = new StarSystem(10);
-
+    /** Frees the old star system's GPU resources before generating a new one. */
+    public void recreateStarSystem() {
+        starSystem.cleanupAll();
+        starSystem = new StarSystem(10);
     }
 
-    public void updateSelectedObject(CelestialBody objectClicked) {
+    // --- Ray-picking ---
 
-        if (objectClicked != null) {
-            selectedObject = objectClicked;
-            selectedObject.setSelected(true);
-            return;
+    private GameObject pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
+        Vector3f rayOrigin    = calculateRayOrigin(camera);
+        Vector3f rayDirection = calculateMouseRay(mouseX, mouseY, windowHandle, camera);
+        return calculateClosestObject(rayOrigin, rayDirection);
+    }
+
+    private GameObject calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
+        float closestDistance = Float.MAX_VALUE;
+        GameObject closestObject = null;
+
+        for (Planet planet : starSystem.getPlanets()) {
+            Vector3f planetCenter = planet.getPosition();
+            float    planetRadius = planet.getPlanetRadius();
+            Vector2f result       = new Vector2f();
+
+            boolean hit = Intersectionf.intersectRaySphere(
+                    rayOrigin, rayDirection, planetCenter, planetRadius * planetRadius, result);
+
+            if (hit && result.x >= 0 && result.x < closestDistance) {
+                closestDistance = result.x;
+                closestObject   = planet;
+            }
         }
-        selectedObject.setSelected(false);
-        selectedObject = null;
+
+        Star     star        = starSystem.getStar();
+        Vector3f starCenter  = star.getPosition();
+        float    starRadius  = star.getRadius();
+        Vector2f result      = new Vector2f();
+
+        boolean hit = Intersectionf.intersectRaySphere(
+                rayOrigin, rayDirection, starCenter, starRadius * starRadius, result);
+
+        if (hit && result.x >= 0 && result.x < closestDistance) {
+            closestObject = star;
+        }
+
+        return closestObject;
+    }
+
+    private Vector3f calculateMouseRay(float mouseX, float mouseY, long windowHandle, Camera camera) {
+        Vector2i screenSize = Window.getWindowSize(windowHandle);
+
+        float ndcX = (2.0f * mouseX) / screenSize.x - 1.0f;
+        float ndcY =  1.0f - (2.0f * mouseY) / screenSize.y;
+
+        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix())
+                .mul(camera.getViewMatrix())
+                .invert();
+
+        Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
+        Vector4f farPoint  = new Vector4f(ndcX, ndcY,  1.0f, 1.0f);
+
+        inverseViewProjection.transform(nearPoint);
+        inverseViewProjection.transform(farPoint);
+
+        nearPoint.div(nearPoint.w);
+        farPoint.div(farPoint.w);
+
+        return new Vector3f(
+                farPoint.x - nearPoint.x,
+                farPoint.y - nearPoint.y,
+                farPoint.z - nearPoint.z).normalize();
+    }
+
+    private Vector3f calculateRayOrigin(Camera camera) {
+        return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
     }
 }

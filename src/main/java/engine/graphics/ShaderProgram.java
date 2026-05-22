@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import engine.utils.FileUtils;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -77,6 +78,16 @@ public class ShaderProgram {
     private static void assertValidLocation(String uniformName, int location) {
         if (location == -1) {
             System.err.println("Uniform not found: " + uniformName);
+        }
+    }
+
+    public void setUniform(String uniformName, Matrix3f value) {
+        int location = glGetUniformLocation(programId, uniformName);
+        assertValidLocation(uniformName, location);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer buffer = stack.mallocFloat(9);
+            value.get(buffer);
+            glUniformMatrix3fv(location, false, buffer);
         }
     }
 

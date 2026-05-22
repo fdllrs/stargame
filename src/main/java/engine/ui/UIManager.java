@@ -11,11 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL11C.GL_BLEND;
-import static org.lwjgl.opengl.GL11C.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11C.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11C.glBlendFunc;
-import static org.lwjgl.opengl.GL11C.glDisable;
 
 
 public class UIManager {
@@ -34,15 +29,18 @@ public class UIManager {
         this.uiShader = ShaderProgram.initShader("/UI/ui.vert", "/UI/ui.frag");
         uiQuad = ScreenQuadGeometry.generateUIRect();
         Vector2i windowSize = Window.getWindowSize(windowHandle);
-        uiProjection = new Matrix4f().ortho(
-                0.0f,
-                windowSize.x,
-                0.0f,
-                windowSize.y,
-                -1.0f,
-                1.0f);
+        uiProjection = new Matrix4f();
+        rebuildProjection(windowSize.x, windowSize.y);
+    }
 
-    };
+    /** Call when the framebuffer is resized to keep the UI projection in sync. */
+    public void onResize(int width, int height) {
+        rebuildProjection(width, height);
+    }
+
+    private void rebuildProjection(int width, int height) {
+        uiProjection.setOrtho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
+    }
 
     public void addElement(UIElement element) {
         elements.add(element);
@@ -71,5 +69,10 @@ public class UIManager {
 
     public Matrix4f getProjection() {
         return uiProjection;
+    }
+
+    public void cleanup() {
+        uiShader.cleanup();
+        uiQuad.cleanup();
     }
 }
