@@ -6,6 +6,7 @@ import engine.ui.InfoPanel;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
+import game.objects.CelestialBody;
 import game.objects.GameObject;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -18,21 +19,21 @@ import static org.lwjgl.glfw.GLFW.*;
  */
 public class Game {
 
-    private static final String FONT_FILE    = "src/main/resources/fonts/fontfile.fnt";
+    private static final String FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
     private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
 
-    private static final int INITIAL_WIDTH  = 1280;
+    private static final int INITIAL_WIDTH = 1280;
     private static final int INITIAL_HEIGHT = 720;
 
     private long windowHandle;
 
-    private Window     window;
-    private Camera     camera;
-    private Input      input;
-    private Scene      scene;
-    private Renderer   renderer;
-    private UIManager  uiManager;
-    private InfoPanel  infoPanel;
+    private Window window;
+    private Camera camera;
+    private Input input;
+    private Scene scene;
+    private Renderer renderer;
+    private UIManager uiManager;
+    private InfoPanel infoPanel;
 
     public void run() throws Exception {
         init();
@@ -41,14 +42,14 @@ public class Game {
     }
 
     private void init() {
-        window      = new Window();
+        window = new Window();
         window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
         windowHandle = window.windowHandle;
 
-        camera    = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
-        scene     = new Scene();
-        renderer  = new Renderer(windowHandle);
-        input     = new Input(windowHandle, camera, scene);
+        camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
+        scene = new Scene();
+        renderer = new Renderer(windowHandle);
+        input = new Input(windowHandle, camera, scene);
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
@@ -77,7 +78,7 @@ public class Game {
 
         while (!glfwWindowShouldClose(windowHandle)) {
             double currentTime = glfwGetTime();
-            float  deltaTime   = (float) (currentTime - lastTime);
+            float deltaTime = (float) (currentTime - lastTime);
             lastTime = currentTime;
 
             glfwPollEvents();
@@ -94,11 +95,11 @@ public class Game {
         input.handleCameraInput(deltaTime);
 
         if (input.consumeLeftClick()) {
-            GameObject clicked = scene.objectClicked(
-                    input.getMouseX(), input.getMouseY(), windowHandle, camera);
-
-            // Deselect the previous target, select the new one.
+            CelestialBody clicked = scene.objectClicked(input.getMouseX(), input.getMouseY(), windowHandle, camera);
+            scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
+
+
         }
 
         if (glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {

@@ -16,13 +16,12 @@ import static org.lwjgl.opengl.GL20C.*;
 public class ShaderProgram {
 
     private final int programId;
-    private final int vertexId;
-    private final int fragmentId;
+
     public ShaderProgram(String vertexPath, String fragmentPath) {
         programId = glCreateProgram();
 
-        vertexId = compileShader(vertexPath, GL_VERTEX_SHADER);
-        fragmentId = compileShader(fragmentPath, GL_FRAGMENT_SHADER);
+        int vertexId = compileShader(vertexPath, GL_VERTEX_SHADER);
+        int fragmentId = compileShader(fragmentPath, GL_FRAGMENT_SHADER);
 
         glAttachShader(programId, vertexId);
         glAttachShader(programId, fragmentId);
@@ -34,6 +33,7 @@ public class ShaderProgram {
         glDeleteShader(fragmentId);
 
     }
+
 
     public static ShaderProgram initShader(String vertexPath, String fragmentPath) {
         try {

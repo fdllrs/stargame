@@ -30,30 +30,36 @@ public class GameObject {
         return new Matrix3f(modelMatrix).invert().transpose();
     }
 
+    public Mesh getMesh() {
+        return mesh;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.isSelected = selected;
+    }
+
+    protected void setupStencilForSelection() {
+        if (isSelected) {
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        } else {
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        }
+    }
+
     public void render(ShaderProgram shader) {
         shader.setUniform("model", modelMatrix);
         shader.setUniform("normalMatrix", computeNormalMatrix());
         shader.setUniform("colorA", color);
         shader.setUniform("colorB", color);
         shader.setUniform("noiseScale", 0.0f);
+        setupStencilForSelection();
         mesh.render();
-    }
-
-    /** Renders a selection wireframe shell around this object. Call from subclasses when isSelected. */
-    protected void renderSelectionShell(ShaderProgram shader) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glLineWidth(2.0f);
-
-        Matrix4f shellMatrix = new Matrix4f(modelMatrix).scale(1.05f);
-        shader.setUniform("model", shellMatrix);
-        shader.setUniform("normalMatrix", new Matrix3f(shellMatrix).invert().transpose());
-        shader.setUniform("colorA", new Vector3f(0.0f, 1.0f, 1.0f));
-        shader.setUniform("colorB", new Vector3f(0.0f, 1.0f, 1.0f));
-        mesh.render();
-
-        // CRITICAL: Reset OpenGL state so the rest of the scene doesn't turn into a wireframe.
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glLineWidth(1.0f);
     }
 
     public void cleanup() {

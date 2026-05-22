@@ -8,6 +8,7 @@ uniform bool isLightSource;
 uniform vec3 colorA;      // e.g., Water / Dark Plasma
 uniform vec3 colorB;      // e.g., Land / Bright Plasma
 uniform float noiseScale; // How "zoomed in" the continents are
+uniform vec3 playerPos;
 
 in vec3 Normal;
 in vec3 FragPos;
@@ -88,11 +89,26 @@ void main() {
         return;
     }
 
-    float diffuseStrength = getDiffuseStrength();
-    diffuseStrength = applyDitheredBands(diffuseStrength);
+    float sunDiffuse = getDiffuseStrength();
+
+    // Player light calculation (Point light attached to player/camera)
+    vec3 normal = normalize(Normal);
+    vec3 playerLightDir = normalize(playerPos - FragPos);
+    float playerDiffuse = max(dot(normal, playerLightDir), 0.3);
+
+    float playerDist = length(playerPos - FragPos);
+    float playerLightRange = 200.0;
+    float attenuation = clamp(1.0 - (playerDist / playerLightRange), 0.0, 1.0);
+    attenuation = attenuation * attenuation; // quadratic falloff
+
+    float playerLightIntensity = 0.7;
+    float playerLightContribution = playerDiffuse * attenuation * playerLightIntensity;
+
+    float totalDiffuse = sunDiffuse + playerLightContribution;
+    totalDiffuse = applyDitheredBands(totalDiffuse);
 
     vec3 ambient = AMBIENT_STRENGTH * objectColor;
-    vec3 diffuse = diffuseStrength * objectColor;
+    vec3 diffuse = totalDiffuse * objectColor;
 
     FragColor = vec4(ambient + diffuse, 1.0);
 }

@@ -10,40 +10,42 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 
-public class Planet extends GameObject implements Describable {
-    private static final int   PLANET_RESOLUTION = 4;
-    private static final float MAX_ORBIT_ANGLE   = (float) (Math.PI * 2.0);
-
-    private String name;
-    private final Star     homeStar;
+public class Planet extends CelestialBody implements Describable {
+    private static final int PLANET_RESOLUTION = 4;
+    private static final float MAX_ORBIT_ANGLE = (float) (Math.PI * 2.0);
+    private final Star homeStar;
     private final PlanetInfo planetInfo;
-
     private final Vector3f colorA;
     private final Vector3f colorB;
+    private String name;
     private float orbitAngle;
+
+    public Planet(PlanetInfo planetInfo) {
+        super(PlanetGeometry.generate(PLANET_RESOLUTION, planetInfo.planetRadius()), planetInfo.colorA(), planetInfo.homeStar().getPosition().add(planetInfo.orbitDistance(), 0, 0));
+
+        this.name = planetInfo.name();
+        this.planetInfo = planetInfo;
+        this.homeStar = planetInfo.homeStar();
+        this.orbitAngle = planetInfo.initialOrbitAngle();
+        this.colorA = planetInfo.colorA();
+        this.colorB = planetInfo.colorB();
+    }
 
     public float getPlanetRadius() {
         return planetInfo.planetRadius();
     }
 
-    public Planet(PlanetInfo planetInfo) {
-        super(PlanetGeometry.generate(
-                        PLANET_RESOLUTION,
-                        planetInfo.planetRadius()),
-                planetInfo.colorA(),
-                planetInfo.homeStar().getPosition().add(planetInfo.orbitDistance(), 0, 0));
-
-        this.name       = planetInfo.name();
-        this.planetInfo = planetInfo;
-        this.homeStar   = planetInfo.homeStar();
-        this.orbitAngle = planetInfo.initialOrbitAngle();
-        this.colorA     = planetInfo.colorA();
-        this.colorB     = planetInfo.colorB();
+    public String getName() {
+        return name;
     }
 
-    public void setName(String name) { this.name = name; }
-    public String getName()          { return name; }
-    public PlanetInfo getPlanetInfo(){ return planetInfo; }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public PlanetInfo getPlanetInfo() {
+        return planetInfo;
+    }
 
     @Override
     public String getDisplayName() {
@@ -52,12 +54,7 @@ public class Planet extends GameObject implements Describable {
 
     @Override
     public List<Map.Entry<String, String>> getDisplayProperties() {
-        return List.of(
-                new AbstractMap.SimpleEntry<>("Home Star",    planetInfo.homeStar().getName()),
-                new AbstractMap.SimpleEntry<>("Radius",       String.format("%.1f", planetInfo.planetRadius())),
-                new AbstractMap.SimpleEntry<>("Orbit Dist.",  String.format("%.1f", planetInfo.orbitDistance())),
-                new AbstractMap.SimpleEntry<>("Orbit Speed",  String.format("%.5f", planetInfo.orbitSpeed()))
-        );
+        return List.of(new AbstractMap.SimpleEntry<>("Home Star", planetInfo.homeStar().getName()), new AbstractMap.SimpleEntry<>("Radius", String.format("%.1f", planetInfo.planetRadius())), new AbstractMap.SimpleEntry<>("Orbit Dist.", String.format("%.1f", planetInfo.orbitDistance())), new AbstractMap.SimpleEntry<>("Orbit Speed", String.format("%.5f", planetInfo.orbitSpeed())));
     }
 
     @Override
@@ -68,20 +65,20 @@ public class Planet extends GameObject implements Describable {
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", 2.0f);
+        setupStencilForSelection();
         mesh.render();
-
-        if (isSelected) {
-            renderSelectionShell(shader);
-        }
     }
 
-    /** Advances the orbital position by the given time delta. */
+    /**
+     * Advances the orbital position by the given time delta.
+     */
     public void orbit(float deltaTime) {
         float orbitDistance = planetInfo.orbitDistance();
-        float orbitSpeed    = planetInfo.orbitSpeed();
+        float orbitSpeed = planetInfo.orbitSpeed();
 
         orbitAngle += orbitSpeed * deltaTime;
-        if (orbitAngle >= MAX_ORBIT_ANGLE) orbitAngle -= MAX_ORBIT_ANGLE;
+        if (orbitAngle >= MAX_ORBIT_ANGLE)
+            orbitAngle -= MAX_ORBIT_ANGLE;
 
         modelMatrix.identity();
         modelMatrix.translate(homeStar.getPosition());

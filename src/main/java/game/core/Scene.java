@@ -2,6 +2,7 @@ package game.core;
 
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
+import engine.ui.Describable;
 import engine.window.Window;
 import game.objects.*;
 import org.joml.*;
@@ -13,8 +14,10 @@ public class Scene {
     private final Player player;
     private StarSystem starSystem;
 
+    private CelestialBody selectedObject;
+
     public Scene() {
-        player    = new Player();
+        player = new Player();
         starSystem = new StarSystem(8);
     }
 
@@ -51,49 +54,45 @@ public class Scene {
         return starSystem.getPlanets();
     }
 
-    public GameObject objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
+    public CelestialBody objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
         return pickObject(mouseX, mouseY, windowHandle, camera);
     }
 
-    /** Frees the old star system's GPU resources before generating a new one. */
     public void recreateStarSystem() {
         starSystem.cleanupAll();
         starSystem = new StarSystem(10);
     }
 
-    // --- Ray-picking ---
 
-    private GameObject pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
-        Vector3f rayOrigin    = calculateRayOrigin(camera);
+    private CelestialBody pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
+        Vector3f rayOrigin = calculateRayOrigin(camera);
         Vector3f rayDirection = calculateMouseRay(mouseX, mouseY, windowHandle, camera);
         return calculateClosestObject(rayOrigin, rayDirection);
     }
 
-    private GameObject calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
+    private CelestialBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
         float closestDistance = Float.MAX_VALUE;
-        GameObject closestObject = null;
+        CelestialBody closestObject = null;
 
         for (Planet planet : starSystem.getPlanets()) {
             Vector3f planetCenter = planet.getPosition();
-            float    planetRadius = planet.getPlanetRadius();
-            Vector2f result       = new Vector2f();
+            float planetRadius = planet.getPlanetRadius();
+            Vector2f result = new Vector2f();
 
-            boolean hit = Intersectionf.intersectRaySphere(
-                    rayOrigin, rayDirection, planetCenter, planetRadius * planetRadius, result);
+            boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, planetCenter, planetRadius * planetRadius, result);
 
             if (hit && result.x >= 0 && result.x < closestDistance) {
                 closestDistance = result.x;
-                closestObject   = planet;
+                closestObject = planet;
             }
         }
 
-        Star     star        = starSystem.getStar();
-        Vector3f starCenter  = star.getPosition();
-        float    starRadius  = star.getRadius();
-        Vector2f result      = new Vector2f();
+        Star star = starSystem.getStar();
+        Vector3f starCenter = star.getPosition();
+        float starRadius = star.getRadius();
+        Vector2f result = new Vector2f();
 
-        boolean hit = Intersectionf.intersectRaySphere(
-                rayOrigin, rayDirection, starCenter, starRadius * starRadius, result);
+        boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, starCenter, starRadius * starRadius, result);
 
         if (hit && result.x >= 0 && result.x < closestDistance) {
             closestObject = star;
@@ -106,14 +105,12 @@ public class Scene {
         Vector2i screenSize = Window.getWindowSize(windowHandle);
 
         float ndcX = (2.0f * mouseX) / screenSize.x - 1.0f;
-        float ndcY =  1.0f - (2.0f * mouseY) / screenSize.y;
+        float ndcY = 1.0f - (2.0f * mouseY) / screenSize.y;
 
-        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix())
-                .mul(camera.getViewMatrix())
-                .invert();
+        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix()).invert();
 
         Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
-        Vector4f farPoint  = new Vector4f(ndcX, ndcY,  1.0f, 1.0f);
+        Vector4f farPoint = new Vector4f(ndcX, ndcY, 1.0f, 1.0f);
 
         inverseViewProjection.transform(nearPoint);
         inverseViewProjection.transform(farPoint);
@@ -121,13 +118,24 @@ public class Scene {
         nearPoint.div(nearPoint.w);
         farPoint.div(farPoint.w);
 
-        return new Vector3f(
-                farPoint.x - nearPoint.x,
-                farPoint.y - nearPoint.y,
-                farPoint.z - nearPoint.z).normalize();
+        return new Vector3f(farPoint.x - nearPoint.x, farPoint.y - nearPoint.y, farPoint.z - nearPoint.z).normalize();
     }
 
     private Vector3f calculateRayOrigin(Camera camera) {
         return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
+    }
+
+    public CelestialBody getSelectedObject() {
+        return selectedObject;
+    }
+
+    public void updateSelectedObject(CelestialBody clicked) {
+        if (selectedObject != null) {
+            selectedObject.setSelected(false);
+        }
+        selectedObject = clicked;
+        if (selectedObject != null) {
+            selectedObject.setSelected(true);
+        }
     }
 }
