@@ -10,6 +10,10 @@ import static org.lwjgl.opengl.GL11C.*;
 
 public class GameObject {
 
+    protected final Vector3f position;
+    protected final Vector3f rotation; // Stored in Euler angles (Degrees or Radians)
+    protected final Vector3f scale;
+
     protected final Mesh mesh;
     protected final Matrix4f modelMatrix;
     protected final Vector3f color;
@@ -18,14 +22,35 @@ public class GameObject {
     public GameObject(Mesh mesh, Vector3f color, Vector3f position) {
         this.mesh = mesh;
         this.color = color;
-        this.modelMatrix = new Matrix4f().identity().translate(position);
+
+        this.position = new Vector3f(position);
+        this.rotation = new Vector3f(0, 0, 0);
+        this.scale = new Vector3f(1, 1, 1);
+        this.modelMatrix = new Matrix4f();
+        updateModelMatrix();
     }
 
     public Matrix4f getModelMatrix() {
         return modelMatrix;
     }
+    public Vector3f getPosition() { return position; }
+    public Vector3f getRotation() { return rotation; }
+    public Vector3f getScale() { return scale; }
 
-    /** Computes the correct normal matrix (inverse-transpose of the model's 3x3). */
+    public void setPosition(Vector3f position) {
+        this.position.set(position);
+        updateModelMatrix();
+    }
+    public void setRotation(Vector3f rotation) {
+        this.rotation.set(rotation);
+        updateModelMatrix();
+    }
+    public void setScale(Vector3f scale) {
+        this.scale.set(scale);
+        updateModelMatrix();
+    }
+
+
     protected Matrix3f computeNormalMatrix() {
         return new Matrix3f(modelMatrix).invert().transpose();
     }
@@ -34,9 +59,18 @@ public class GameObject {
         return mesh;
     }
 
-    public boolean isSelected() {
-        return isSelected;
+    public void updateModelMatrix() {
+        modelMatrix.identity();
+        modelMatrix.translate(position);
+
+        // Convert degrees to radians for JOML!
+        modelMatrix.rotateX((float) Math.toRadians(rotation.x));
+        modelMatrix.rotateY((float) Math.toRadians(rotation.y));
+        modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
+
+        modelMatrix.scale(scale);
     }
+
 
     public void setSelected(boolean selected) {
         this.isSelected = selected;
@@ -62,11 +96,10 @@ public class GameObject {
         mesh.render();
     }
 
+
+
     public void cleanup() {
         mesh.cleanup();
     }
 
-    public Vector3f getPosition() {
-        return modelMatrix.getTranslation(new Vector3f());
-    }
 }

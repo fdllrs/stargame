@@ -10,22 +10,22 @@ import java.util.Random;
 public class PlanetBuilder {
     private static final Random RANDOM = new Random();
 
-    private static final float MIN_ORBIT_SPEED      = 0.001f;
+    private static final float MIN_ORBIT_SPEED = 0.01f;
     private static final float MAX_EXTRA_ORBIT_SPEED = 0.4f;
-    private static final float MIN_RADIUS           = 10f;
-    private static final float MAX_EXTRA_RADIUS     = 20f;
+    private static final float MIN_RADIUS = 10f;
+    private static final float MAX_EXTRA_RADIUS = 20f;
 
-    /** Planets must start at least this many units past the star's edge + planet max radius. */
+
     private static final float ORBIT_DISTANCE_PADDING = 50f;
-    private static final float MAX_ORBIT_DISTANCE     = 6000f;
+    private static final float MAX_ORBIT_DISTANCE = 6000f;
 
     private final Star homeStar;
-    private Float orbitSpeed    = null;
-    private Float orbitAngle    = null;
-    private Float radius        = null;
+    private Float orbitSpeed = null;
+    private Float orbitAngle = null;
+    private Float radius = null;
     private Float orbitDistance = null;
-    private Vector3f colorA     = null;
-    private Vector3f colorB     = null;
+    private Vector3f colorA = null;
+    private Vector3f colorB = null;
 
     /**
      * The constructor requires the absolute bare minimum data for a planet to exist.
@@ -63,12 +63,12 @@ public class PlanetBuilder {
     // --- THE BUILD TRIGGER ---
 
     public Planet build() {
-        float finalRadius   = (this.radius != null)        ? this.radius        : randomRadius();
-        float finalDistance = (this.orbitDistance != null)  ? this.orbitDistance : randomOrbitDistance();
-        float finalSpeed    = (this.orbitSpeed != null)     ? this.orbitSpeed    : randomOrbitSpeed();
-        float finalAngle    = (this.orbitAngle != null)     ? this.orbitAngle    : randomOrbitAngle();
-        Vector3f finalColorA = (this.colorA != null)        ? this.colorA        : randomColor();
-        Vector3f finalColorB = (this.colorB != null)        ? this.colorB        : randomColor();
+        float finalRadius = (this.radius != null) ? this.radius : randomRadius();
+        float finalDistance = (this.orbitDistance != null) ? this.orbitDistance : randomOrbitDistance();
+        float finalSpeed = (this.orbitSpeed != null) ? this.orbitSpeed : randomOrbitSpeed();
+        float finalAngle = (this.orbitAngle != null) ? this.orbitAngle : randomOrbitAngle();
+        Vector3f finalColorA = (this.colorA != null) ? this.colorA : randomColor();
+        Vector3f finalColorB = (this.colorB != null) ? this.colorB : randomColor();
 
         PlanetInfo info = new PlanetInfo(
                 homeStar, finalSpeed, finalAngle, finalRadius, finalDistance,

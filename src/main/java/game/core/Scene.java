@@ -2,7 +2,7 @@ package game.core;
 
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
-import engine.ui.Describable;
+
 import engine.window.Window;
 import game.objects.*;
 import org.joml.*;
@@ -13,26 +13,27 @@ public class Scene {
 
     private final Player player;
     private StarSystem starSystem;
+    private Starfield starfield;
 
     private CelestialBody selectedObject;
 
     public Scene() {
         player = new Player();
         starSystem = new StarSystem(8);
+        starfield = new Starfield(500, 10000);
     }
+
+
 
     public void update(Camera camera, boolean isMoving, float deltaTime) {
         player.syncWithCamera(camera, isMoving);
 
         Vector3f playerPosition = player.getPosition();
 
-        starSystem.getStar().update(deltaTime);
+        starSystem.update(deltaTime);
 
         for (Planet planet : starSystem.getPlanets()) {
-            planet.orbit(deltaTime);
-
-            float planetRadius = planet.getPlanetRadius();
-            float orbitInfluence = planetRadius + 5f;
+            float orbitInfluence = planet.orbitInfluence();
 
             if (planet.getPosition().distance(playerPosition) < orbitInfluence) {
                 camera.zeroAcceleration(true);
@@ -73,29 +74,17 @@ public class Scene {
     private CelestialBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
         float closestDistance = Float.MAX_VALUE;
         CelestialBody closestObject = null;
+        for (CelestialBody body : starSystem.getAllBodies()) {
+            Vector3f center = body.getPosition();
+            float radius = body.getRadius();
 
-        for (Planet planet : starSystem.getPlanets()) {
-            Vector3f planetCenter = planet.getPosition();
-            float planetRadius = planet.getPlanetRadius();
             Vector2f result = new Vector2f();
-
-            boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, planetCenter, planetRadius * planetRadius, result);
+            boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, center, radius * radius, result);
 
             if (hit && result.x >= 0 && result.x < closestDistance) {
                 closestDistance = result.x;
-                closestObject = planet;
+                closestObject = body;
             }
-        }
-
-        Star star = starSystem.getStar();
-        Vector3f starCenter = star.getPosition();
-        float starRadius = star.getRadius();
-        Vector2f result = new Vector2f();
-
-        boolean hit = Intersectionf.intersectRaySphere(rayOrigin, rayDirection, starCenter, starRadius * starRadius, result);
-
-        if (hit && result.x >= 0 && result.x < closestDistance) {
-            closestObject = star;
         }
 
         return closestObject;
@@ -123,6 +112,10 @@ public class Scene {
 
     private Vector3f calculateRayOrigin(Camera camera) {
         return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
+    }
+
+    public Starfield getStarfield(){
+        return starfield;
     }
 
     public CelestialBody getSelectedObject() {

@@ -7,21 +7,23 @@ public class Camera {
 
     private static final float BASE_FOV = 45.0f;
     private static final float FOV_SPEED_FACTOR = 0.07f;
-    private static final float NEAR_PLANE = 10f;
+    private static final float NEAR_PLANE = 0.1f;
     private static final float FAR_PLANE = 100_000.0f;
+
     private final float acceleration = 100f;
     private final float turboMultiplier = 2f;
     private final float mouseSensitivity = 0.15f;
     private final float distanceFromPlayer = 15f;
     private final float maxSpeed = 800f;
     private final float brakeStrength = 0.95f;
+
     public Vector3f position;
     public Vector3f rotation;
     Matrix4f viewMatrix;
-    private Vector3f velocity = new Vector3f();
+    private final Vector3f velocity = new Vector3f();
     private float aspectRatio;
     private float cachedFov = -1f; // sentinel so matrix is built on first frame
-    private Matrix4f projectionMatrix;
+    private final Matrix4f projectionMatrix;
 
     public Camera() {
         this(1280f / 720f);
@@ -67,6 +69,8 @@ public class Camera {
     public void addRotation(float deltaX, float deltaY) {
         rotation.x += deltaY * mouseSensitivity;
         rotation.y += deltaX * mouseSensitivity;
+
+        rotation.x = Math.clamp(rotation.x, -89.0f, 89.0f);
     }
 
     public void accelerateWithTurbo(float deltaTime) {
@@ -90,27 +94,23 @@ public class Camera {
     }
 
     public void applyMovement(float deltaTime) {
-        if (velocity.length() > maxSpeed) {
+        if (velocity.lengthSquared() > maxSpeed * maxSpeed) {
             velocity.normalize(maxSpeed);
         }
-        position.add(new Vector3f(velocity).mul(deltaTime));
+        position.fma(deltaTime, velocity);
+
     }
 
     public Matrix4f getViewMatrix() {
         return viewMatrix;
     }
-
     public Matrix4f getProjectionMatrix() {
         return projectionMatrix;
     }
-
     public Vector3f getPosition() {
         return position;
     }
 
-    public float getVelocity() {
-        return velocity.length();
-    }
 
     public void moveTo(Vector3f position) {
         this.position = position;

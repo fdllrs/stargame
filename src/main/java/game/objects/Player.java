@@ -5,30 +5,32 @@ import engine.graphics.Mesh;
 import game.geometry.PlayerGeometry;
 import org.joml.Vector3f;
 
-public class Player extends GameObject{
+public class Player extends GameObject {
 
-    Vector3f playerRotation = new Vector3f(0,0,0);
     private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
 
-    public Player(){
-        super(playerMesh, new Vector3f(1.0f,0.0f,0.0f), new Vector3f(0,0,0));
+    public Player() {
+        super(playerMesh, new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0, 0, 0));
     }
 
     public void syncWithCamera(Camera camera, boolean isMoving) {
-        getModelMatrix().identity();
-        getModelMatrix().translate(camera.position);
+        this.position.set(camera.position);
 
         if (isMoving) {
             float turnSpeed = 0.15f;
 
-            playerRotation.x += (camera.rotation.x - playerRotation.x) * turnSpeed;
-            playerRotation.y += (camera.rotation.y - playerRotation.y) * turnSpeed;
+            this.rotation.x = lerpAngle(this.rotation.x, camera.rotation.x, turnSpeed);
+            this.rotation.y = lerpAngle(this.rotation.y, camera.rotation.y, turnSpeed);
         }
-
-        getModelMatrix().rotateY( - (float) Math.toRadians(playerRotation.y));
-        getModelMatrix().rotateX( - (float) Math.toRadians(playerRotation.x));
-
+        updateModelMatrix();
     }
 
+    private float lerpAngle(float current, float target, float speed) {
+        float difference = target - current;
 
+        while (difference < -180.0f) difference += 360.0f;
+        while (difference > 180.0f) difference -= 360.0f;
+
+        return current + (difference * speed);
+    }
 }

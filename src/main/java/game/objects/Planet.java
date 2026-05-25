@@ -12,39 +12,31 @@ import java.util.Map;
 
 public class Planet extends CelestialBody implements Describable {
     private static final int PLANET_RESOLUTION = 4;
-    private static final float MAX_ORBIT_ANGLE = (float) (Math.PI * 2.0);
+
     private final Star homeStar;
     private final PlanetInfo planetInfo;
-    private final Vector3f colorA;
-    private final Vector3f colorB;
-    private String name;
+
     private float orbitAngle;
 
+
+
     public Planet(PlanetInfo planetInfo) {
-        super(PlanetGeometry.generate(PLANET_RESOLUTION, planetInfo.planetRadius()), planetInfo.colorA(), planetInfo.homeStar().getPosition().add(planetInfo.orbitDistance(), 0, 0));
+        super(PlanetGeometry.generate(PLANET_RESOLUTION, planetInfo.planetRadius()), planetInfo.colorA(), planetInfo.homeStar().getPosition().add(planetInfo.orbitDistance(), 0, 0, new Vector3f()));
 
         this.name = planetInfo.name();
         this.planetInfo = planetInfo;
         this.homeStar = planetInfo.homeStar();
         this.orbitAngle = planetInfo.initialOrbitAngle();
+
         this.colorA = planetInfo.colorA();
         this.colorB = planetInfo.colorB();
+        this.radius = planetInfo.planetRadius();
     }
 
-    public float getPlanetRadius() {
-        return planetInfo.planetRadius();
-    }
 
-    public String getName() {
-        return name;
-    }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public PlanetInfo getPlanetInfo() {
-        return planetInfo;
     }
 
     @Override
@@ -69,20 +61,21 @@ public class Planet extends CelestialBody implements Describable {
         mesh.render();
     }
 
-    /**
-     * Advances the orbital position by the given time delta.
-     */
-    public void orbit(float deltaTime) {
-        float orbitDistance = planetInfo.orbitDistance();
+
+    public void update(float deltaTime) {
         float orbitSpeed = planetInfo.orbitSpeed();
-
         orbitAngle += orbitSpeed * deltaTime;
-        if (orbitAngle >= MAX_ORBIT_ANGLE)
-            orbitAngle -= MAX_ORBIT_ANGLE;
 
-        modelMatrix.identity();
-        modelMatrix.translate(homeStar.getPosition());
-        modelMatrix.rotateY(orbitAngle);
-        modelMatrix.translate(orbitDistance, 0, 0);
+        float offsetX = (float) Math.cos(orbitAngle) * planetInfo.orbitDistance();
+        float offsetZ = (float) Math.sin(orbitAngle) * planetInfo.orbitDistance();
+
+        Vector3f starPos = homeStar.getPosition();
+        this.position.set(starPos.x + offsetX, starPos.y, starPos.z + offsetZ);
+
+        float spinSpeed = 0.5f;
+        this.rotation.y += spinSpeed * deltaTime;
+
+        rotate(deltaTime);
+        updateModelMatrix();
     }
 }

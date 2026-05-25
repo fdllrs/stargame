@@ -15,9 +15,7 @@ public class Star extends CelestialBody implements Describable {
     private static final float NOISE_SCALE_MIN = 4.0f;
     private static final float NOISE_SCALE_MAX = 8.0f;
     private static final float NOISE_PULSE_SPEED = 0.01f; // full oscillations per second
-    private final Vector3f colorA;
-    private final Vector3f colorB;
-    private final String name;
+
     private final StarInfo starInfo;
     private float elapsedTime = 0f;
 
@@ -31,6 +29,8 @@ public class Star extends CelestialBody implements Describable {
 
     public void update(float deltaTime) {
         elapsedTime += deltaTime;
+        this.rotate(deltaTime);
+        updateModelMatrix();
     }
 
     @Override

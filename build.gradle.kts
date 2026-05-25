@@ -1,7 +1,7 @@
 val lwjglVersion = "3.4.1"
 val jomlVersion = "1.10.8"
 val `joml-primitivesVersion` = "1.10.0"
-val lwjglNatives = "natives-windows"
+val lwjglNatives = "natives-linux"
 
 plugins {
     application

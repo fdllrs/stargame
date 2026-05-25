@@ -7,8 +7,7 @@ import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.objects.CelestialBody;
-import game.objects.GameObject;
-import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -70,7 +69,7 @@ public class Game {
 
     private void placePlayerAtFirstPlanet() {
         scene.update(camera, false, 0f);
-        camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0));
+        camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0, new Vector3f()));
     }
 
     private void gameLoop() {
@@ -96,27 +95,19 @@ public class Game {
 
         if (input.consumeLeftClick()) {
             CelestialBody clicked = scene.objectClicked(input.getMouseX(), input.getMouseY(), windowHandle, camera);
+            System.out.println(clicked);
             scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
-
-
         }
 
-        if (glfwGetKey(windowHandle, GLFW_KEY_L) == GLFW_PRESS) {
-            Vector2f size = infoPanel.getSize();
-            infoPanel.setSize(size.x + 5, size.y);
-        }
-        if (glfwGetKey(windowHandle, GLFW_KEY_K) == GLFW_PRESS) {
-            Vector2f size = infoPanel.getSize();
-            infoPanel.setSize(size.x - 5, size.y);
-        }
         if (glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS) {
             scene.recreateStarSystem();
         }
 
         camera.applyMovement(deltaTime);
-        camera.updateViewMatrix();
+
         scene.update(camera, isMoving, deltaTime);
+        camera.updateViewMatrix();
     }
 
     private void cleanup() {

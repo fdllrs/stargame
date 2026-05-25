@@ -9,8 +9,8 @@ import java.util.ArrayList;
 
 public class StarSystem {
 
-    private Star star;
-    private ArrayList<Planet> planets;
+    private final Star star;
+    private final ArrayList<Planet> planets;
 
     public StarSystem(Star star, ArrayList<Planet> planets) {
         this.star = star;
@@ -19,7 +19,7 @@ public class StarSystem {
 
     public StarSystem(int planetAmount) {
         this.star = new StarBuilder().build();
-        this.planets = new ArrayList<Planet>();
+        this.planets = new ArrayList<>();
 
         placePlanets(planetAmount);
         namePlanets();
@@ -60,5 +60,22 @@ public class StarSystem {
 
     public Star getStar() {
         return star;
+    }
+
+    public ArrayList<CelestialBody> getAllBodies() {
+
+        ArrayList<CelestialBody> celestialBodies = new ArrayList<CelestialBody>(planets);
+        celestialBodies.add(star);
+        return celestialBodies;
+
+    }
+
+    public void update(float deltaTime) {
+        star.update(deltaTime);
+
+        for (Planet planet: planets){
+            planet.update(deltaTime);
+        }
+
     }
 }
