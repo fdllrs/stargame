@@ -98,7 +98,7 @@ void main() {
 
     float playerDist = length(playerPos - FragPos);
     float playerLightRange = 200.0;
-    float attenuation = clamp(1.0 - (playerDist / playerLightRange), 0.0, 1.0);
+    float attenuation = clamp(1.0 - (playerDist / playerLightRange), 0.0, 0.6);
     attenuation = attenuation * attenuation; // quadratic falloff
 
     float playerLightIntensity = 0.7;
