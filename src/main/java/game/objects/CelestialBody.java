@@ -9,7 +9,7 @@ public class CelestialBody extends GameObject {
         super(mesh, color, position);
     }
 
-    private float spinSpeedMultiplier = 0.7f;
+    private float spinSpeedMultiplier = 0.1f;
 
     protected String name;
     protected Vector3f colorA;
@@ -17,15 +17,14 @@ public class CelestialBody extends GameObject {
     protected float radius;
 
 
-
-
     public void rotate(float deltaTime) {
         this.rotation.y += (float) Math.toDegrees(deltaTime * spinSpeedMultiplier);
     }
 
-    public float getRadius(){
+    public float getRadius() {
         return radius;
     }
+
     public float orbitInfluence() {
         return radius + 5f;
     }

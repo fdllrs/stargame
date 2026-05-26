@@ -1,39 +1,39 @@
 package engine.ui.text;
 
+import engine.graphics.Mesh;
+import engine.graphics.ShaderProgram;
 import engine.ui.UIElement;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
-import engine.graphics.Mesh;
-import engine.graphics.ShaderProgram;
 
 public class UIText extends UIElement {
 
     public static final float REAL_FONT_SIZE = 88f;
     public static final int MAX_CHAR_HEIGHT = 60;
     public static final int LINE_SPACING = 10;
-
-    private String rawText;
-    private String renderText;
-    private float currentMaxWidth = -1f;
-    public float fontSizeMultiplier;
-
     private final FontAtlas font;
     private final UIElement container;
-    private final float hPadding;
-    private final float vPadding;
     private final Alignment alignment;
 
-    // --- MEMORY OPTIMIZATION ---
     // Instantiate these ONCE to prevent Garbage Collection stutters
     private final Matrix4f transformMatrix = new Matrix4f();
     private final Vector2f uvScaleVec = new Vector2f();
     private final Vector2f uvOffsetVec = new Vector2f();
 
-    public enum Alignment { LEFT, CENTER, RIGHT }
+    public float fontSizeMultiplier;
+    private String rawText;
+    private String renderText;
+    private float currentMaxWidth = -1f;
 
-    public UIText(String text, UIElement container, Alignment alignment, Vector4f color,
-                  int fontSize, int horizontalPadding, int verticalPadding, FontAtlas font) {
+    public UIText(String text,
+                  UIElement container,
+                  Alignment alignment,
+                  Vector4f color,
+                  int fontSize,
+                  int horizontalPadding,
+                  int verticalPadding,
+                  FontAtlas font) {
         super(0, 0, 0, 0, color);
         this.font = font;
         this.alignment = alignment;
@@ -52,7 +52,6 @@ public class UIText extends UIElement {
         this.rawText = text;
         this.renderText = wrapText(this.currentMaxWidth);
 
-        // Calculate the anchoring Y position (Top of the container minus padding)
         this.y = container.getPosition().y + container.getSize().y - vPadding;
     }
 
@@ -69,7 +68,8 @@ public class UIText extends UIElement {
 
         // Pre-calculate space width to avoid doing it every loop
         CharacterInfo spaceInfo = font.getCharacter(' ');
-        float spaceWidth = (spaceInfo != null) ? (spaceInfo.xAdvance() * fontSizeMultiplier) : (10 * fontSizeMultiplier);
+        float spaceWidth = (spaceInfo != null) ? (spaceInfo.xAdvance() * fontSizeMultiplier) :
+                (10 * fontSizeMultiplier);
 
         for (String word : words) {
             float wordWidth = calculateTextWidth(word); // Reuse our helper method!
@@ -123,7 +123,9 @@ public class UIText extends UIElement {
                 float targetX = cursorX + (charInfo.xOffset() * fontSizeMultiplier);
                 float targetY = cursorY - ((charInfo.yOffset() + charInfo.height()) * fontSizeMultiplier);
                 transformMatrix.translate(targetX, targetY, 0.0f);
-                transformMatrix.scale(charInfo.width() * fontSizeMultiplier, charInfo.height() * fontSizeMultiplier, 1.0f);
+                transformMatrix.scale(charInfo.width() * fontSizeMultiplier,
+                                      charInfo.height() * fontSizeMultiplier,
+                                      1.0f);
 
                 shader.setUniform("model", transformMatrix);
                 uiQuad.render();
@@ -135,8 +137,6 @@ public class UIText extends UIElement {
             cursorY -= lineHeight;
         }
     }
-
-    // --- ALIGNMENT MATH ---
 
     private float getAlignedStartX(String line) {
         Vector2f containerPos = container.getPosition();
@@ -155,6 +155,8 @@ public class UIText extends UIElement {
         }
     }
 
+    // --- ALIGNMENT MATH ---
+
     private float calculateTextWidth(String text) {
         float totalWidth = 0;
         for (int i = 0; i < text.length(); i++) {
@@ -170,6 +172,17 @@ public class UIText extends UIElement {
     public float getBoundingHeight() {
         int numLines = this.renderText.split("\n").length;
         float exactLineHeight = (MAX_CHAR_HEIGHT + LINE_SPACING) * fontSizeMultiplier;
-        return numLines * exactLineHeight;
+        return numLines * exactLineHeight + vPadding;
+    }
+
+    @Override
+    public void handleClick(float mouseX, float mouseY) {
+        
+    }
+
+    public enum Alignment {
+        LEFT,
+        CENTER,
+        RIGHT
     }
 }

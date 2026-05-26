@@ -33,7 +33,9 @@ public class UIManager {
         rebuildProjection(windowSize.x, windowSize.y);
     }
 
-    /** Call when the framebuffer is resized to keep the UI projection in sync. */
+    /**
+     * Call when the framebuffer is resized to keep the UI projection in sync.
+     */
     public void onResize(int width, int height) {
         rebuildProjection(width, height);
     }
@@ -74,5 +76,16 @@ public class UIManager {
     public void cleanup() {
         uiShader.cleanup();
         uiQuad.cleanup();
+    }
+
+    public Boolean objectClicked(float mouseX, float mouseY, long windowHandle) {
+        for (UIElement element : elements) {
+            if (element.contains(mouseX, mouseY)) {
+                element.handleClick(mouseX, mouseY);
+                return true;
+            }
+        }
+
+        return false;
     }
 }

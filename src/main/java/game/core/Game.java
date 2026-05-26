@@ -6,7 +6,9 @@ import engine.ui.InfoPanel;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
+import game.managers.ResourceManager;
 import game.objects.CelestialBody;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -33,6 +35,7 @@ public class Game {
     private Renderer renderer;
     private UIManager uiManager;
     private InfoPanel infoPanel;
+    private ResourceManager resouceManager;
 
     public void run() throws Exception {
         init();
@@ -49,10 +52,11 @@ public class Game {
         scene = new Scene();
         renderer = new Renderer(windowHandle);
         input = new Input(windowHandle, camera, scene);
+        resouceManager = new ResourceManager();
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
-        infoPanel = new InfoPanel(20, 20, 400, 500, new Vector4f(0.2f, 0.2f, 0.2f, 0.5f), fontAtlas);
+        infoPanel = new InfoPanel(20, 50, 400, INITIAL_HEIGHT - 100, new Vector4f(0.2f, 0.2f, 0.2f, 0.8f), fontAtlas);
         uiManager.addElement(infoPanel);
 
         registerResizeCallback();
@@ -94,8 +98,13 @@ public class Game {
         input.handleCameraInput(deltaTime);
 
         if (input.consumeLeftClick()) {
-            CelestialBody clicked = scene.objectClicked(input.getMouseX(), input.getMouseY(), windowHandle, camera);
-            System.out.println(clicked);
+            float mouseX = input.getMouseX();
+            float mouseY = input.getMouseY();
+            Vector2i size = Window.getWindowSize(windowHandle);
+
+
+            if (uiManager.objectClicked(mouseX, size.y - mouseY, windowHandle)) return;
+            CelestialBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
             scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
         }

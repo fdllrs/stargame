@@ -9,6 +9,8 @@ import engine.graphics.ShaderProgram;
 public abstract class UIElement {
     protected float x, y;
     protected float width, height;
+    protected float hPadding, vPadding;
+
     protected Vector4f color;
 
     protected Matrix4f modelMatrix;
@@ -39,6 +41,7 @@ public abstract class UIElement {
     public Vector2f getSize() {
         return new Vector2f(width, height);
     }
+
     public Vector2f getPosition() {
         return new Vector2f(x, y);
     }
@@ -54,4 +57,22 @@ public abstract class UIElement {
     }
 
     public abstract float getBoundingHeight();
+
+
+    protected void setYPos(float newY) {
+        this.setPosition(this.x, newY);
+    }
+
+    public boolean contains(float mouseX, float mouseY) {
+        System.out.println("x: " + mouseX + " y: " + mouseY);
+        boolean conditionX = mouseX >= this.x && mouseX <= this.x + width;
+        boolean conditionY = mouseY >= this.y && mouseY <= this.y + height;
+        System.out.println(conditionX);
+        System.out.println(conditionY);
+        return conditionX && conditionY;
+    }
+
+    public abstract void handleClick(float mouseX, float mouseY);
+
+
 }

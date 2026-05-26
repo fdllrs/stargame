@@ -6,6 +6,7 @@ import org.joml.Vector2i;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+
 public class Input {
 
     private final long windowHandle;
@@ -53,8 +54,7 @@ public class Input {
     }
 
     public boolean isForwardMovementPressed() {
-        return glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS
-                || glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS;
+        return glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS;
     }
 
     public void handleCameraInput(float deltaTime) {
@@ -104,6 +104,7 @@ public class Input {
     }
 
     public boolean consumeLeftClick() {
+
         if (!leftClickPressed) {
             return false;
         }
