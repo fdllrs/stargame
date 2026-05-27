@@ -13,7 +13,6 @@ public class UIText extends UIElement {
     public static final int MAX_CHAR_HEIGHT = 60;
     public static final int LINE_SPACING = 10;
     private final FontAtlas font;
-    private final UIElement container;
     private final Alignment alignment;
 
     // Instantiate these ONCE to prevent Garbage Collection stutters
@@ -27,23 +26,20 @@ public class UIText extends UIElement {
     private float currentMaxWidth = -1f;
 
     public UIText(String text,
-                  UIElement container,
                   Alignment alignment,
                   Vector4f color,
                   int fontSize,
                   int horizontalPadding,
                   int verticalPadding,
-                  FontAtlas font) {
-        super(0, 0, 0, 0, color);
+                  FontAtlas font,
+                  float maxWidth) {
+        super(0, 0, maxWidth, 0, color);
         this.font = font;
         this.alignment = alignment;
-        this.container = container;
         this.fontSizeMultiplier = (float) fontSize / REAL_FONT_SIZE;
         this.hPadding = horizontalPadding;
         this.vPadding = verticalPadding;
-
-        // Ensure maxWidth is initialized based on the container before wrapping
-        this.currentMaxWidth = container.getSize().x - (2 * horizontalPadding);
+        this.currentMaxWidth = maxWidth;
 
         setText(text);
     }
@@ -52,13 +48,9 @@ public class UIText extends UIElement {
         this.rawText = text;
         this.renderText = wrapText(this.currentMaxWidth);
 
-        this.y = container.getPosition().y + container.getSize().y - vPadding;
-    }
-
-    public void setMaxWidth(float maxPixelWidth) {
-        if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f) return;
-        this.currentMaxWidth = maxPixelWidth;
-        this.renderText = wrapText(this.currentMaxWidth);
+        this.width = this.currentMaxWidth;
+        this.height = getBoundingHeight();
+        updateMatrix();
     }
 
     private String wrapText(float maxPixelWidth) {
@@ -68,8 +60,7 @@ public class UIText extends UIElement {
 
         // Pre-calculate space width to avoid doing it every loop
         CharacterInfo spaceInfo = font.getCharacter(' ');
-        float spaceWidth = (spaceInfo != null) ? (spaceInfo.xAdvance() * fontSizeMultiplier) :
-                (10 * fontSizeMultiplier);
+        float spaceWidth = (spaceInfo != null) ? (spaceInfo.xAdvance() * fontSizeMultiplier) : (10 * fontSizeMultiplier);
 
         for (String word : words) {
             float wordWidth = calculateTextWidth(word); // Reuse our helper method!
@@ -83,6 +74,38 @@ public class UIText extends UIElement {
             }
         }
         return wrappedText.toString().trim(); // Remove the trailing space
+    }
+
+    private float calculateTextWidth(String text) {
+        float totalWidth = 0;
+        for (int i = 0; i < text.length(); i++) {
+            CharacterInfo info = font.getCharacter(text.charAt(i));
+            if (info != null) {
+                totalWidth += (info.xAdvance() * fontSizeMultiplier);
+            }
+        }
+        return totalWidth;
+    }
+
+    public void setMaxWidth(float maxPixelWidth) {
+        if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f)
+            return;
+        this.currentMaxWidth = maxPixelWidth;
+        this.renderText = wrapText(this.currentMaxWidth);
+    }
+
+    @Override
+    public float getBoundingHeight() {
+        int numLines = this.renderText.split("\n").length;
+        float exactLineHeight = (MAX_CHAR_HEIGHT + LINE_SPACING) * fontSizeMultiplier;
+        return numLines * exactLineHeight + vPadding;
+    }
+
+    // --- ALIGNMENT MATH ---
+
+    @Override
+    public void handleClick(float mouseX, float mouseY) {
+
     }
 
     @Override
@@ -109,19 +132,18 @@ public class UIText extends UIElement {
             for (int i = 0; i < line.length(); i++) {
                 char c = line.charAt(i);
                 CharacterInfo charInfo = font.getCharacter(c);
-                if (charInfo == null) continue;
+                if (charInfo == null)
+                    continue;
 
-                // Update vectors in-place (No 'new' keyword)
                 uvScaleVec.set(charInfo.width() / scaleW, charInfo.height() / scaleH);
                 uvOffsetVec.set(charInfo.x() / scaleW, (scaleH - charInfo.y() - charInfo.height()) / scaleH);
 
                 shader.setUniform("uvScale", uvScaleVec);
                 shader.setUniform("uvOffset", uvOffsetVec);
 
-                // Update matrix in-place
                 transformMatrix.identity();
                 float targetX = cursorX + (charInfo.xOffset() * fontSizeMultiplier);
-                float targetY = cursorY - ((charInfo.yOffset() + charInfo.height()) * fontSizeMultiplier);
+                float targetY = cursorY + (charInfo.yOffset() * fontSizeMultiplier);
                 transformMatrix.translate(targetX, targetY, 0.0f);
                 transformMatrix.scale(charInfo.width() * fontSizeMultiplier,
                                       charInfo.height() * fontSizeMultiplier,
@@ -133,56 +155,25 @@ public class UIText extends UIElement {
                 cursorX += (charInfo.xAdvance() * fontSizeMultiplier);
             }
 
-            // 3. Move down for the next line
-            cursorY -= lineHeight;
+            cursorY += lineHeight;
         }
     }
 
     private float getAlignedStartX(String line) {
-        Vector2f containerPos = container.getPosition();
-        Vector2f containerSize = container.getSize();
-
         if (alignment == Alignment.LEFT) {
-            return containerPos.x + hPadding;
+            return this.x + hPadding;
         }
 
         float lineWidth = calculateTextWidth(line);
 
         if (alignment == Alignment.CENTER) {
-            return containerPos.x + ((containerSize.x - lineWidth) / 2.0f);
+            return this.x + ((this.width - lineWidth) / 2.0f);
         } else { // RIGHT
-            return containerPos.x + containerSize.x - lineWidth - hPadding;
+            return this.x + this.width - lineWidth - hPadding;
         }
-    }
-
-    // --- ALIGNMENT MATH ---
-
-    private float calculateTextWidth(String text) {
-        float totalWidth = 0;
-        for (int i = 0; i < text.length(); i++) {
-            CharacterInfo info = font.getCharacter(text.charAt(i));
-            if (info != null) {
-                totalWidth += (info.xAdvance() * fontSizeMultiplier);
-            }
-        }
-        return totalWidth;
-    }
-
-    @Override
-    public float getBoundingHeight() {
-        int numLines = this.renderText.split("\n").length;
-        float exactLineHeight = (MAX_CHAR_HEIGHT + LINE_SPACING) * fontSizeMultiplier;
-        return numLines * exactLineHeight + vPadding;
-    }
-
-    @Override
-    public void handleClick(float mouseX, float mouseY) {
-        
     }
 
     public enum Alignment {
-        LEFT,
-        CENTER,
-        RIGHT
+        LEFT, CENTER, RIGHT
     }
 }

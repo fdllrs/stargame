@@ -8,20 +8,17 @@ import org.joml.Matrix4f;
 import org.joml.Vector2i;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.*;
-
 
 public class UIManager {
 
     private final Matrix4f uiProjection;
     private final long windowHandle;
 
-    private ArrayList<UIElement> elements;
-    private ShaderProgram uiShader;
-    private Mesh uiQuad;
-
+    private final ArrayList<UIElement> elements;
+    private final ShaderProgram uiShader;
+    private final Mesh uiQuad;
 
     public UIManager(long windowHandle) {
         this.windowHandle = windowHandle;
@@ -33,15 +30,15 @@ public class UIManager {
         rebuildProjection(windowSize.x, windowSize.y);
     }
 
-    /**
-     * Call when the framebuffer is resized to keep the UI projection in sync.
-     */
-    public void onResize(int width, int height) {
-        rebuildProjection(width, height);
+    private void rebuildProjection(int width, int height) {
+        uiProjection.setOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     }
 
-    private void rebuildProjection(int width, int height) {
-        uiProjection.setOrtho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
+    public void onResize(int width, int height) {
+        rebuildProjection(width, height);
+        for (UIElement element : elements) {
+            element.onResize(width, height);
+        }
     }
 
     public void addElement(UIElement element) {
@@ -67,10 +64,6 @@ public class UIManager {
 
         uiShader.unbind();
         glDisable(GL_BLEND);
-    }
-
-    public Matrix4f getProjection() {
-        return uiProjection;
     }
 
     public void cleanup() {

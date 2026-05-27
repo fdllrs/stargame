@@ -10,26 +10,27 @@ public class UIButton extends UIElement {
 
     private final Runnable onClick;
     private final UIText textLabel;
-    private final UIElement container;
 
-    public UIButton(UIElement container, float width, float height, Vector4f backgroundColor, Vector4f textColor, String textLabel, Runnable onClick, FontAtlas fontAtlas) {
+    public UIButton(float width,
+                    float height,
+                    Vector4f backgroundColor,
+                    Vector4f textColor,
+                    String textLabel,
+                    Runnable onClick,
+                    FontAtlas fontAtlas) {
         super(0, 0, width, height, backgroundColor);
 
-        this.x = (container.width - this.width) / 2;
-        this.textLabel = new UIText(textLabel, this, UIText.Alignment.CENTER, textColor, 15, 10, 5, fontAtlas);
         this.onClick = onClick;
         this.vPadding = 15;
         this.hPadding = 10;
-        this.container = container;
-
+        this.textLabel = new UIText(textLabel, UIText.Alignment.CENTER, textColor, 15, 10, 5, fontAtlas, width);
+        alignText();
     }
 
-    @Override
-    protected void updateMatrix() {
-        modelMatrix.identity();
-        // Translate the rendering start point down by height so 'y' is the top
-        modelMatrix.translate(x, y - height, 0);
-        modelMatrix.scale(width, height, 1);
+    private void alignText() {
+        if (textLabel != null) {
+            textLabel.setPosition(x, y + (height - textLabel.getBoundingHeight()) / 2);
+        }
     }
 
     @Override
@@ -58,14 +59,7 @@ public class UIButton extends UIElement {
     @Override
     public void setPosition(float x, float y) {
         super.setPosition(x, y);
-        if (textLabel != null) {
-            textLabel.setPosition(x, y - height / 2 + textLabel.getBoundingHeight() / 2);
-        }
-    }
-
-    @Override
-    public boolean contains(float mouseX, float mouseY) {
-        return mouseX >= this.x && mouseX <= this.x + width && mouseY >= this.y - height && mouseY <= this.y;
+        alignText();
     }
 
 }

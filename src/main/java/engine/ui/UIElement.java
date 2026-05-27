@@ -25,7 +25,6 @@ public abstract class UIElement {
         updateMatrix();
     }
 
-    // Whenever an element moves or changes size, recalculate its matrix
     protected void updateMatrix() {
         modelMatrix.identity();
         modelMatrix.translate(x, y, 0);
@@ -40,14 +39,6 @@ public abstract class UIElement {
 
     public Vector2f getSize() {
         return new Vector2f(width, height);
-    }
-
-    public Vector2f getPosition() {
-        return new Vector2f(x, y);
-    }
-
-    protected void setYPos(float newY) {
-        this.setPosition(this.x, newY);
     }
 
     public void setPosition(float x, float y) {
@@ -66,6 +57,9 @@ public abstract class UIElement {
         this.width = width;
         this.height = height;
         updateMatrix();
+    }
+
+    public void onResize(int screenWidth, int screenHeight) {
     }
 
 }

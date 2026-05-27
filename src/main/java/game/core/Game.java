@@ -2,23 +2,18 @@ package game.core;
 
 import engine.graphics.Camera;
 import engine.ui.Describable;
-import engine.ui.InfoPanel;
-import engine.ui.ResourcesPanel;
 import engine.ui.UIManager;
+import engine.ui.panels.InfoPanel;
+import engine.ui.panels.ResourcesPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.managers.ResourceManager;
 import game.objects.CelestialBody;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-/**
- * The top-level game orchestrator: owns the game loop and wires all subsystems together.
- * Rendering internals live in {@link Renderer}; scene logic lives in {@link Scene}.
- */
 public class Game {
 
     private static final String FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
@@ -36,7 +31,6 @@ public class Game {
     private Renderer renderer;
     private UIManager uiManager;
     private InfoPanel infoPanel;
-    private ResourceManager resouceManager;
     private ResourcesPanel resourcesPanel;
 
     public void run()
@@ -55,7 +49,7 @@ public class Game {
         scene = new Scene();
         renderer = new Renderer(windowHandle);
         input = new Input(windowHandle, camera, scene);
-        resouceManager = new ResourceManager();
+        ResourceManager resourceManager = new ResourceManager();
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
@@ -65,15 +59,16 @@ public class Game {
                                   INITIAL_HEIGHT - 100,
                                   new Vector4f(0.2f, 0.2f, 0.2f, 0.8f),
                                   fontAtlas,
-                                  resouceManager);
+                                  resourceManager);
 
         resourcesPanel = new ResourcesPanel(INITIAL_WIDTH - 220,
-                                            20,
+                                            INITIAL_HEIGHT - 420,
                                             200,
                                             400,
                                             fontAtlas,
-                                            resouceManager,
+                                            resourceManager,
                                             new Vector4f(0.2f, 0.2f, 0.2f, 0.8f));
+
         uiManager.addElement(infoPanel);
         uiManager.addElement(resourcesPanel);
         registerResizeCallback();
@@ -117,9 +112,8 @@ public class Game {
         if (input.consumeLeftClick()) {
             float mouseX = input.getMouseX();
             float mouseY = input.getMouseY();
-            Vector2i size = Window.getWindowSize(windowHandle);
 
-            if (uiManager.objectClicked(mouseX, size.y - mouseY, windowHandle)) {
+            if (uiManager.objectClicked(mouseX, mouseY, windowHandle)) {
                 resourcesPanel.refreshAmounts();
                 return;
             }
