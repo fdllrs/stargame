@@ -110,6 +110,10 @@ public class Camera {
     public Vector3f getPosition() {
         return position;
     }
+    public Vector3f getVelocity() {
+        return velocity;
+    }
+
 
 
     public void moveTo(Vector3f position) {

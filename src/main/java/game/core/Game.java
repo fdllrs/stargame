@@ -15,15 +15,11 @@ import org.joml.Vector4f;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Game {
-
     private static final String FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
     private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
-
     private static final int INITIAL_WIDTH = 1280;
     private static final int INITIAL_HEIGHT = 720;
-
     private long windowHandle;
-
     private Window window;
     private Camera camera;
     private Input input;
@@ -110,18 +106,8 @@ public class Game {
         input.handleCameraInput(deltaTime);
 
         if (input.consumeLeftClick()) {
-            float mouseX = input.getMouseX();
-            float mouseY = input.getMouseY();
-
-            if (uiManager.objectClicked(mouseX, mouseY, windowHandle)) {
-                resourcesPanel.refreshAmounts();
-                return;
-            }
-            CelestialBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
-            scene.updateSelectedObject(clicked);
-            infoPanel.setTarget(clicked instanceof Describable d ? d : null);
+            handleLeftClick();
         }
-
         if (glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS) {
             scene.recreateStarSystem();
         }
@@ -130,6 +116,21 @@ public class Game {
 
         scene.update(camera, isMoving, deltaTime);
         camera.updateViewMatrix();
+    }
+
+    private void handleLeftClick() {
+        float mouseX = input.getMouseX();
+        float mouseY = input.getMouseY();
+
+        if (uiManager.objectClicked(mouseX, mouseY, windowHandle)) {
+            resourcesPanel.refreshAmounts();
+
+        } else {
+            CelestialBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            scene.updateSelectedObject(clicked);
+            infoPanel.setTarget(clicked instanceof Describable d ? d : null);
+        }
+
     }
 
     private void cleanup() {

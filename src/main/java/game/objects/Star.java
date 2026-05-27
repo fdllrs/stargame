@@ -25,6 +25,7 @@ public class Star extends CelestialBody implements Describable {
         this.name = info.name();
         this.colorA = info.colorA();
         this.colorB = info.colorB();
+        this.radius = info.radius();
     }
 
     public void update(float deltaTime) {

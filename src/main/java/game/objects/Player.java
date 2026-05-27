@@ -6,11 +6,15 @@ import game.geometry.PlayerGeometry;
 import org.joml.Vector3f;
 
 public class Player extends GameObject {
-
     private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
+    private static final float PLAYER_RADIUS = 1.0f;
 
     public Player() {
         super(playerMesh, new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0, 0, 0));
+    }
+
+    public float getRadius() {
+        return PLAYER_RADIUS;
     }
 
     public void syncWithCamera(Camera camera, boolean isMoving) {
@@ -28,8 +32,10 @@ public class Player extends GameObject {
     private float lerpAngle(float current, float target, float speed) {
         float difference = target - current;
 
-        while (difference < -180.0f) difference += 360.0f;
-        while (difference > 180.0f) difference -= 360.0f;
+        while (difference < -180.0f)
+            difference += 360.0f;
+        while (difference > 180.0f)
+            difference -= 360.0f;
 
         return current + (difference * speed);
     }

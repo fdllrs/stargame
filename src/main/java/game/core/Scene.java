@@ -2,7 +2,6 @@ package game.core;
 
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
-
 import engine.window.Window;
 import game.objects.*;
 import org.joml.*;
@@ -10,11 +9,9 @@ import org.joml.*;
 import java.util.List;
 
 public class Scene {
-
     private final Player player;
+    private final Starfield starfield;
     private StarSystem starSystem;
-    private Starfield starfield;
-
     private CelestialBody selectedObject;
 
     public Scene() {
@@ -23,20 +20,42 @@ public class Scene {
         starfield = new Starfield(500, 10000);
     }
 
-
-
     public void update(Camera camera, boolean isMoving, float deltaTime) {
-        player.syncWithCamera(camera, isMoving);
-
-        Vector3f playerPosition = player.getPosition();
-
         starSystem.update(deltaTime);
 
-        for (Planet planet : starSystem.getPlanets()) {
-            float orbitInfluence = planet.orbitInfluence();
+        checkCollisions(camera);
+        player.syncWithCamera(camera, isMoving);
 
-            if (planet.getPosition().distance(playerPosition) < orbitInfluence) {
-                camera.zeroAcceleration(true);
+    }
+
+    private void checkCollisions(Camera camera) {
+        Vector3f playerPos = camera.getPosition();
+        Vector3f velocity = camera.getVelocity();
+        float playerRadius = player.getRadius();
+
+        for (CelestialBody body : starSystem.getAllBodies()) {
+            Vector3f bodyPos = body.getPosition();
+            float bodyRadius = body.getRadius();
+            float minDistance = bodyRadius + playerRadius;
+            float distance = playerPos.distance(bodyPos);
+
+            if (distance >= minDistance)
+                return;
+
+            Vector3f normal = new Vector3f();
+            if (distance > 0.001f) {
+                playerPos.sub(bodyPos, normal).normalize();
+            } else {
+                normal.set(0.0f, 0.0f, 1.0f);
+            }
+
+            Vector3f correctedPos = new Vector3f(bodyPos).add(new Vector3f(normal).mul(minDistance));
+            camera.position.set(correctedPos);
+
+            float velocityDotNormal = velocity.dot(normal);
+            if (velocityDotNormal < 0.0f) {
+                float restitution = 0.3f;
+                velocity.sub(new Vector3f(normal).mul((1.0f + restitution) * velocityDotNormal)).mul(0.7f);
             }
         }
     }
@@ -58,12 +77,6 @@ public class Scene {
     public CelestialBody objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
         return pickObject(mouseX, mouseY, windowHandle, camera);
     }
-
-    public void recreateStarSystem() {
-        starSystem.cleanupAll();
-        starSystem = new StarSystem(10);
-    }
-
 
     private CelestialBody pickObject(float mouseX, float mouseY, long windowHandle, Camera camera) {
         Vector3f rayOrigin = calculateRayOrigin(camera);
@@ -96,7 +109,8 @@ public class Scene {
         float ndcX = (2.0f * mouseX) / screenSize.x - 1.0f;
         float ndcY = 1.0f - (2.0f * mouseY) / screenSize.y;
 
-        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix()).invert();
+        Matrix4f inverseViewProjection = new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix())
+                                                                                   .invert();
 
         Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
         Vector4f farPoint = new Vector4f(ndcX, ndcY, 1.0f, 1.0f);
@@ -114,7 +128,12 @@ public class Scene {
         return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
     }
 
-    public Starfield getStarfield(){
+    public void recreateStarSystem() {
+        starSystem.cleanupAll();
+        starSystem = new StarSystem(10);
+    }
+
+    public Starfield getStarfield() {
         return starfield;
     }
 
