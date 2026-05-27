@@ -8,6 +8,10 @@ plugins {
     java
 }
 
+application {
+    mainClass.set("game.core.Main")
+}
+
 repositories {
     mavenCentral()
 }

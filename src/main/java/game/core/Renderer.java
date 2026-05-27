@@ -21,9 +21,7 @@ import static org.lwjgl.opengl.GL11C.*;
  * Call {@link #onResize(int, int)} when the framebuffer size changes.
  */
 public class Renderer {
-
     private static final int PIXEL_ART_DOWNSCALE = 3;
-
     private final ShaderProgram shader3D;
     private final ShaderProgram shaderPixelArt;
     private final ShaderProgram shaderOutline;

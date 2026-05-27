@@ -40,7 +40,7 @@ public class Scene {
             float distance = playerPos.distance(bodyPos);
 
             if (distance >= minDistance)
-                return;
+                continue;
 
             Vector3f normal = new Vector3f();
             if (distance > 0.001f) {

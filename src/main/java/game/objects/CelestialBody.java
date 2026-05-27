@@ -4,20 +4,17 @@ import engine.graphics.Mesh;
 import org.joml.Vector3f;
 
 public class CelestialBody extends GameObject {
-
-    public CelestialBody(Mesh mesh, Vector3f color, Vector3f position) {
-        super(mesh, color, position);
-    }
-
-    private float spinSpeedMultiplier = 0.1f;
-
     protected String name;
     protected Vector3f colorA;
     protected Vector3f colorB;
     protected float radius;
 
+    public CelestialBody(Mesh mesh, Vector3f color, Vector3f position) {
+        super(mesh, color, position);
+    }
 
     public void rotate(float deltaTime) {
+        float spinSpeedMultiplier = 0.1f;
         this.rotation.y += (float) Math.toDegrees(deltaTime * spinSpeedMultiplier);
     }
 

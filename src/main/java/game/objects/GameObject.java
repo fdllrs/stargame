@@ -9,11 +9,9 @@ import org.joml.Vector3f;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class GameObject {
-
     protected final Vector3f position;
     protected final Vector3f rotation; // Stored in Euler angles (Degrees or Radians)
     protected final Vector3f scale;
-
     protected final Mesh mesh;
     protected final Matrix4f modelMatrix;
     protected final Vector3f color;
@@ -30,60 +28,29 @@ public class GameObject {
         updateModelMatrix();
     }
 
-    public Matrix4f getModelMatrix() {
-        return modelMatrix;
-    }
-    public Vector3f getPosition() { return position; }
-    public Vector3f getRotation() { return rotation; }
-    public Vector3f getScale() { return scale; }
-
-    public void setPosition(Vector3f position) {
-        this.position.set(position);
-        updateModelMatrix();
-    }
-    public void setRotation(Vector3f rotation) {
-        this.rotation.set(rotation);
-        updateModelMatrix();
-    }
-    public void setScale(Vector3f scale) {
-        this.scale.set(scale);
-        updateModelMatrix();
-    }
-
-
-    protected Matrix3f computeNormalMatrix() {
-        return new Matrix3f(modelMatrix).invert().transpose();
-    }
-
-    public Mesh getMesh() {
-        return mesh;
-    }
-
     public void updateModelMatrix() {
         modelMatrix.identity();
         modelMatrix.translate(position);
 
-        // Convert degrees to radians for JOML!
-        modelMatrix.rotateX((float) Math.toRadians(rotation.x));
         modelMatrix.rotateY((float) Math.toRadians(rotation.y));
+        modelMatrix.rotateX((float) Math.toRadians(rotation.x));
         modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
 
         modelMatrix.scale(scale);
     }
 
+    public Matrix4f getModelMatrix() {
+        return modelMatrix;
+    }
+
+    public Vector3f getPosition() {return position;}
+
+    public Mesh getMesh() {
+        return mesh;
+    }
 
     public void setSelected(boolean selected) {
         this.isSelected = selected;
-    }
-
-    protected void setupStencilForSelection() {
-        if (isSelected) {
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        } else {
-            glStencilFunc(GL_ALWAYS, 0, 0xFF);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        }
     }
 
     public void render(ShaderProgram shader) {
@@ -96,7 +63,19 @@ public class GameObject {
         mesh.render();
     }
 
+    protected Matrix3f computeNormalMatrix() {
+        return new Matrix3f(modelMatrix).invert().transpose();
+    }
 
+    protected void setupStencilForSelection() {
+        if (isSelected) {
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        } else {
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        }
+    }
 
     public void cleanup() {
         mesh.cleanup();

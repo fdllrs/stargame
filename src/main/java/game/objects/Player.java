@@ -23,8 +23,8 @@ public class Player extends GameObject {
         if (isMoving) {
             float turnSpeed = 0.15f;
 
-            this.rotation.x = lerpAngle(this.rotation.x, camera.rotation.x, turnSpeed);
-            this.rotation.y = lerpAngle(this.rotation.y, camera.rotation.y, turnSpeed);
+            this.rotation.x = lerpAngle(this.rotation.x, -camera.rotation.x, turnSpeed);
+            this.rotation.y = lerpAngle(this.rotation.y, -camera.rotation.y, turnSpeed);
         }
         updateModelMatrix();
     }

@@ -1,7 +1,6 @@
 package engine.window;
 
 import org.joml.Vector2i;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
@@ -13,7 +12,6 @@ import static org.lwjgl.opengl.GL11C.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11C.glEnable;
 
 public class Window {
-
     public long windowHandle;
 
     public static Vector2i getWindowSize(long windowHandle) {
@@ -21,7 +19,6 @@ public class Window {
             IntBuffer pWidth = stack.mallocInt(1);
             IntBuffer pHeight = stack.mallocInt(1);
 
-            // Use glfwGetWindowSize for screen coordinates
             glfwGetWindowSize(windowHandle, pWidth, pHeight);
 
             int width = pWidth.get(0);
@@ -42,7 +39,7 @@ public class Window {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
-        windowHandle = glfwCreateWindow(width,height, "stargame", 0L, 0);
+        windowHandle = glfwCreateWindow(width, height, "stargame", 0L, 0);
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         assert videoMode != null;
         glfwSetWindowPos(windowHandle, (videoMode.width() - width) / 2, (videoMode.height() - height) / 2);
@@ -55,11 +52,9 @@ public class Window {
         glEnable(GL_DEPTH_TEST);
     }
 
-
     public void cleanup() {
         glfwDestroyWindow(windowHandle);
         glfwTerminate();
     }
-
 
 }

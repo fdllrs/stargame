@@ -3,35 +3,29 @@ package game.objects;
 import engine.graphics.ShaderProgram;
 import game.builder.PlanetBuilder;
 import game.builder.StarBuilder;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class StarSystem {
-
     private final Star star;
     private final ArrayList<Planet> planets;
+
+    public StarSystem(int planetAmount) {
+        this(new StarBuilder().build(), new ArrayList<>());
+
+        generateRandomPlanets(planetAmount);
+        nameAllPlanets();
+    }
 
     public StarSystem(Star star, ArrayList<Planet> planets) {
         this.star = star;
         this.planets = planets;
+        nameAllPlanets();
+
     }
 
-    public StarSystem(int planetAmount) {
-        this.star = new StarBuilder().build();
-        this.planets = new ArrayList<>();
-
-        placePlanets(planetAmount);
-        namePlanets();
-    }
-
-    private void placePlanets(int planetAmount) {
-        for (int i = 0; i < planetAmount; i++) {
-            this.planets.add(new PlanetBuilder(star).build());
-        }
-    }
-
-    private void namePlanets() {
+    private void nameAllPlanets() {
         int nameSufix = 1;
         for (Planet planet : planets) {
             planet.setName(star.getName().split(" ")[1] + " " + nameSufix);
@@ -39,8 +33,10 @@ public class StarSystem {
         }
     }
 
-    public ArrayList<Planet> getPlanets() {
-        return planets;
+    private void generateRandomPlanets(int planetAmount) {
+        for (int i = 0; i < planetAmount; i++) {
+            this.planets.add(new PlanetBuilder(star).build());
+        }
     }
 
     public void renderAll(ShaderProgram shader) {
@@ -58,13 +54,9 @@ public class StarSystem {
         star.cleanup();
     }
 
-    public Star getStar() {
-        return star;
-    }
-
     public ArrayList<CelestialBody> getAllBodies() {
 
-        ArrayList<CelestialBody> celestialBodies = new ArrayList<CelestialBody>(planets);
+        ArrayList<CelestialBody> celestialBodies = new ArrayList<>(planets);
         celestialBodies.add(star);
         return celestialBodies;
 
@@ -73,9 +65,13 @@ public class StarSystem {
     public void update(float deltaTime) {
         star.update(deltaTime);
 
-        for (Planet planet: planets){
+        for (Planet planet : planets) {
             planet.update(deltaTime);
         }
 
+    }
+
+    public List<Planet> getPlanets() {
+        return planets;
     }
 }
