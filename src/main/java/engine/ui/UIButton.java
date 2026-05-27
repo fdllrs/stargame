@@ -8,19 +8,11 @@ import org.joml.Vector4f;
 
 public class UIButton extends UIElement {
 
-
     private final Runnable onClick;
     private final UIText textLabel;
     private final UIElement container;
 
-    public UIButton(UIElement container,
-                    float width,
-                    float height,
-                    Vector4f backgroundColor,
-                    Vector4f textColor,
-                    String textLabel,
-                    Runnable onClick,
-                    FontAtlas fontAtlas) {
+    public UIButton(UIElement container, float width, float height, Vector4f backgroundColor, Vector4f textColor, String textLabel, Runnable onClick, FontAtlas fontAtlas) {
         super(0, 0, width, height, backgroundColor);
 
         this.x = (container.width - this.width) / 2;
@@ -32,6 +24,18 @@ public class UIButton extends UIElement {
 
     }
 
+    @Override
+    protected void updateMatrix() {
+        modelMatrix.identity();
+        // Translate the rendering start point down by height so 'y' is the top
+        modelMatrix.translate(x, y - height, 0);
+        modelMatrix.scale(width, height, 1);
+    }
+
+    @Override
+    public float getBoundingHeight() {
+        return height + vPadding;
+    }
 
     @Override
     public void handleClick(float mouseX, float mouseY) {
@@ -49,21 +53,6 @@ public class UIButton extends UIElement {
 
         textLabel.render(shader, uiQuad);
 
-    }
-
-
-    @Override
-    protected void updateMatrix() {
-        modelMatrix.identity();
-        // Translate the rendering start point down by height so 'y' is the top
-        modelMatrix.translate(x, y - height, 0);
-        modelMatrix.scale(width, height, 1);
-    }
-
-
-    @Override
-    public float getBoundingHeight() {
-        return height + vPadding;
     }
 
     @Override

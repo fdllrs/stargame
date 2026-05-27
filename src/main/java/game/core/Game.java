@@ -3,6 +3,7 @@ package game.core;
 import engine.graphics.Camera;
 import engine.ui.Describable;
 import engine.ui.InfoPanel;
+import engine.ui.ResourcesPanel;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
@@ -36,8 +37,10 @@ public class Game {
     private UIManager uiManager;
     private InfoPanel infoPanel;
     private ResourceManager resouceManager;
+    private ResourcesPanel resourcesPanel;
 
-    public void run() throws Exception {
+    public void run()
+            throws Exception {
         init();
         gameLoop();
         cleanup();
@@ -56,9 +59,23 @@ public class Game {
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
-        infoPanel = new InfoPanel(20, 50, 400, INITIAL_HEIGHT - 100, new Vector4f(0.2f, 0.2f, 0.2f, 0.8f), fontAtlas);
-        uiManager.addElement(infoPanel);
+        infoPanel = new InfoPanel(20,
+                                  50,
+                                  400,
+                                  INITIAL_HEIGHT - 100,
+                                  new Vector4f(0.2f, 0.2f, 0.2f, 0.8f),
+                                  fontAtlas,
+                                  resouceManager);
 
+        resourcesPanel = new ResourcesPanel(INITIAL_WIDTH - 220,
+                                            20,
+                                            200,
+                                            400,
+                                            fontAtlas,
+                                            resouceManager,
+                                            new Vector4f(0.2f, 0.2f, 0.2f, 0.8f));
+        uiManager.addElement(infoPanel);
+        uiManager.addElement(resourcesPanel);
         registerResizeCallback();
         placePlayerAtFirstPlanet();
     }
@@ -102,8 +119,10 @@ public class Game {
             float mouseY = input.getMouseY();
             Vector2i size = Window.getWindowSize(windowHandle);
 
-
-            if (uiManager.objectClicked(mouseX, size.y - mouseY, windowHandle)) return;
+            if (uiManager.objectClicked(mouseX, size.y - mouseY, windowHandle)) {
+                resourcesPanel.refreshAmounts();
+                return;
+            }
             CelestialBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
             scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);

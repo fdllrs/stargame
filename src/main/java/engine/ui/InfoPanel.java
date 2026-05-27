@@ -4,32 +4,85 @@ import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
+import game.managers.ResourceManager;
 import org.joml.Vector4f;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * A UI panel that displays the name and properties of any {@link Describable} object.
- * The engine layer has no dependency on game-specific types.
- */
 public class InfoPanel extends UIElement {
 
     private final FontAtlas font;
     private final List<UIElement> elements = new java.util.ArrayList<>();
+    private final ResourceManager resourceManager;
     private Describable currentTarget;
 
-    public InfoPanel(float x, float y, float width, float height, Vector4f color, FontAtlas font) {
+    public InfoPanel(float x,
+                     float y,
+                     float width,
+                     float height,
+                     Vector4f color,
+                     FontAtlas font,
+                     ResourceManager resourceManager) {
         super(x, y, width, height, color);
         this.font = font;
         this.vPadding = 10;
+        this.hPadding = 10;
+        this.resourceManager = resourceManager;
 
+    }
+
+    @Override
+    public float getBoundingHeight() {
+        return this.height + vPadding;
+    }
+
+    public void handleClick(float mouseX, float mouseY) {
+        for (UIElement element : elements) {
+            if (element.contains(mouseX, mouseY)) {
+                element.handleClick(mouseX, mouseY);
+                return;
+            }
+        }
+
+    }
+
+    @Override
+    public void render(ShaderProgram shader, Mesh uiQuad) {
+        if (currentTarget == null)
+            return;
+
+        shader.setUniform("useTexture", 0);
+        shader.setUniform("uiColor", this.color);
+        shader.setUniform("model", this.modelMatrix);
+        uiQuad.render();
+
+        for (UIElement element : elements) {
+            element.render(shader, uiQuad);
+        }
+    }
+
+    @Override
+    public void setSize(float newWidth, float newHeight) {
+        if (this.width == newWidth && this.height == newHeight)
+            return;
+
+        super.setSize(newWidth, newHeight);
+
+        for (UIElement child : elements) {
+            if (child instanceof UIText textChild) {
+                textChild.setMaxWidth(this.width);
+            }
+        }
+
+        rebuildElements();
     }
 
     private void rebuildElements() {
         elements.clear();
 
-        if (currentTarget == null) return;
+        if (currentTarget == null)
+            return;
 
         addTitle();
         addProperties();
@@ -40,12 +93,12 @@ public class InfoPanel extends UIElement {
 
     private void addButtons() {
         UIButton button = new UIButton(this,
-                                       width / 3,
-                                       20,
+                                       width / 2,
+                                       70,
                                        new Vector4f(0, 0, 1, 1),
                                        new Vector4f(1, 1, 1, 1),
                                        "gather " + "iron",
-                                       () -> System.out.println("click iron"),
+                                       () -> resourceManager.gatherResource(ResourceManager.RESOURCE_TYPE.IRON, 10),
                                        font);
         UIButton button2 = new UIButton(this,
                                         width / 2,
@@ -53,7 +106,7 @@ public class InfoPanel extends UIElement {
                                         new Vector4f(1, 0, 1, 1),
                                         new Vector4f(1, 1, 1, 1),
                                         "gather " + "gold",
-                                        () -> System.out.println("click gold"),
+                                        () -> resourceManager.gatherResource(ResourceManager.RESOURCE_TYPE.GOLD, 10),
                                         font);
         UIButton button3 = new UIButton(this,
                                         width / 2,
@@ -61,10 +114,10 @@ public class InfoPanel extends UIElement {
                                         new Vector4f(1, 0, 1, 1),
                                         new Vector4f(1, 1, 1, 1),
                                         "gather " + "water",
-                                        () -> System.out.println("click water"),
+                                        () -> resourceManager.gatherResource(ResourceManager.RESOURCE_TYPE.WATER, 10),
                                         font);
-        elements.add(button2);
         elements.add(button);
+        elements.add(button2);
         elements.add(button3);
     }
 
@@ -86,7 +139,6 @@ public class InfoPanel extends UIElement {
                                 font));
     }
 
-
     private void calculateElementsYPos() {
         float currentY = this.y + this.height;
         for (UIElement element : elements) {
@@ -96,52 +148,9 @@ public class InfoPanel extends UIElement {
         }
     }
 
-    @Override
-    public void render(ShaderProgram shader, Mesh uiQuad) {
-        if (currentTarget == null) return;
-
-        shader.setUniform("useTexture", 0);
-        shader.setUniform("uiColor", this.color);
-        shader.setUniform("model", this.modelMatrix);
-        uiQuad.render();
-
-        for (UIElement element : elements) {
-            element.render(shader, uiQuad);
-        }
-    }
-
-    @Override
-    public float getBoundingHeight() {
-        return this.height + vPadding;
-    }
-
     public void setTarget(Describable target) {
         this.currentTarget = target;
         rebuildElements();
     }
 
-    @Override
-    public void setSize(float newWidth, float newHeight) {
-        if (this.width == newWidth && this.height == newHeight) return;
-
-        super.setSize(newWidth, newHeight);
-
-        for (UIElement child : elements) {
-            if (child instanceof UIText textChild) {
-                textChild.setMaxWidth(this.width);
-            }
-        }
-
-        rebuildElements();
-    }
-
-    public void handleClick(float mouseX, float mouseY) {
-        for (UIElement element : elements) {
-            if (element.contains(mouseX, mouseY)) {
-                element.handleClick(mouseX, mouseY);
-                return;
-            }
-        }
-
-    }
 }
