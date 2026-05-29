@@ -59,6 +59,8 @@ public class GameObject {
         shader.setUniform("colorA", color);
         shader.setUniform("colorB", color);
         shader.setUniform("noiseScale", 0.0f);
+        shader.setUniform("useVertexColor", 1);
+        shader.setUniform("isLightSource", 0);
         setupStencilForSelection();
         mesh.render();
     }

@@ -85,6 +85,7 @@ public class Renderer {
         shader3D.setUniform("view", camera.getViewMatrix());
         shader3D.setUniform("projection", camera.getProjectionMatrix());
         shader3D.setUniform("playerPos", camera.getPosition());
+        shader3D.setUniform("lightPos", scene.getStarPosition());
 
         scene.render(shader3D); // Draws all planets
         shader3D.unbind();

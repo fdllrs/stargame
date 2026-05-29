@@ -74,4 +74,8 @@ public class StarSystem {
     public List<Planet> getPlanets() {
         return planets;
     }
+
+    public Star getStar() {
+        return star;
+    }
 }

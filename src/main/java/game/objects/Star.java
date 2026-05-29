@@ -44,6 +44,7 @@ public class Star extends CelestialBody implements Describable {
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", noiseScale);
+        shader.setUniform("useVertexColor", 0);
         shader.setUniform("model", modelMatrix);
         shader.setUniform("normalMatrix", computeNormalMatrix());
         setupStencilForSelection();

@@ -16,7 +16,7 @@ public class Mesh {
     private final int vertexCount;
     private final List<Integer> vboIdList;
 
-    private Mesh(float[] positions, int[] indices, float[] normals, float[] uvs, int dim) {
+    private Mesh(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors, float[] emissive, int dim) {
         this.vertexCount = indices.length;
         this.vboIdList = new ArrayList<>();
 
@@ -34,6 +34,14 @@ public class Mesh {
             createFloatVbo(2, 2, uvs);
         }
 
+        if (colors != null && colors.length > 0) {
+            createFloatVbo(3, 3, colors);
+        }
+
+        if (emissive != null && emissive.length > 0) {
+            createFloatVbo(4, 3, emissive);
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
@@ -43,15 +51,29 @@ public class Mesh {
      * Builds a standard 3D model (requires Normals for lighting).
      */
     public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs) {
-        return new Mesh(positions, indices, normals, uvs, 3);
+        return new Mesh(positions, indices, normals, uvs, null, null, 3);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors.
+     */
+    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors) {
+        return new Mesh(positions, indices, normals, uvs, colors, null, 3);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors and emissive properties.
+     */
+    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors, float[] emissive) {
+        return new Mesh(positions, indices, normals, uvs, colors, emissive, 3);
     }
 
     /**
      * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
      */
     public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
-        // Pass null for normals, and 2 for dimensions
-        return new Mesh(positions, indices, null, uvs, 2);
+        // Pass null for normals, colors, and emissive, and 2 for dimensions
+        return new Mesh(positions, indices, null, uvs, null, null, 2);
     }
 
     private void createFloatVbo(int attribute, int size, float[] data) {
@@ -97,6 +119,8 @@ public class Mesh {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
         glBindVertexArray(0);
 
         for (int vboId : vboIdList) {

@@ -150,4 +150,8 @@ public class Scene {
             selectedObject.setSelected(true);
         }
     }
+
+    public Vector3f getStarPosition() {
+        return starSystem.getStar().getPosition();
+    }
 }

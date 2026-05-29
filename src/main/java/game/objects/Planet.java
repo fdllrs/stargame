@@ -57,6 +57,7 @@ public class Planet extends CelestialBody implements Describable {
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", 2.0f);
+        shader.setUniform("useVertexColor", 0);
         setupStencilForSelection();
         mesh.render();
     }
