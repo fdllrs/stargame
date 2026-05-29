@@ -2,14 +2,13 @@ package game.builder;
 
 import game.info.StarInfo;
 import game.info.StarInfo.StarType;
-import game.objects.Star;
+import game.objects.celestialBodies.Star;
 import org.joml.Vector3f;
 
 import java.util.Random;
 
 public class StarBuilder {
     private static final Random RANDOM = new Random();
-
     private String name = null;
     private StarType type = null;
     private Float radius = null;
@@ -17,40 +16,84 @@ public class StarBuilder {
     private Vector3f colorA = null;
     private Vector3f colorB = null;
 
-    public StarBuilder withName(String name) { this.name = name; return this; }
-    public StarBuilder withType(StarType type) { this.type = type; return this; }
-    public StarBuilder withRadius(float radius) { this.radius = radius; return this; }
-    public StarBuilder withMass(float mass) { this.mass = mass; return this; }
+    public StarBuilder withName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public StarBuilder withType(StarType type) {
+        this.type = type;
+        return this;
+    }
+
+    public StarBuilder withRadius(float radius) {
+        this.radius = radius;
+        return this;
+    }
+
+    public StarBuilder withMass(float mass) {
+        this.mass = mass;
+        return this;
+    }
+
     public StarBuilder withColors(Vector3f colorA, Vector3f colorB) {
         this.colorA = colorA;
         this.colorB = colorB;
         return this;
     }
 
-
     public Star build() {
         String finalName = (this.name != null) ? this.name : generateRandomName();
 
         // 2. Resolve Type (Pick a random spectral class if none was provided)
-        StarType finalType = (this.type != null) ? this.type :
-                StarType.values()[RANDOM.nextInt(StarType.values().length)];
+        StarType finalType = (this.type != null)
+                             ? this.type
+                             :
+                             StarType.values()[RANDOM.nextInt(StarType.values().length)];
 
         // 3. Resolve Physics & Colors based on Spectral Class (Main Sequence)
-        float finalRadius = (this.radius != null) ? this.radius : generateRadiusForType(finalType);
-        float finalMass = (this.mass != null) ? this.mass : generateMassForType(finalType);
-        Vector3f finalColorA = (this.colorA != null) ? this.colorA : generateBaseColor(finalType);
-        Vector3f finalColorB = (this.colorB != null) ? this.colorB : generateCoronaColor(finalType);
+        float finalRadius = (this.radius != null)
+                            ? this.radius
+                            : generateRadiusForType(finalType);
+        float finalMass = (this.mass != null)
+                          ? this.mass
+                          : generateMassForType(finalType);
+        Vector3f finalColorA = (this.colorA != null)
+                               ? this.colorA
+                               : generateBaseColor(finalType);
+        Vector3f finalColorB = (this.colorB != null)
+                               ? this.colorB
+                               : generateCoronaColor(finalType);
 
-        StarInfo info = new StarInfo(finalName, finalType, finalRadius, finalMass, finalColorA, finalColorB);
+        StarInfo info = new StarInfo(finalName,
+                                     finalType,
+                                     finalRadius,
+                                     finalMass,
+                                     finalColorA,
+                                     finalColorB);
         return new Star(info);
     }
 
     // --- PROCEDURAL GENERATORS ---
 
     private String generateRandomName() {
-        String[] greekLetters = {"Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Sigma", "Omega"};
-        String[] constellations = {"Andromedae", "Centauri", "Cygni", "Draconis", "Orionis", "Pegasi", "Lyrae"};
-        return greekLetters[RANDOM.nextInt(greekLetters.length)] + " " + constellations[RANDOM.nextInt(constellations.length)];
+        String[] greekLetters = {"Alpha",
+                                 "Beta",
+                                 "Gamma",
+                                 "Delta",
+                                 "Epsilon",
+                                 "Zeta",
+                                 "Sigma",
+                                 "Omega"};
+        String[] constellations = {"Andromedae",
+                                   "Centauri",
+                                   "Cygni",
+                                   "Draconis",
+                                   "Orionis",
+                                   "Pegasi",
+                                   "Lyrae"};
+        return greekLetters[RANDOM.nextInt(greekLetters.length)] + " " +
+               constellations[RANDOM.nextInt(constellations.length)];
     }
 
     private float generateRadiusForType(StarType type) {

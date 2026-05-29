@@ -10,9 +10,7 @@ public abstract class UIElement {
     protected float x, y;
     protected float width, height;
     protected float hPadding, vPadding;
-
     protected Vector4f color;
-
     protected Matrix4f modelMatrix;
 
     public UIElement(float x, float y, float width, float height, Vector4f color) {
@@ -32,9 +30,7 @@ public abstract class UIElement {
     }
 
     public abstract float getBoundingHeight();
-
     public abstract void handleClick(float mouseX, float mouseY);
-
     public abstract void render(ShaderProgram shader, Mesh uiQuad);
 
     public Vector2f getSize() {

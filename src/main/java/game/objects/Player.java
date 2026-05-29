@@ -2,12 +2,14 @@ package game.objects;
 
 import engine.graphics.Camera;
 import engine.graphics.Mesh;
+import game.components.StorageComponent;
 import game.geometry.PlayerGeometry;
 import org.joml.Vector3f;
 
 public class Player extends GameObject {
     private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
     private static final float PLAYER_RADIUS = 1.0f;
+    private final StorageComponent storage = new StorageComponent(1000);
 
     public Player() {
         super(playerMesh, new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0, 0, 0));
@@ -38,5 +40,9 @@ public class Player extends GameObject {
             difference -= 360.0f;
 
         return current + (difference * speed);
+    }
+
+    public StorageComponent getStorage() {
+        return storage;
     }
 }

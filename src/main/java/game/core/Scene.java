@@ -13,6 +13,7 @@ import org.joml.*;
 import java.util.List;
 
 public class Scene {
+    private final float MAX_SELECTION_DISTANCE = 6000.0f;
     private final Player player;
     private final Starfield starfield;
     private StarSystem starSystem;
@@ -116,6 +117,9 @@ public class Scene {
                 closestObject = body;
             }
         }
+        if (closestDistance >= MAX_SELECTION_DISTANCE) {
+            return null;
+        }
 
         return closestObject;
     }
@@ -177,4 +181,9 @@ public class Scene {
     public Vector3f getStarPosition() {
         return starSystem.getStar().getPosition();
     }
+
+    public Player getPlayer() {
+        return player;
+    }
+
 }

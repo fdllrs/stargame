@@ -3,6 +3,9 @@ package game.objects;
 import engine.graphics.ShaderProgram;
 import game.builder.PlanetBuilder;
 import game.builder.StarBuilder;
+import game.objects.celestialBodies.CelestialBody;
+import game.objects.celestialBodies.Planet;
+import game.objects.celestialBodies.Star;
 
 import java.util.ArrayList;
 import java.util.List;

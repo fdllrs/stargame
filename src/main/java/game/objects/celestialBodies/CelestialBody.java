@@ -1,6 +1,7 @@
-package game.objects;
+package game.objects.celestialBodies;
 
 import engine.graphics.Mesh;
+import game.objects.GameObject;
 import org.joml.Vector3f;
 
 public class CelestialBody extends GameObject {

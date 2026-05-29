@@ -10,24 +10,26 @@ import org.joml.Vector4f;
 import java.util.List;
 
 public abstract class UIPanel extends UIElement {
-
     protected final List<UIElement> children = new java.util.ArrayList<>();
     protected final FontAtlas font;
 
-    public UIPanel(float x, float y, float width, float height, Vector4f color, FontAtlas font) {
+    public UIPanel(float x,
+                   float y,
+                   float width,
+                   float height,
+                   Vector4f color,
+                   FontAtlas font) {
         super(x, y, width, height, color);
         this.font = font;
         this.vPadding = 10;
         this.hPadding = 10;
     }
 
-    @Override
-    public float getBoundingHeight() {
+    @Override public float getBoundingHeight() {
         return 0;
     }
 
-    @Override
-    public void handleClick(float mouseX, float mouseY) {
+    @Override public void handleClick(float mouseX, float mouseY) {
         if (!shouldRender())
             return;
         for (UIElement child : children) {
@@ -38,8 +40,7 @@ public abstract class UIPanel extends UIElement {
         }
     }
 
-    @Override
-    public void render(ShaderProgram shader, Mesh uiQuad) {
+    @Override public void render(ShaderProgram shader, Mesh uiQuad) {
         if (!shouldRender())
             return;
 
@@ -53,15 +54,13 @@ public abstract class UIPanel extends UIElement {
         }
     }
 
-    @Override
-    public void setPosition(float x, float y) {
+    @Override public void setPosition(float x, float y) {
         super.setPosition(x, y);
 
         layout();
     }
 
-    @Override
-    public void setSize(float newWidth, float newHeight) {
+    @Override public void setSize(float newWidth, float newHeight) {
         if (this.width == newWidth && this.height == newHeight) {
             return;
         }
@@ -81,6 +80,13 @@ public abstract class UIPanel extends UIElement {
     }
 
     protected void setPanelTitle(String title) {
-        children.addFirst(new UIText(title, UIText.Alignment.CENTER, new Vector4f(1, 1, 1, 1), 24, 1, 15, font, width));
+        children.addFirst(new UIText(title,
+                                     UIText.Alignment.CENTER,
+                                     new Vector4f(1, 1, 1, 1),
+                                     24,
+                                     1,
+                                     10,
+                                     font,
+                                     width));
     }
 }

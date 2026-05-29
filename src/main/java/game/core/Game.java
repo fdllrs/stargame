@@ -7,7 +7,6 @@ import engine.ui.panels.InfoPanel;
 import engine.ui.panels.ResourcesPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
-import game.managers.ResourceManager;
 import game.objects.celestialBodies.CelestialBody;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -45,7 +44,6 @@ public class Game {
         scene = new Scene();
         renderer = new Renderer(windowHandle);
         input = new Input(windowHandle, camera, scene);
-        ResourceManager resourceManager = new ResourceManager();
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
@@ -55,14 +53,14 @@ public class Game {
                                   INITIAL_HEIGHT - 100,
                                   new Vector4f(0.2f, 0.2f, 0.2f, 0.8f),
                                   fontAtlas,
-                                  resourceManager);
+                                  scene.getPlayer().getStorage());
 
-        resourcesPanel = new ResourcesPanel(INITIAL_WIDTH - 220,
-                                            INITIAL_HEIGHT - 420,
+        resourcesPanel = new ResourcesPanel(INITIAL_WIDTH - 320,
+                                            INITIAL_HEIGHT - 220,
+                                            300,
                                             200,
-                                            400,
                                             fontAtlas,
-                                            resourceManager,
+                                            scene.getPlayer().getStorage(),
                                             new Vector4f(0.2f, 0.2f, 0.2f, 0.8f));
 
         uiManager.addElement(infoPanel);
