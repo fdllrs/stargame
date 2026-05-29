@@ -118,6 +118,7 @@ public class Input {
             cursorEnabled = false;
             glfwSetCursorPos(windowHandle, mouseX[0], mouseY[0]);
             glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            firstMouse = true;
         } else {
             cursorEnabled = true;
             glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

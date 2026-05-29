@@ -5,6 +5,7 @@ import org.joml.Vector3f;
 
 public class Camera {
     private static final float BASE_FOV = 45.0f;
+    private static final float SIDE_VELOCITY_DOWNSCALE_FACTOR = 0.35f;
     private static final float FOV_SPEED_FACTOR = 0.07f;
     private static final float NEAR_PLANE = 0.1f;
     private static final float FAR_PLANE = 100_000.0f;
@@ -37,7 +38,10 @@ public class Camera {
 
     private void rebuildProjection(float fov) {
         cachedFov = fov;
-        projectionMatrix.setPerspective((float) Math.toRadians(fov), aspectRatio, NEAR_PLANE, FAR_PLANE);
+        projectionMatrix.setPerspective((float) Math.toRadians(fov),
+                                        aspectRatio,
+                                        NEAR_PLANE,
+                                        FAR_PLANE);
 
     }
 
@@ -71,7 +75,8 @@ public class Camera {
     }
 
     public void accelerateWithTurbo(float deltaTime) {
-        velocity.add(localForwardDirection().mul(acceleration * turboMultiplier * deltaTime));
+        velocity.add(localForwardDirection().mul(
+                acceleration * turboMultiplier * deltaTime));
     }
 
     private Vector3f localForwardDirection() {
@@ -95,7 +100,9 @@ public class Camera {
     }
 
     private Vector3f localRightDirection() {
-        return new Vector3f(localForwardDirection().cross(new Vector3f(0, 1, 0)).normalize());
+        return new Vector3f(localForwardDirection().cross(new Vector3f(0, 1, 0))
+                                                   .normalize()).mul(
+                SIDE_VELOCITY_DOWNSCALE_FACTOR);
     }
 
     public void accelerateRight(float deltaTime) {

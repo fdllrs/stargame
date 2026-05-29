@@ -8,7 +8,7 @@ import engine.ui.panels.ResourcesPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.managers.ResourceManager;
-import game.objects.CelestialBody;
+import game.objects.celestialBodies.CelestialBody;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -81,7 +81,10 @@ public class Game {
 
     private void placePlayerAtFirstPlanet() {
         scene.update(camera, false, 0f);
-        camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0, new Vector3f()));
+        camera.moveTo(scene.getPlanets()
+                           .getFirst()
+                           .getPosition()
+                           .add(35, 0, 0, new Vector3f()));
     }
 
     private void gameLoop() {
@@ -126,7 +129,10 @@ public class Game {
             resourcesPanel.refreshAmounts();
 
         } else {
-            CelestialBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            CelestialBody clicked = scene.objectClicked(mouseX,
+                                                        mouseY,
+                                                        windowHandle,
+                                                        camera);
             scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
         }
