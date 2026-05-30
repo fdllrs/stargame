@@ -22,7 +22,7 @@ public class StorageComponent {
         return true;
     }
 
-    public float getOccupancy() {
+    public int getOccupancy() {
         return inventory.values().stream().mapToInt(Integer::intValue).sum();
     }
 

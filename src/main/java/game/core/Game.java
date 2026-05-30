@@ -14,6 +14,7 @@ import org.joml.Vector4f;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Game {
+    public static final int TICK_TIME = 5;
     private static final String FONT_FILE = "src/main/resources/fonts/fontfile.fnt";
     private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
     private static final int INITIAL_WIDTH = 1280;
@@ -87,7 +88,7 @@ public class Game {
 
     private void gameLoop() {
         double lastTime = glfwGetTime();
-
+        double tickAccumulator = 0.0;
         while (!glfwWindowShouldClose(windowHandle)) {
             double currentTime = glfwGetTime();
             float deltaTime = (float) (currentTime - lastTime);
@@ -95,6 +96,14 @@ public class Game {
 
             glfwPollEvents();
             update(deltaTime);
+
+            tickAccumulator += deltaTime;
+            if (tickAccumulator >= TICK_TIME) {
+                scene.tick();
+                infoPanel.tick();
+                tickAccumulator -= TICK_TIME;
+            }
+
             renderer.render(scene, camera, windowHandle);
             uiManager.renderAll();
             glfwSwapBuffers(windowHandle);

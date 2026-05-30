@@ -18,10 +18,11 @@ import org.joml.Vector4f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class InfoPanel extends UIPanel {
     private final StorageComponent playerStorage;
-    private final Tab currentTab = Tab.STATS;
+    private Tab currentTab = Tab.STATS;
     private Describable currentTarget;
 
     public InfoPanel(float x,
@@ -68,6 +69,11 @@ public class InfoPanel extends UIPanel {
 
     public void setTarget(Describable target) {
         this.currentTarget = target;
+        this.currentTab = Tab.STATS;
+        rebuildElements();
+    }
+
+    public void tick() {
         rebuildElements();
     }
 
@@ -77,36 +83,86 @@ public class InfoPanel extends UIPanel {
         if (currentTarget == null)
             return;
 
+        setTabs();
         setPanelTitle(currentTarget.getDisplayName());
-        addProperties();
+
         if (currentTarget instanceof Planet planet) {
-            addPlanetButtons(planet);
+            addEntryText(planet.getDisplayStorage());
         }
+        if (currentTab.equals(Tab.STATS)) {
+            showStats();
+        }
+        if (currentTarget instanceof Planet planet && currentTab.equals(Tab.GATHER)) {
+            addGatherButtons(planet);
+        }
+        if (currentTarget instanceof Planet planet && currentTab.equals(Tab.BUILD)) {
+            addBuildButtons(planet);
+        }
+
         layout();
     }
 
-    private void addProperties() {
+    private void setTabs() {
+        UIRow tabsRow = new UIRow(0);
+        Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1f);
+        float btnWidth = (350f - (10f * (Tab.values().length - 1))) / Tab.values().length;
+        for (Tab tab : Tab.values()) {
+            Vector4f btnBg = new Vector4f(0.2f, 0.2f, 0.5f, 0.5f);
+            btnBg.y += 0.1f * tab.ordinal();
+            if (currentTab.equals(tab)) {
+                btnBg.w = 1f;
+                btnBg.add(0.35f, 0.35f, 0.35f, 0f);
+            }
+
+            UIButton tabButton = new UIButton(btnWidth,
+                                              40,
+                                              btnBg,
+                                              textCol,
+                                              tab.name(),
+                                              () -> {
+                                                  currentTab = tab;
+                                                  rebuildElements();
+                                              },
+                                              font);
+
+            tabsRow.addElement(tabButton);
+        }
+        children.add(tabsRow);
+
+    }
+
+    private void showStats() {
         for (Map.Entry<String, String> entry : currentTarget.getDisplayProperties()) {
-            String line = entry.getKey() + ": " + entry.getValue();
-            children.add(new UIText(line,
-                                    UIText.Alignment.LEFT,
-                                    new Vector4f(1, 1, 1, 1),
-                                    20,
-                                    15,
-                                    10,
-                                    font,
-                                    width));
+            addEntryText(entry);
         }
     }
 
-    private void addPlanetButtons(Planet planet) {
+    private void addEntryText(Entry<String, String> entry) {
+        String line = entry.getKey() + ": " + entry.getValue();
+        children.add(new UIText(line,
+                                UIText.Alignment.LEFT,
+                                new Vector4f(1, 1, 1, 1),
+                                20,
+                                15,
+                                10,
+                                font,
+                                width));
+    }
+
+    private void addGatherButtons(Planet planet) {
         Vector4f btnBg = new Vector4f(0.2f, 0.4f, 0.8f, 1.0f);
-        Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
         Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
 
         addMiningButtonRow(planet, btnBg, textCol);
         addActionButtonRow(planet, btnBg, textCol);
+    }
+
+    private void addBuildButtons(Planet planet) {
+        Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
+        Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+
         addBuildButtonRow(planet, buildBtnBg, textCol);
+
     }
 
     private void addBuildButtonRow(Planet planet, Vector4f buildBtnBg, Vector4f textCol) {
@@ -263,6 +319,6 @@ public class InfoPanel extends UIPanel {
         setSize(400, screenHeight - 100);
     }
 
-    private enum Tab {STATS, STORAGE, CONSTRUCTION}
+    private enum Tab {STATS, GATHER, BUILD}
 
 }

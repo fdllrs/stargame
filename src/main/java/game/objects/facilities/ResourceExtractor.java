@@ -12,7 +12,7 @@ public class ResourceExtractor extends Facility {
         this.resourceType = resourceType;
     }
 
-    @Override public void tick(Planet planet, float deltaTime) {
+    @Override public void tick(Planet planet) {
         planet.deposit(resourceType,
                        Math.round(extractionAmount * this.efficiencyMultiplier));
     }

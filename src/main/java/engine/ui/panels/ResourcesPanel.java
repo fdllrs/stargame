@@ -18,6 +18,7 @@ import java.util.Map;
 public class ResourcesPanel extends UIPanel {
     private final StorageComponent storageComponent;
     private final Map<ItemType, UIText> resourceLabels;
+    private UIText storageFillText;
 
     public ResourcesPanel(float x,
                           float y,
@@ -44,17 +45,18 @@ public class ResourcesPanel extends UIPanel {
     }
 
     private void initializeResourceLabels() {
+
+        UIText storageFillText = new UIText(storageComponent.getFillForDisplay(),
+                                            Alignment.CENTER,
+                                            new Vector4f(1, 1, 1, 1),
+                                            16,
+                                            10,
+                                            5,
+                                            font,
+                                            width);
+        this.storageFillText = storageFillText;
+        children.add(storageFillText);
         List<ItemType> allItems = new ArrayList<>(List.of(RawResource.values()));
-
-        children.add(new UIText(storageComponent.getFillForDisplay(),
-                                Alignment.CENTER,
-                                new Vector4f(1, 1, 1, 1),
-                                16,
-                                10,
-                                5,
-                                font,
-                                width));
-
         for (ItemType type : allItems) {
             String text = getNameAndAmountText(type);
             UIText label = new UIText(text,
@@ -82,6 +84,7 @@ public class ResourcesPanel extends UIPanel {
     }
 
     public void refreshAmounts() {
+        storageFillText.setText(storageComponent.getFillForDisplay());
         resourceLabels.forEach((type, label) -> {
             label.setText(getNameAndAmountText(type));
         });

@@ -60,8 +60,11 @@ public class Planet extends CelestialBody implements Describable {
                                  String.format("%.1f", planetInfo.orbitDistance())),
                        Map.entry("Orbit Speed",
                                  String.format("%.5f", planetInfo.orbitSpeed())),
-                       Map.entry("Type", planetInfo.type().name()),
-                       Map.entry("Storage", storageComponent.getFillForDisplay()));
+                       Map.entry("Type", planetInfo.type().name()));
+    }
+
+    public Map.Entry<String, String> getDisplayStorage() {
+        return Map.entry("Storage", storageComponent.getFillForDisplay());
     }
 
     @Override public void render(ShaderProgram shader) {
@@ -92,12 +95,11 @@ public class Planet extends CelestialBody implements Describable {
         rotate(deltaTime);
         updateModelMatrix();
 
-        tickFacilities(deltaTime);
     }
 
-    private void tickFacilities(float deltaTime) {
+    public void tickFacilities() {
         for (Facility facility : facilities) {
-            facility.tick(this, deltaTime);
+            facility.tick(this);
         }
     }
 
