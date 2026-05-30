@@ -8,6 +8,7 @@ import game.objects.StarSystem;
 import game.objects.Starfield;
 import game.objects.celestialBodies.CelestialBody;
 import game.objects.celestialBodies.Planet;
+import game.objects.entities.Light;
 import org.joml.*;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class Scene {
     }
 
     public void update(Camera camera, boolean isMoving, float deltaTime) {
-        starSystem.update(deltaTime);
+        starSystem.updateAll(deltaTime);
 
         checkCollisions(camera);
         player.syncWithCamera(camera, isMoving);
@@ -67,9 +68,24 @@ public class Scene {
         }
     }
 
-    public void render(ShaderProgram shader) {
-        starSystem.renderAll(shader);
-        player.render(shader);
+    public void render(ShaderProgram shader3D, ShaderProgram shaderStar, Camera camera) {
+        // Bind the star's light to the lit shader
+        Light starLight = starSystem.getStar().getLight();
+        shader3D.setUniform("lightPosition", starLight.getPosition());
+        shader3D.setUniform("lightColor", starLight.getColor());
+
+        for (Planet planet : starSystem.getPlanets()) {
+            planet.render(shader3D);
+        }
+        player.render(shader3D);
+
+        // Render the unlit star
+        shader3D.unbind();
+        shaderStar.bind();
+        shaderStar.setUniform("view", camera.getViewMatrix());
+        shaderStar.setUniform("projection", camera.getProjectionMatrix());
+        starSystem.getStar().render(shaderStar);
+        shaderStar.unbind();
     }
 
     public void cleanup() {
@@ -186,4 +202,7 @@ public class Scene {
         return player;
     }
 
+    public void tick() {
+        starSystem.tickAllFacilities();
+    }
 }

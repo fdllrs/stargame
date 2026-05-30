@@ -4,6 +4,7 @@ import engine.graphics.ShaderProgram;
 import engine.ui.Describable;
 import game.geometry.PlanetGeometry;
 import game.info.StarInfo;
+import game.objects.entities.Light;
 import org.joml.Vector3f;
 
 import java.util.AbstractMap;
@@ -15,6 +16,7 @@ public class Star extends CelestialBody implements Describable {
     private static final float NOISE_SCALE_MAX = 8.0f;
     private static final float NOISE_PULSE_SPEED = 0.01f; // full oscillations per second
     private final StarInfo starInfo;
+    private final Light light;
     private float elapsedTime = 0f;
 
     public Star(StarInfo info) {
@@ -26,6 +28,7 @@ public class Star extends CelestialBody implements Describable {
         this.colorA = info.colorA();
         this.colorB = info.colorB();
         this.radius = info.radius();
+        this.light = new Light(new Vector3f(0, 0, 0), info.colorA().mul(1.1f));
     }
 
     public void update(float deltaTime) {
@@ -35,21 +38,20 @@ public class Star extends CelestialBody implements Describable {
     }
 
     @Override public void render(ShaderProgram shader) {
-        // Noise scale oscillates smoothly between MIN and MAX using sin(), independent
-        // of frame rate.
         float t = (float) Math.sin(elapsedTime * NOISE_PULSE_SPEED * Math.PI);
         float noiseScale = NOISE_SCALE_MIN +
                            (t * 0.5f + 0.5f) * (NOISE_SCALE_MAX - NOISE_SCALE_MIN);
 
-        shader.setUniform("isLightSource", 1);
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", noiseScale);
-        shader.setUniform("useVertexColor", 0);
         shader.setUniform("model", modelMatrix);
-        shader.setUniform("normalMatrix", computeNormalMatrix());
         setupStencilForSelection();
         mesh.render();
+    }
+
+    public Light getLight() {
+        return light;
     }
 
     public float getRadius() {

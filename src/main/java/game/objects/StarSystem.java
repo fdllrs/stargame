@@ -42,12 +42,7 @@ public class StarSystem {
         }
     }
 
-    public void renderAll(ShaderProgram shader) {
-        for (Planet planet : planets) {
-            planet.render(shader);
-        }
-        star.render(shader);
-    }
+
 
     public void cleanupAll() {
         for (Planet planet : planets) {
@@ -65,13 +60,19 @@ public class StarSystem {
 
     }
 
-    public void update(float deltaTime) {
+    public void updateAll(float deltaTime) {
         star.update(deltaTime);
 
         for (Planet planet : planets) {
             planet.update(deltaTime);
         }
 
+    }
+
+    public void tickAllFacilities() {
+        for (Planet planet : planets) {
+            planet.tickFacilities();
+        }
     }
 
     public List<Planet> getPlanets() {

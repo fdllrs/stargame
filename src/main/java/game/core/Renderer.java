@@ -23,6 +23,7 @@ import static org.lwjgl.opengl.GL11C.*;
 public class Renderer {
     private static final int PIXEL_ART_DOWNSCALE = 3;
     private final ShaderProgram shader3D;
+    private final ShaderProgram shaderStar;
     private final ShaderProgram shaderPixelArt;
     private final ShaderProgram shaderOutline;
     private final ShaderProgram shaderStarfield;
@@ -31,6 +32,7 @@ public class Renderer {
 
     public Renderer(long windowHandle) {
         shader3D = ShaderProgram.initShader("/game/basic.vert", "/game/basic.frag");
+        shaderStar = ShaderProgram.initShader("/game/star.vert", "/game/star.frag");
         shaderPixelArt = ShaderProgram.initShader("/game/screen.vert",
                                                   "/game/screen.frag");
         shaderOutline = ShaderProgram.initShader("/game/outline.vert",
@@ -86,10 +88,8 @@ public class Renderer {
         shader3D.bind();
         shader3D.setUniform("view", camera.getViewMatrix());
         shader3D.setUniform("projection", camera.getProjectionMatrix());
-        shader3D.setUniform("playerPos", camera.getPosition());
-        shader3D.setUniform("lightPos", scene.getStarPosition());
 
-        scene.render(shader3D);
+        scene.render(shader3D, shaderStar, camera);
         shader3D.unbind();
     }
 
@@ -141,6 +141,7 @@ public class Renderer {
 
     public void cleanup() {
         shader3D.cleanup();
+        shaderStar.cleanup();
         shaderPixelArt.cleanup();
         shaderOutline.cleanup();
         shaderStarfield.cleanup();
