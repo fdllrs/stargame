@@ -18,7 +18,7 @@ public class Planet extends CelestialBody implements Describable {
     private static final int PLANET_RESOLUTION = 4;
     private final Star homeStar;
     private final PlanetInfo planetInfo;
-    private final StorageComponent storageComponent;
+    private final StorageComponent planetStorage;
     List<Facility> facilities;
     private float orbitAngle;
 
@@ -26,13 +26,13 @@ public class Planet extends CelestialBody implements Describable {
         this(planetInfo, new StorageComponent(1000));
     }
 
-    public Planet(PlanetInfo planetInfo, StorageComponent storageComponent) {
+    public Planet(PlanetInfo planetInfo, StorageComponent planetStorage) {
         super(PlanetGeometry.generate(PLANET_RESOLUTION, planetInfo.planetRadius()),
               planetInfo.colorA(),
               planetInfo.homeStar()
                         .getPosition()
                         .add(planetInfo.orbitDistance(), 0, 0, new Vector3f()));
-        this.storageComponent = storageComponent;
+        this.planetStorage = planetStorage;
 
         this.name = planetInfo.name();
         this.planetInfo = planetInfo;
@@ -61,10 +61,6 @@ public class Planet extends CelestialBody implements Describable {
                        Map.entry("Orbit Speed",
                                  String.format("%.5f", planetInfo.orbitSpeed())),
                        Map.entry("Type", planetInfo.type().name()));
-    }
-
-    public Map.Entry<String, String> getDisplayStorage() {
-        return Map.entry("Storage", storageComponent.getFillForDisplay());
     }
 
     @Override public void render(ShaderProgram shader) {
@@ -103,20 +99,20 @@ public class Planet extends CelestialBody implements Describable {
         }
     }
 
-    public boolean deposit(ItemType resourceType, int amount) {
-        return storageComponent.deposit(resourceType, amount);
+    public void deposit(ItemType resourceType, int amount) {
+        planetStorage.deposit(resourceType, amount);
     }
 
-    public boolean withdraw(ItemType resourceType, int amount) {
-        return storageComponent.withdraw(resourceType, amount);
+    public void withdraw(ItemType resourceType, int amount) {
+        planetStorage.withdraw(resourceType, amount);
     }
 
     public StorageComponent getStorage() {
-        return storageComponent;
+        return planetStorage;
     }
 
     public void addCapacity(int capacity) {
-        storageComponent.addCapacity(capacity);
+        planetStorage.addCapacity(capacity);
     }
 
     public PlanetType getType() {

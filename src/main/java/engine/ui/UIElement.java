@@ -33,6 +33,9 @@ public abstract class UIElement {
     public abstract void handleClick(float mouseX, float mouseY);
     public abstract void render(ShaderProgram shader, Mesh uiQuad);
 
+    public void handleScroll(float mouseX, float mouseY, double yOffset) {
+    }
+
     public Vector2f getSize() {
         return new Vector2f(width, height);
     }

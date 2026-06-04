@@ -1,7 +1,8 @@
-package engine.ui;
+package engine.ui.buttons;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
+import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import org.joml.Vector4f;
@@ -54,13 +55,12 @@ public class UIButton extends UIElement {
         shader.setUniform("useTexture", 0);
         if (isEnabled) {
             shader.setUniform("uiColor", this.color);
-            textLabel.color.w = 1f;
 
         } else {
             shader.setUniform("uiColor", new Vector4f(0.5f, 0.5f, 0.5f, 0.4f));
-            textLabel.color.w = 0.2f;
 
         }
+        textLabel.setTextEnabled(isEnabled);
         shader.setUniform("model", this.modelMatrix);
         uiQuad.render();
 

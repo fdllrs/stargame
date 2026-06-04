@@ -12,16 +12,12 @@ import java.util.ArrayList;
 import static org.lwjgl.opengl.GL11C.*;
 
 public class UIManager {
-
     private final Matrix4f uiProjection;
-    private final long windowHandle;
-
     private final ArrayList<UIElement> elements;
     private final ShaderProgram uiShader;
     private final Mesh uiQuad;
 
     public UIManager(long windowHandle) {
-        this.windowHandle = windowHandle;
         elements = new ArrayList<>();
         this.uiShader = ShaderProgram.initShader("/UI/ui.vert", "/UI/ui.frag");
         uiQuad = ScreenQuadGeometry.generateUIRect();
@@ -43,10 +39,6 @@ public class UIManager {
 
     public void addElement(UIElement element) {
         elements.add(element);
-    }
-
-    public ShaderProgram getUiShader() {
-        return uiShader;
     }
 
     public void renderAll() {
@@ -71,7 +63,7 @@ public class UIManager {
         uiQuad.cleanup();
     }
 
-    public Boolean objectClicked(float mouseX, float mouseY, long windowHandle) {
+    public Boolean objectClicked(float mouseX, float mouseY) {
         for (UIElement element : elements) {
             if (element.contains(mouseX, mouseY)) {
                 element.handleClick(mouseX, mouseY);
@@ -79,6 +71,16 @@ public class UIManager {
             }
         }
 
+        return false;
+    }
+
+    public boolean handleScroll(float mouseX, float mouseY, double yOffset) {
+        for (UIElement element : elements) {
+            if (element.contains(mouseX, mouseY)) {
+                element.handleScroll(mouseX, mouseY, yOffset);
+                return true;
+            }
+        }
         return false;
     }
 }

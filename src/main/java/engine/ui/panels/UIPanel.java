@@ -25,6 +25,8 @@ public abstract class UIPanel extends UIElement {
         this.hPadding = 10;
     }
 
+    protected abstract void rebuildElements();
+
     @Override public float getBoundingHeight() {
         return 0;
     }
@@ -51,6 +53,17 @@ public abstract class UIPanel extends UIElement {
 
         for (UIElement child : children) {
             child.render(shader, uiQuad);
+        }
+    }
+
+    @Override public void handleScroll(float mouseX, float mouseY, double yOffset) {
+        if (!shouldRender())
+            return;
+        for (UIElement child : children) {
+            if (child.contains(mouseX, mouseY)) {
+                child.handleScroll(mouseX, mouseY, yOffset);
+                return;
+            }
         }
     }
 

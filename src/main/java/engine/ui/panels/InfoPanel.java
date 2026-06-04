@@ -1,13 +1,15 @@
 package engine.ui.panels;
 
 import engine.ui.Describable;
-import engine.ui.UIButton;
 import engine.ui.UIElement;
+import engine.ui.UIResourceSlot;
 import engine.ui.UIRow;
+import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
 import game.items.ItemType;
+import game.items.ProcessedItem;
 import game.items.RawResource;
 import game.objects.celestialBodies.Planet;
 import game.objects.facilities.FacilityConfig;
@@ -35,6 +37,38 @@ public class InfoPanel extends UIPanel {
         super(x, y, width, height, color, font);
         this.playerStorage = playerStorage;
 
+    }
+
+    public void setTarget(Describable target) {
+        this.currentTarget = target;
+        this.currentTab = Tab.STATS;
+        rebuildElements();
+    }
+
+    public void tick() {
+        rebuildElements();
+    }
+
+    protected void rebuildElements() {
+        children.clear();
+
+        if (currentTarget == null)
+            return;
+
+        setTabs();
+        setPanelTitle(currentTarget.getDisplayName());
+
+        if (currentTarget instanceof Planet planet) {
+            switch (currentTab) {
+                case STATS -> showStatsTab();
+                case STORAGE -> showStorageTab(planet.getStorage());
+                case BUILD -> showConstructionTab(planet);
+            }
+        } else {
+            showStatsTab();
+        }
+
+        layout();
     }
 
     @Override public float getBoundingHeight() {
@@ -67,41 +101,6 @@ public class InfoPanel extends UIPanel {
         return currentTarget != null;
     }
 
-    public void setTarget(Describable target) {
-        this.currentTarget = target;
-        this.currentTab = Tab.STATS;
-        rebuildElements();
-    }
-
-    public void tick() {
-        rebuildElements();
-    }
-
-    private void rebuildElements() {
-        children.clear();
-
-        if (currentTarget == null)
-            return;
-
-        setTabs();
-        setPanelTitle(currentTarget.getDisplayName());
-
-        if (currentTarget instanceof Planet planet) {
-            addEntryText(planet.getDisplayStorage());
-        }
-        if (currentTab.equals(Tab.STATS)) {
-            showStats();
-        }
-        if (currentTarget instanceof Planet planet && currentTab.equals(Tab.GATHER)) {
-            addGatherButtons(planet);
-        }
-        if (currentTarget instanceof Planet planet && currentTab.equals(Tab.BUILD)) {
-            addBuildButtons(planet);
-        }
-
-        layout();
-    }
-
     private void setTabs() {
         UIRow tabsRow = new UIRow(0);
         Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1f);
@@ -131,7 +130,7 @@ public class InfoPanel extends UIPanel {
 
     }
 
-    private void showStats() {
+    private void showStatsTab() {
         for (Map.Entry<String, String> entry : currentTarget.getDisplayProperties()) {
             addEntryText(entry);
         }
@@ -149,19 +148,62 @@ public class InfoPanel extends UIPanel {
                                 width));
     }
 
-    private void addGatherButtons(Planet planet) {
-        Vector4f btnBg = new Vector4f(0.2f, 0.4f, 0.8f, 1.0f);
+    private void showStorageTab(StorageComponent planetStorage) {
         Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-        addMiningButtonRow(planet, btnBg, textCol);
-        addActionButtonRow(planet, btnBg, textCol);
+        children.add(new UIText("Storage capacity: " + planetStorage.getFillForDisplay(),
+                                UIText.Alignment.LEFT,
+                                textCol,
+                                20,
+                                5,
+                                5,
+                                font,
+                                width));
+
+        children.add(new UIText("Hover line & Scroll wheel to transfer:",
+                                UIText.Alignment.LEFT,
+                                new Vector4f(0.7f, 0.7f, 0.7f, 1.0f),
+                                14,
+                                5,
+                                10,
+                                font,
+                                width));
+
+        children.add(new UIText("Resource                    Planet   |   Ship",
+                                UIText.Alignment.LEFT,
+                                new Vector4f(0.5f, 0.5f, 0.5f, 1.0f),
+                                13,
+                                10,
+                                5,
+                                font,
+                                width));
+
+        List<ItemType> allItems = new ArrayList<>();
+        allItems.addAll(List.of(RawResource.values()));
+        allItems.addAll(List.of(ProcessedItem.values()));
+        Vector4f bg = new Vector4f(0.1f, 0.5f, 0.1f, 0.5f);
+        for (ItemType item : allItems) {
+            bg.y += 0.1f;
+            bg.z += 0.1f;
+            UIResourceSlot slot = new UIResourceSlot(width - hPadding / 2,
+                                                     20,
+                                                     item,
+                                                     planetStorage,
+                                                     playerStorage,
+                                                     font,
+                                                     this::rebuildElements,
+                                                     new Vector4f(bg));
+            children.add(slot);
+        }
     }
 
-    private void addBuildButtons(Planet planet) {
+    private void showConstructionTab(Planet planet) {
         Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
         Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+        Vector4f btnBg = new Vector4f(0.2f, 0.4f, 0.8f, 1.0f);
 
         addBuildButtonRow(planet, buildBtnBg, textCol);
+        addMiningButtonRow(planet, btnBg, textCol);
 
     }
 
@@ -222,58 +264,6 @@ public class InfoPanel extends UIPanel {
         children.add(buildRow);
     }
 
-    private void addActionButtonRow(Planet planet, Vector4f btnBg, Vector4f textCol) {
-        List<ItemType> allItems = new ArrayList<>(List.of(RawResource.values()));
-
-        for (ItemType item : allItems) {
-
-            UIRow transferRow = new UIRow(10);
-            UIButton takeButton = new UIButton(170,
-                                               35,
-                                               btnBg,
-                                               textCol,
-                                               "Take 10 " + item.name(),
-                                               () -> {
-                                                   if (planet.getStorage()
-                                                             .canWithdraw(item, 10) &&
-                                                       playerStorage.canDeposit(10)) {
-                                                       planet.withdraw(item, 10);
-                                                       playerStorage.deposit(item, 10);
-                                                       rebuildElements();
-                                                   }
-                                               },
-                                               font);
-            UIButton depositButton = new UIButton(170,
-                                                  35,
-                                                  btnBg,
-                                                  textCol,
-                                                  "Deposit 10 " + item.name(),
-                                                  () -> {
-                                                      if (planet.getStorage()
-                                                                .canDeposit(10) &&
-                                                          playerStorage.canWithdraw(item,
-                                                                                    10)) {
-                                                          playerStorage.withdraw(item,
-                                                                                 10);
-                                                          planet.deposit(item, 10);
-                                                          rebuildElements();
-                                                      }
-                                                  },
-                                                  font);
-
-            takeButton.setEnabled(planet.getStorage().canWithdraw(item, 10) &&
-                                  playerStorage.canDeposit(10));
-            depositButton.setEnabled(planet.getStorage().canDeposit(10) &&
-                                     playerStorage.canWithdraw(item, 10));
-
-            transferRow.addElement(takeButton);
-            transferRow.addElement(depositButton);
-
-            children.add(transferRow);
-
-        }
-    }
-
     private void addMiningButtonRow(Planet planet, Vector4f btnBg, Vector4f textCol) {
 
         List<RawResource> harvestable = planet.getType().getHarvestableResources();
@@ -311,7 +301,7 @@ public class InfoPanel extends UIPanel {
         if (cost == null)
             return;
         for (Map.Entry<ItemType, Integer> entry : cost.entrySet()) {
-            planet.getStorage().withdraw(entry.getKey(), entry.getValue());
+            planet.withdraw(entry.getKey(), entry.getValue());
         }
     }
 
@@ -319,6 +309,6 @@ public class InfoPanel extends UIPanel {
         setSize(400, screenHeight - 100);
     }
 
-    private enum Tab {STATS, GATHER, BUILD}
+    private enum Tab {STATS, STORAGE, BUILD}
 
 }

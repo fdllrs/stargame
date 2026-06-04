@@ -8,22 +8,19 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class UIText extends UIElement {
-
     public static final float REAL_FONT_SIZE = 88f;
     public static final int MAX_CHAR_HEIGHT = 60;
     public static final int LINE_SPACING = 10;
     private final FontAtlas font;
     private final Alignment alignment;
-
     // Instantiate these ONCE to prevent Garbage Collection stutters
     private final Matrix4f transformMatrix = new Matrix4f();
     private final Vector2f uvScaleVec = new Vector2f();
     private final Vector2f uvOffsetVec = new Vector2f();
-
     public float fontSizeMultiplier;
     private String rawText;
     private String renderText;
-    private float currentMaxWidth = -1f;
+    private float currentMaxWidth;
 
     public UIText(String text,
                   Alignment alignment,
@@ -60,7 +57,9 @@ public class UIText extends UIElement {
 
         // Pre-calculate space width to avoid doing it every loop
         CharacterInfo spaceInfo = font.getCharacter(' ');
-        float spaceWidth = (spaceInfo != null) ? (spaceInfo.xAdvance() * fontSizeMultiplier) : (10 * fontSizeMultiplier);
+        float spaceWidth = (spaceInfo != null)
+                           ? (spaceInfo.xAdvance() * fontSizeMultiplier)
+                           : (10 * fontSizeMultiplier);
 
         for (String word : words) {
             float wordWidth = calculateTextWidth(word); // Reuse our helper method!
@@ -87,29 +86,19 @@ public class UIText extends UIElement {
         return totalWidth;
     }
 
-    public void setMaxWidth(float maxPixelWidth) {
-        if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f)
-            return;
-        this.currentMaxWidth = maxPixelWidth;
-        this.renderText = wrapText(this.currentMaxWidth);
-    }
-
-    @Override
-    public float getBoundingHeight() {
+    @Override public float getBoundingHeight() {
         int numLines = this.renderText.split("\n").length;
         float exactLineHeight = (MAX_CHAR_HEIGHT + LINE_SPACING) * fontSizeMultiplier;
         return numLines * exactLineHeight + vPadding;
     }
 
-    // --- ALIGNMENT MATH ---
-
-    @Override
-    public void handleClick(float mouseX, float mouseY) {
+    @Override public void handleClick(float mouseX, float mouseY) {
 
     }
 
-    @Override
-    public void render(ShaderProgram shader, Mesh uiQuad) {
+    // --- ALIGNMENT MATH ---
+
+    @Override public void render(ShaderProgram shader, Mesh uiQuad) {
         shader.setUniform("useTexture", 1);
         shader.setUniform("uiTexture", 0);
         shader.setUniform("uiColor", this.color);
@@ -136,7 +125,8 @@ public class UIText extends UIElement {
                     continue;
 
                 uvScaleVec.set(charInfo.width() / scaleW, charInfo.height() / scaleH);
-                uvOffsetVec.set(charInfo.x() / scaleW, (scaleH - charInfo.y() - charInfo.height()) / scaleH);
+                uvOffsetVec.set(charInfo.x() / scaleW,
+                                (scaleH - charInfo.y() - charInfo.height()) / scaleH);
 
                 shader.setUniform("uvScale", uvScaleVec);
                 shader.setUniform("uvOffset", uvOffsetVec);
@@ -170,6 +160,22 @@ public class UIText extends UIElement {
             return this.x + ((this.width - lineWidth) / 2.0f);
         } else { // RIGHT
             return this.x + this.width - lineWidth - hPadding;
+        }
+    }
+
+    public void setMaxWidth(float maxPixelWidth) {
+        if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f)
+            return;
+        this.currentMaxWidth = maxPixelWidth;
+        this.renderText = wrapText(this.currentMaxWidth);
+    }
+
+    public void setTextEnabled(boolean enabled) {
+        if (enabled) {
+            color.w = 1f;
+
+        } else {
+            color.w = 0.2f;
         }
     }
 

@@ -4,7 +4,7 @@ import engine.graphics.Camera;
 import engine.ui.Describable;
 import engine.ui.UIManager;
 import engine.ui.panels.InfoPanel;
-import engine.ui.panels.ResourcesPanel;
+import engine.ui.panels.PlayerResourcesPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.objects.celestialBodies.CelestialBody;
@@ -27,10 +27,9 @@ public class Game {
     private Renderer renderer;
     private UIManager uiManager;
     private InfoPanel infoPanel;
-    private ResourcesPanel resourcesPanel;
+    private PlayerResourcesPanel playerResourcesPanel;
 
-    public void run()
-            throws Exception {
+    public void run() {
         init();
         gameLoop();
         cleanup();
@@ -44,7 +43,6 @@ public class Game {
         camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
         scene = new Scene();
         renderer = new Renderer(windowHandle);
-        input = new Input(windowHandle, camera, scene);
 
         FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
         uiManager = new UIManager(windowHandle);
@@ -56,26 +54,23 @@ public class Game {
                                   fontAtlas,
                                   scene.getPlayer().getStorage());
 
-        resourcesPanel = new ResourcesPanel(INITIAL_WIDTH - 320,
-                                            INITIAL_HEIGHT - 220,
-                                            300,
-                                            200,
-                                            fontAtlas,
-                                            scene.getPlayer().getStorage(),
-                                            new Vector4f(0.2f, 0.2f, 0.2f, 0.8f));
+        playerResourcesPanel = new PlayerResourcesPanel(INITIAL_WIDTH - 320,
+                                                        INITIAL_HEIGHT - 220,
+                                                        300,
+                                                        200,
+                                                        fontAtlas,
+                                                        scene.getPlayer().getStorage(),
+                                                        new Vector4f(0.2f,
+                                                                     0.2f,
+                                                                     0.2f,
+                                                                     0.8f));
 
+        input = new Input(windowHandle, camera);
         uiManager.addElement(infoPanel);
-        uiManager.addElement(resourcesPanel);
+        uiManager.addElement(playerResourcesPanel);
         registerResizeCallback();
+        registerScrollCallback();
         placePlayerAtFirstPlanet();
-    }
-
-    private void registerResizeCallback() {
-        glfwSetFramebufferSizeCallback(windowHandle, (win, width, height) -> {
-            camera.onResize(width, height);
-            uiManager.onResize(width, height);
-            renderer.onResize(width, height);
-        });
     }
 
     private void placePlayerAtFirstPlanet() {
@@ -84,6 +79,32 @@ public class Game {
                            .getFirst()
                            .getPosition()
                            .add(35, 0, 0, new Vector3f()));
+    }
+
+    private void registerResizeCallback() {
+        glfwSetFramebufferSizeCallback(windowHandle, (_, width, height) -> {
+            camera.onResize(width, height);
+            uiManager.onResize(width, height);
+            renderer.onResize(width, height);
+        });
+    }
+
+    private void registerScrollCallback() {
+        glfwSetScrollCallback(windowHandle, (win, _, yOffset) -> {
+            if (!input.isCursorEnabled()) {
+                return;
+            }
+
+            double[] xpos = new double[1];
+            double[] ypos = new double[1];
+            glfwGetCursorPos(win, xpos, ypos);
+            float mouseX = (float) xpos[0];
+            float mouseY = (float) ypos[0];
+
+            if (uiManager.handleScroll(mouseX, mouseY, yOffset)) {
+                playerResourcesPanel.refreshAmounts();
+            }
+        });
     }
 
     private void gameLoop() {
@@ -132,8 +153,8 @@ public class Game {
         float mouseX = input.getMouseX();
         float mouseY = input.getMouseY();
 
-        if (uiManager.objectClicked(mouseX, mouseY, windowHandle)) {
-            resourcesPanel.refreshAmounts();
+        if (uiManager.objectClicked(mouseX, mouseY)) {
+            playerResourcesPanel.refreshAmounts();
 
         } else {
             CelestialBody clicked = scene.objectClicked(mouseX,
@@ -152,4 +173,5 @@ public class Game {
         uiManager.cleanup();
         window.cleanup();
     }
+
 }

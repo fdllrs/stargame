@@ -14,7 +14,7 @@ import org.joml.*;
 import java.util.List;
 
 public class Scene {
-    private final float MAX_SELECTION_DISTANCE = 6000.0f;
+    private static final float MAX_SELECTION_DISTANCE = 6000.0f;
     private final Player player;
     private final Starfield starfield;
     private StarSystem starSystem;
@@ -22,7 +22,7 @@ public class Scene {
 
     public Scene() {
         player = new Player();
-        starSystem = new StarSystem(9);
+        starSystem = new StarSystem(10);
         starfield = new Starfield(500, 10000);
     }
 
@@ -192,10 +192,6 @@ public class Scene {
         if (selectedObject != null) {
             selectedObject.setSelected(true);
         }
-    }
-
-    public Vector3f getStarPosition() {
-        return starSystem.getStar().getPosition();
     }
 
     public Player getPlayer() {
