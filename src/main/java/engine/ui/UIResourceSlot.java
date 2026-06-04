@@ -74,23 +74,20 @@ public class UIResourceSlot extends UIElement {
 
     @Override public void handleScroll(float mouseX, float mouseY, double yOffset) {
         int transferAmount = 10;
-
         if (yOffset < 0) {
-            if (planetStorage.canWithdraw(itemType, transferAmount) &&
-                playerStorage.canDeposit(transferAmount)) {
-
-                playerStorage.deposit(itemType, transferAmount);
-                planetStorage.withdraw(itemType, transferAmount);
-                onTransfer.run();
-            }
+            transferItemsFromTo(planetStorage, playerStorage, transferAmount);
         } else if (yOffset > 0) {
-            if (playerStorage.canWithdraw(itemType, transferAmount) &&
-                planetStorage.canDeposit(transferAmount)) {
+            transferItemsFromTo(playerStorage, planetStorage, transferAmount);
+        }
+    }
 
-                planetStorage.deposit(itemType, transferAmount);
-                playerStorage.withdraw(itemType, transferAmount);
-                onTransfer.run();
-            }
+    private void transferItemsFromTo(StorageComponent sourceStorage,
+                                     StorageComponent targetStorage,
+                                     int transferAmount) {
+        if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, transferAmount)) {
+            onTransfer.run();
+        } else if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, 1)) {
+            onTransfer.run();
         }
     }
 

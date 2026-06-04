@@ -53,6 +53,7 @@ public class Window {
     }
 
     public void cleanup() {
+        org.lwjgl.glfw.Callbacks.glfwFreeCallbacks(windowHandle);
         glfwDestroyWindow(windowHandle);
         glfwTerminate();
     }
