@@ -14,6 +14,46 @@ in vec3 worldPosition;
 in vec3 localPosition;
 in vec3 VertexColor;
 in vec3 VertexEmissive;
+in vec4 fragPosLightSpace;
+
+uniform sampler2D shadowMap;
+
+float calculateShadow(vec4 fragPosLS) {
+    // perform perspective divide
+    vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    
+    // If outside shadow map frustum, no shadow
+    if (projCoords.z > 1.0) {
+        return 0.0;
+    }
+
+    // get closest depth value from light's perspective
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+
+    // calculate bias (based on depth map resolution and slope)
+    vec3 normal = normalize(surfaceNormal);
+    vec3 lightDir = normalize(lightPosition - worldPosition);
+    float biasScale = (useVertexColor != 0) ? 0.0005 : 0.005;
+    float biasMin   = (useVertexColor != 0) ? 0.00005 : 0.0005;
+    float bias = max(biasScale * (1.0 - dot(normal, lightDir)), biasMin);
+
+    // PCF (Percentage-Closer Filtering) for smoother edges:
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+    
+    return shadow;
+}
 
 const float AMBIENT_STRENGTH = 0.18;
 const float BANDS = 5.0;
@@ -61,7 +101,7 @@ void main() {
     float extraAmbient = 0.0;
     if (useVertexColor != 0) {
         objectColor  = VertexColor;
-        extraAmbient = 0.4;
+        extraAmbient = 0.05; // Reduced from 0.4 to allow realistic shadows and dark night-sides
     } else {
         vec3 sphereCoord  = normalize(localPosition);
         float terrainHeight = fbm(sphereCoord * noiseScale);
@@ -73,7 +113,10 @@ void main() {
     float brightness = max(dot(normalize(surfaceNormal), lightDir), 0.0);
 
     vec3 ambient = (AMBIENT_STRENGTH + extraAmbient) * objectColor;
-    vec3 diffuse = lightColor * brightness * objectColor;
+    
+    // Calculate shadow factor
+    float shadow = calculateShadow(fragPosLightSpace);
+    vec3 diffuse = (1.0 - shadow) * lightColor * brightness * objectColor;
 
     // Apply dithered banding and emissive
     vec3 lit = ambient + diffuse + VertexEmissive;

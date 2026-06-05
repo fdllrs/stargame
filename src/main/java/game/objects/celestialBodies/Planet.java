@@ -73,6 +73,11 @@ public class Planet extends CelestialBody implements Describable {
         shader.setUniform("useVertexColor", 0);
         setupStencilForSelection();
         mesh.render();
+
+        // Render all constructed facilities on the surface
+        for (Facility facility : facilities) {
+            facility.render(shader, this.modelMatrix);
+        }
     }
 
     public void update(float deltaTime) {
@@ -119,8 +124,8 @@ public class Planet extends CelestialBody implements Describable {
         return planetInfo.type();
     }
 
-    public List<Facility> getFacilities() {
-        return facilities;
+    public void addFacility(Facility facility) {
+        facilities.add(facility);
     }
 
 }

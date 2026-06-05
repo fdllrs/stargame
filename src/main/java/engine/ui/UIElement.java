@@ -18,7 +18,7 @@ public abstract class UIElement {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = color;
+        this.color = color != null ? new Vector4f(color) : new Vector4f(1, 1, 1, 1);
         this.modelMatrix = new Matrix4f();
         updateMatrix();
     }
@@ -56,6 +56,10 @@ public abstract class UIElement {
         this.width = width;
         this.height = height;
         updateMatrix();
+    }
+
+    public void setOpacity(float opacity) {
+        this.color.w = opacity;
     }
 
     public void onResize(int screenWidth, int screenHeight) {

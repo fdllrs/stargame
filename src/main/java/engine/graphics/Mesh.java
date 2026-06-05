@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import org.lwjgl.system.MemoryUtil;
+
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -11,12 +12,19 @@ import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.*;
 
 public class Mesh {
-
     private final int vaoId;
     private final int vertexCount;
     private final List<Integer> vboIdList;
+    private boolean hasVertexColors = false;
 
-    private Mesh(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors, float[] emissive, int dim) {
+    private Mesh(float[] positions,
+                 int[] indices,
+                 float[] normals,
+                 float[] uvs,
+                 float[] colors,
+                 float[] emissive,
+                 int dim) {
+
         this.vertexCount = indices.length;
         this.vboIdList = new ArrayList<>();
 
@@ -36,6 +44,7 @@ public class Mesh {
 
         if (colors != null && colors.length > 0) {
             createFloatVbo(3, 3, colors);
+            this.hasVertexColors = true;
         }
 
         if (emissive != null && emissive.length > 0) {
@@ -44,36 +53,6 @@ public class Mesh {
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-    }
-
-
-    /**
-     * Builds a standard 3D model (requires Normals for lighting).
-     */
-    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs) {
-        return new Mesh(positions, indices, normals, uvs, null, null, 3);
-    }
-
-    /**
-     * Builds a standard 3D model with custom vertex colors.
-     */
-    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors) {
-        return new Mesh(positions, indices, normals, uvs, colors, null, 3);
-    }
-
-    /**
-     * Builds a standard 3D model with custom vertex colors and emissive properties.
-     */
-    public static Mesh create3D(float[] positions, int[] indices, float[] normals, float[] uvs, float[] colors, float[] emissive) {
-        return new Mesh(positions, indices, normals, uvs, colors, emissive, 3);
-    }
-
-    /**
-     * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
-     */
-    public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
-        // Pass null for normals, colors, and emissive, and 2 for dimensions
-        return new Mesh(positions, indices, null, uvs, null, null, 2);
     }
 
     private void createFloatVbo(int attribute, int size, float[] data) {
@@ -104,6 +83,51 @@ public class Mesh {
         } finally {
             MemoryUtil.memFree(buffer);
         }
+    }
+
+    public boolean hasVertexColors() {
+        return hasVertexColors;
+    }
+
+    /**
+     * Builds a standard 3D model (requires Normals for lighting).
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs) {
+        return new Mesh(positions, indices, normals, uvs, null, null, 3);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors.
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs,
+                                float[] colors) {
+        return new Mesh(positions, indices, normals, uvs, colors, null, 3);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors and emissive properties.
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs,
+                                float[] colors,
+                                float[] emissive) {
+        return new Mesh(positions, indices, normals, uvs, colors, emissive, 3);
+    }
+
+    /**
+     * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
+     */
+    public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
+        // Pass null for normals, colors, and emissive, and 2 for dimensions
+        return new Mesh(positions, indices, null, uvs, null, null, 2);
     }
 
     // --- 4. ENGINE METHODS ---

@@ -75,15 +75,9 @@ public class ShaderProgram {
         return utils.readFile(shaderPath);
     }
 
-    private static void assertValidLocation(String uniformName, int location) {
-        if (location == -1) {
-            System.err.println("Uniform not found: " + uniformName);
-        }
-    }
-
     public void setUniform(String uniformName, Matrix3f value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
+        if (location == -1) return;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer buffer = stack.mallocFloat(9);
             value.get(buffer);
@@ -93,55 +87,41 @@ public class ShaderProgram {
 
     public void setUniform(String uniformName, Matrix4f value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-
-
+        if (location == -1) return;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer buffer = stack.mallocFloat(16);
-
             value.get(buffer);
-
             glUniformMatrix4fv(location, false, buffer);
         }
     }
 
-
     public void setUniform(String uniformName, int value) {
-        glUniform1i(glGetUniformLocation(programId, uniformName), value);
+        int location = glGetUniformLocation(programId, uniformName);
+        if (location == -1) return;
+        glUniform1i(location, value);
     }
 
     public void setUniform(String uniformName, Float value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-
+        if (location == -1) return;
         glUniform1f(location, value);
-
     }
-
 
     public void setUniform(String uniformName, Vector2f value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-
+        if (location == -1) return;
         glUniform2f(location, value.x, value.y);
     }
 
     public void setUniform(String uniformName, Vector3f value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer buffer = stack.mallocFloat(16);
-
-            value.get(buffer);
-            glUniform3f(location, value.x, value.y, value.z);
-
-        }
+        if (location == -1) return;
+        glUniform3f(location, value.x, value.y, value.z);
     }
 
     public void setUniform(String uniformName, Vector4f value) {
         int location = glGetUniformLocation(programId, uniformName);
-        assertValidLocation(uniformName, location);
-
+        if (location == -1) return;
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 

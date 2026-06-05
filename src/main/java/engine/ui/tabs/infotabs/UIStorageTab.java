@@ -1,4 +1,4 @@
-package engine.ui.panels.infotabs;
+package engine.ui.tabs.infotabs;
 
 import engine.ui.UIElement;
 import engine.ui.UIResourceSlot;

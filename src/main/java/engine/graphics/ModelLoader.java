@@ -3,6 +3,7 @@ package engine.graphics;
 import engine.utils.ArrayUtils;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,13 +12,18 @@ import java.util.Map;
 
 public class ModelLoader {
     public static Mesh loadModelObj(String modelPath) {
+        return loadModelObj(modelPath, 1.0f);
+    }
+
+    public static Mesh loadModelObj(String modelPath, float scale) {
         try {
-            List<String> lines = Files.readAllLines(Paths.get(modelPath));
+            Path modelFilePath = Paths.get(modelPath);
+            List<String> lines = Files.readAllLines(modelFilePath);
             ArrayList<Float> vertices = new ArrayList<>();
             ArrayList<Float> texture = new ArrayList<>();
             ArrayList<Float> normals = new ArrayList<>();
 
-            parseLines(lines, vertices, normals, texture);
+            parseLines(lines, vertices, normals, texture, scale);
 
             // Parse materials if specified
             Map<String, float[]> materials = new HashMap<>();
@@ -27,8 +33,9 @@ public class ModelLoader {
                     String[] split = trimmed.split("\\s+");
                     if (split.length > 1) {
                         String mtlFileName = split[1];
-                        java.nio.file.Path parent = Paths.get(modelPath).getParent();
-                        java.nio.file.Path mtlPath = parent != null ? parent.resolve(mtlFileName) : Paths.get(mtlFileName);
+                        java.nio.file.Path parent = modelFilePath.getParent();
+                        java.nio.file.Path mtlPath = parent != null ? parent.resolve(
+                                mtlFileName) : Paths.get(mtlFileName);
                         materials.putAll(loadMtl(mtlPath.toString()));
                     }
                 }
@@ -51,8 +58,14 @@ public class ModelLoader {
                     String[] split = trimmed.split("\\s+");
                     if (split.length > 1) {
                         String matName = split[1];
-                        activeColor = materials.getOrDefault(matName + "_Kd", new float[]{1.0f, 1.0f, 1.0f});
-                        activeEmissive = materials.getOrDefault(matName + "_Ke", new float[]{0.0f, 0.0f, 0.0f});
+                        activeColor = materials.getOrDefault(matName + "_Kd",
+                                                             new float[]{1.0f,
+                                                                         1.0f,
+                                                                         1.0f});
+                        activeEmissive = materials.getOrDefault(matName + "_Ke",
+                                                                new float[]{0.0f,
+                                                                            0.0f,
+                                                                            0.0f});
                     }
                 } else if (trimmed.startsWith("f ")) {
                     String[] split = trimmed.split("\\s+");
@@ -102,7 +115,12 @@ public class ModelLoader {
             float[] emissiveArray = ArrayUtils.convertToFloatArray(finalEmissive);
             int[] indicesArray = ArrayUtils.convertToIntArray(finalIndices);
 
-            return Mesh.create3D(vertexArray, indicesArray, normalArray, textureArray, colorArray, emissiveArray);
+            return Mesh.create3D(vertexArray,
+                                 indicesArray,
+                                 normalArray,
+                                 textureArray,
+                                 colorArray,
+                                 emissiveArray);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load obj file: " + modelPath, e);
@@ -119,12 +137,14 @@ public class ModelLoader {
                 String[] split = trimmed.split("\\s+");
                 if (trimmed.startsWith("newmtl ") && split.length > 1) {
                     currentMaterial = split[1];
-                } else if (trimmed.startsWith("Kd ") && currentMaterial != null && split.length > 3) {
+                } else if (trimmed.startsWith("Kd ") && currentMaterial != null &&
+                           split.length > 3) {
                     float r = Float.parseFloat(split[1]);
                     float g = Float.parseFloat(split[2]);
                     float b = Float.parseFloat(split[3]);
                     materialColors.put(currentMaterial + "_Kd", new float[]{r, g, b});
-                } else if (trimmed.startsWith("Ke ") && currentMaterial != null && split.length > 3) {
+                } else if (trimmed.startsWith("Ke ") && currentMaterial != null &&
+                           split.length > 3) {
                     float r = Float.parseFloat(split[1]);
                     float g = Float.parseFloat(split[2]);
                     float b = Float.parseFloat(split[3]);
@@ -132,7 +152,8 @@ public class ModelLoader {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Failed to load mtl file: " + mtlPath + ". " + e.getMessage());
+            System.err.println(
+                    "Failed to load mtl file: " + mtlPath + ". " + e.getMessage());
         }
         return materialColors;
     }
@@ -140,14 +161,15 @@ public class ModelLoader {
     private static void parseLines(List<String> lines,
                                    ArrayList<Float> vertices,
                                    ArrayList<Float> normals,
-                                   ArrayList<Float> texture) {
+                                   ArrayList<Float> texture,
+                                   float scale) {
         for (String line : lines) {
             String trimmed = line.trim();
             String[] split = trimmed.split("\\s+");
             if (trimmed.startsWith("v ")) {
-                vertices.add(Float.parseFloat(split[1]));
-                vertices.add(Float.parseFloat(split[2]));
-                vertices.add(Float.parseFloat(split[3]));
+                vertices.add(Float.parseFloat(split[1]) * scale);
+                vertices.add(Float.parseFloat(split[2]) * scale);
+                vertices.add(Float.parseFloat(split[3]) * scale);
             } else if (trimmed.startsWith("vn ")) {
                 normals.add(Float.parseFloat(split[1]));
                 normals.add(Float.parseFloat(split[2]));

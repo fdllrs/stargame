@@ -6,12 +6,15 @@ import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
 import game.objects.celestialBodies.CelestialBody;
+import game.objects.celestialBodies.Planet;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import static game.geometry.ScreenQuadGeometry.generateScreenQuad;
 import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL13C.*;
+import static org.lwjgl.opengl.GL30C.*;
 
 /**
  * Owns all rendering resources and executes the two-pass render pipeline:
@@ -27,8 +30,12 @@ public class Renderer {
     private final ShaderProgram shaderPixelArt;
     private final ShaderProgram shaderOutline;
     private final ShaderProgram shaderStarfield;
+    private final ShaderProgram shaderShadow;
     private final Mesh screenQuad;
     private Framebuffer fbo;
+    private final int shadowFbo;
+    private final int shadowDepthTex;
+    private final Matrix4f currentLightSpaceMatrix = new Matrix4f();
 
     public Renderer(long windowHandle) {
         shader3D = ShaderProgram.initShader("/game/basic.vert", "/game/basic.frag");
@@ -39,10 +46,33 @@ public class Renderer {
                                                  "/game/outline.frag");
         shaderStarfield = ShaderProgram.initShader("/game/starfield.vert",
                                                    "/game/starfield.frag");
+        shaderShadow = ShaderProgram.initShader("/game/shadow.vert", "/game/shadow.frag");
 
         Vector2i size = Window.getWindowSize(windowHandle);
         fbo = new Framebuffer(size.x / PIXEL_ART_DOWNSCALE, size.y / PIXEL_ART_DOWNSCALE);
         screenQuad = generateScreenQuad();
+
+        // Setup Shadow Map Framebuffer (depth-only map)
+        shadowFbo = glGenFramebuffers();
+        shadowDepthTex = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 2048, 2048, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (java.nio.ByteBuffer) null);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float[] borderColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowDepthTex, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw new RuntimeException("Shadow Framebuffer is not complete!");
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     /**
@@ -54,11 +84,45 @@ public class Renderer {
     }
 
     /**
-     * Executes both render passes for a single frame.
+     * Executes render passes for a single frame, including shadow rendering.
      */
     public void render(Scene scene, Camera camera, long windowHandle) {
+        renderShadowPass(scene, camera);
         renderScenePass(scene, camera, windowHandle);
         renderUpscalePass();
+    }
+
+    private void renderShadowPass(Scene scene, Camera camera) {
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
+        glViewport(0, 0, 2048, 2048);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE); // Disable culling to match the main rendering pass
+
+        shaderShadow.bind();
+
+        // 1. Calculate direction vector from Star (0,0,0) to player/camera
+        Vector3f cameraPos = camera.getPosition();
+        Vector3f lightDir = new Vector3f(cameraPos).normalize();
+
+        // 2. Position light camera at a distance behind player (closer to the star)
+        Vector3f lightPos = new Vector3f(cameraPos).sub(new Vector3f(lightDir).mul(350.0f));
+
+        Matrix4f lightView = new Matrix4f().lookAt(lightPos, cameraPos, new Vector3f(0, 1, 0));
+        Matrix4f lightProjection = new Matrix4f().ortho(-150.0f, 150.0f, -150.0f, 150.0f, 150.0f, 550.0f);
+
+        currentLightSpaceMatrix.set(lightProjection).mul(lightView);
+        shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
+
+        // 3. Render planets (and their facilities) and player spacecraft to shadow map
+        for (Planet planet : scene.getPlanets()) {
+            planet.render(shaderShadow);
+        }
+        scene.getPlayer().render(shaderShadow);
+
+        shaderShadow.unbind();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     private void renderScenePass(Scene scene, Camera camera, long windowHandle) {
@@ -88,6 +152,13 @@ public class Renderer {
         shader3D.bind();
         shader3D.setUniform("view", camera.getViewMatrix());
         shader3D.setUniform("projection", camera.getProjectionMatrix());
+
+        // Bind shadow matrix and map depth texture
+        shader3D.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
+        shader3D.setUniform("shadowMap", 1);
+        glActiveTexture(GL_TEXTURE0);
 
         scene.render(shader3D, shaderStar, camera);
         shader3D.unbind();
@@ -145,6 +216,9 @@ public class Renderer {
         shaderPixelArt.cleanup();
         shaderOutline.cleanup();
         shaderStarfield.cleanup();
+        shaderShadow.cleanup();
+        glDeleteFramebuffers(shadowFbo);
+        glDeleteTextures(shadowDepthTex);
         fbo.cleanup();
         screenQuad.cleanup();
     }

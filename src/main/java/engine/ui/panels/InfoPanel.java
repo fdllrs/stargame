@@ -4,12 +4,15 @@ import engine.ui.Describable;
 import engine.ui.UIElement;
 import engine.ui.UIRow;
 import engine.ui.buttons.UIButton;
-import engine.ui.panels.infotabs.UIBuildTab;
-import engine.ui.panels.infotabs.UIStatsTab;
-import engine.ui.panels.infotabs.UIStorageTab;
+import engine.ui.tabs.UITab;
+import engine.ui.tabs.UITabBar;
+import engine.ui.tabs.infotabs.UIBuildTab;
+import engine.ui.tabs.infotabs.UIStatsTab;
+import engine.ui.tabs.infotabs.UIStorageTab;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
+import game.items.RawResource;
 import game.objects.celestialBodies.Planet;
 import org.joml.Vector4f;
 
@@ -18,7 +21,7 @@ import java.util.Map;
 public class InfoPanel extends UIPanel {
     private final StorageComponent playerStorage;
     private Describable currentTarget;
-    private Tab currentTab = Tab.STATS;
+    private UITabBar tabBar;
 
     public InfoPanel(float x,
                      float y,
@@ -29,15 +32,11 @@ public class InfoPanel extends UIPanel {
                      StorageComponent playerStorage) {
         super(x, y, width, height, color, font);
         this.playerStorage = playerStorage;
+
+        playerStorage.deposit(RawResource.METAL, 10000);
     }
 
     public void tick() {
-        rebuildElements();
-    }
-
-    public void setTarget(Describable target) {
-        this.currentTarget = target;
-        this.currentTab = Tab.STATS; // Reset to stats tab on target switch
         rebuildElements();
     }
 
@@ -49,23 +48,14 @@ public class InfoPanel extends UIPanel {
 
         setPanelTitle(currentTarget.getDisplayName());
 
-        addTabsBar();
-
-        if (currentTarget instanceof Planet planet) {
-            switch (currentTab) {
-                case STATS -> children.addAll(UIStatsTab.build(planet, font, width));
-                case STORAGE -> children.addAll(UIStorageTab.build(planet.getStorage(),
-                                                                   playerStorage,
-                                                                   font,
-                                                                   width,
-                                                                   this::rebuildElements));
-                case CONSTRUCTION -> children.addAll(UIBuildTab.build(planet,
-                                                                      font,
-                                                                      width,
-                                                                      this::rebuildElements));
+        if (tabBar != null) {
+            children.add(tabBar);
+            UITab activeTab = tabBar.getActiveTab();
+            if (activeTab != null) {
+                children.addAll(activeTab.getContent());
             }
         } else {
-            addProperties();
+            buildDisplayProperties();
         }
 
         layout();
@@ -100,55 +90,7 @@ public class InfoPanel extends UIPanel {
         return currentTarget != null;
     }
 
-    private void addTabsBar() {
-        UIRow tabsRow = new UIRow(5);
-        Vector4f activeColor = new Vector4f(0.2f, 0.5f, 0.9f, 1.0f);    // Slate Blue
-        Vector4f inactiveColor = new Vector4f(0.12f, 0.12f, 0.12f, 1.0f); // Dark Charcoal
-        Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-        tabsRow.addElement(new UIButton(110,
-                                        30,
-                                        (currentTab == Tab.STATS)
-                                        ? activeColor
-                                        : inactiveColor,
-                                        textCol,
-                                        "Stats",
-                                        () -> {
-                                            currentTab = Tab.STATS;
-                                            rebuildElements();
-                                        },
-                                        font));
-
-        tabsRow.addElement(new UIButton(110,
-                                        30,
-                                        (currentTab == Tab.STORAGE)
-                                        ? activeColor
-                                        : inactiveColor,
-                                        textCol,
-                                        "Storage",
-                                        () -> {
-                                            currentTab = Tab.STORAGE;
-                                            rebuildElements();
-                                        },
-                                        font));
-
-        tabsRow.addElement(new UIButton(110,
-                                        30,
-                                        (currentTab == Tab.CONSTRUCTION)
-                                        ? activeColor
-                                        : inactiveColor,
-                                        textCol,
-                                        "Build",
-                                        () -> {
-                                            currentTab = Tab.CONSTRUCTION;
-                                            rebuildElements();
-                                        },
-                                        font));
-
-        children.add(tabsRow);
-    }
-
-    private void addProperties() {
+    private void buildDisplayProperties() {
         for (Map.Entry<String, String> entry : currentTarget.getDisplayProperties()) {
             String line = entry.getKey() + ": " + entry.getValue();
             children.add(new UIText(line,
@@ -162,9 +104,34 @@ public class InfoPanel extends UIPanel {
         }
     }
 
+    public void setTarget(Describable target) {
+        this.currentTarget = target;
+        initializeTabBar(target);
+        rebuildElements();
+    }
+
+    private void initializeTabBar(Describable target) {
+        if (target instanceof Planet planet) {
+            tabBar = new UITabBar(5, font, this::rebuildElements);
+            tabBar.addTab("Stats", () -> UIStatsTab.build(planet, font, width));
+            tabBar.addTab("Storage",
+                          () -> UIStorageTab.build(planet.getStorage(),
+                                                   playerStorage,
+                                                   font,
+                                                   width,
+                                                   this::rebuildElements));
+            tabBar.addTab("Build",
+                          () -> UIBuildTab.build(planet,
+                                                 playerStorage,
+                                                 font,
+                                                 width,
+                                                 this::rebuildElements));
+        } else {
+            tabBar = null;
+        }
+    }
+
     @Override public void onResize(int screenWidth, int screenHeight) {
         setSize(400, screenHeight - 100);
     }
-
-    private enum Tab {STATS, STORAGE, CONSTRUCTION}
 }

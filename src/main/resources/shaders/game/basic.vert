@@ -8,12 +8,14 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat3 normalMatrix;
+uniform mat4 lightSpaceMatrix;
 
 out vec3 surfaceNormal;
 out vec3 worldPosition;
 out vec3 localPosition;
 out vec3 VertexColor;
 out vec3 VertexEmissive;
+out vec4 fragPosLightSpace;
 
 void main() {
     surfaceNormal   = normalMatrix * normal;
@@ -21,5 +23,6 @@ void main() {
     worldPosition  = vec3(model * vec4(position, 1.0));
     VertexColor = color;
     VertexEmissive = aEmissive;
+    fragPosLightSpace = lightSpaceMatrix * vec4(worldPosition, 1.0);
     gl_Position = projection * view * vec4(worldPosition, 1.0);
 }

@@ -10,7 +10,7 @@ import org.joml.Vector4f;
 public class UIButton extends UIElement {
     private final Runnable onClick;
     private final UIText textLabel;
-    private boolean isEnabled = true;
+    private boolean enabled = true;
 
     public UIButton(float width,
                     float height,
@@ -46,26 +46,18 @@ public class UIButton extends UIElement {
     }
 
     @Override public void handleClick(float mouseX, float mouseY) {
-        if (onClick != null && isEnabled) {
+        if (enabled && onClick != null) {
             onClick.run();
         }
     }
 
     @Override public void render(ShaderProgram shader, Mesh uiQuad) {
         shader.setUniform("useTexture", 0);
-        if (isEnabled) {
-            shader.setUniform("uiColor", this.color);
-
-        } else {
-            shader.setUniform("uiColor", new Vector4f(0.5f, 0.5f, 0.5f, 0.4f));
-
-        }
-        textLabel.setTextEnabled(isEnabled);
+        shader.setUniform("uiColor", this.color);
         shader.setUniform("model", this.modelMatrix);
         uiQuad.render();
 
         textLabel.render(shader, uiQuad);
-
     }
 
     @Override public void setPosition(float x, float y) {
@@ -74,7 +66,10 @@ public class UIButton extends UIElement {
     }
 
     public void setEnabled(boolean enabled) {
-        this.isEnabled = enabled;
+        this.enabled = enabled;
+        setOpacity(enabled ? 1.0f : 0.3f);
+        if (this.textLabel != null) {
+            this.textLabel.setOpacity(enabled ? 1.0f : 0.3f);
+        }
     }
-
 }
