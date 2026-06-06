@@ -20,7 +20,7 @@ public class Star extends CelestialBody implements Describable {
     private float elapsedTime = 0f;
 
     public Star(StarInfo info) {
-        super(PlanetGeometry.generate(6, info.radius()),
+        super(PlanetGeometry.generate(32, info.radius(), null),
               info.colorA(),
               new Vector3f(0, 0, 0));
         this.starInfo = info;
@@ -28,7 +28,9 @@ public class Star extends CelestialBody implements Describable {
         this.colorA = info.colorA();
         this.colorB = info.colorB();
         this.radius = info.radius();
-        this.light = new Light(new Vector3f(0, 0, 0), info.colorA().mul(1.1f));
+        Vector3f lightColor = new Vector3f(0.7f, 0.7f, 0.7f).add(colorA.mul(0.3f,
+                                                                            new Vector3f()));
+        this.light = new Light(new Vector3f(0, 0, 0), lightColor);
     }
 
     public void update(float deltaTime) {
@@ -60,10 +62,6 @@ public class Star extends CelestialBody implements Describable {
 
     public String getName() {
         return name;
-    }
-
-    public StarInfo getStarInfo() {
-        return starInfo;
     }
 
     @Override public String getDisplayName() {

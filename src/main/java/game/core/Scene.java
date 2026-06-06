@@ -3,15 +3,25 @@ package game.core;
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
+import game.builder.PlanetBuilder;
+import game.builder.StarBuilder;
+import game.info.PlanetType;
+import game.info.StarInfo;
 import game.objects.Player;
 import game.objects.StarSystem;
 import game.objects.Starfield;
 import game.objects.celestialBodies.CelestialBody;
 import game.objects.celestialBodies.Planet;
+import game.objects.celestialBodies.Star;
 import game.objects.entities.Light;
 import org.joml.*;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.lwjgl.opengl.GL11C.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11C.glBindTexture;
+import static org.lwjgl.opengl.GL13C.*;
 
 public class Scene {
     private static final float MAX_SELECTION_DISTANCE = 6000.0f;
@@ -68,23 +78,83 @@ public class Scene {
         }
     }
 
-    public void render(ShaderProgram shader3D, ShaderProgram shaderStar, Camera camera) {
-        // Bind the star's light to the lit shader
-        Light starLight = starSystem.getStar().getLight();
-        shader3D.setUniform("lightPosition", starLight.getPosition());
-        shader3D.setUniform("lightColor", starLight.getColor());
-
+    public void render(Renderer renderer, ShaderProgram shaderStar, Camera camera) {
         for (Planet planet : starSystem.getPlanets()) {
-            planet.render(shader3D);
-        }
-        player.render(shader3D);
+            Light starLight = planet.getHomeStar().getLight();
+            ShaderProgram planetShader = renderer.getShaderForType(planet.getType());
+            planetShader.bind();
+            planetShader.setUniform("view", camera.getViewMatrix());
+            planetShader.setUniform("projection", camera.getProjectionMatrix());
+            planetShader.setUniform("viewPos", camera.getPosition());
+            planetShader.setUniform("lightSpaceMatrix",
+                                    renderer.getCurrentLightSpaceMatrix());
+            planetShader.setUniform("lightPosition", starLight.getPosition());
+            planetShader.setUniform("lightColor", starLight.getColor());
 
-        // Render the unlit star
-        shader3D.unbind();
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+            planetShader.setUniform("shadowMap", 1);
+            glActiveTexture(GL_TEXTURE0);
+
+            planet.render(planetShader);
+            planetShader.unbind();
+
+            // Render facilities on this planet using the default shader
+            if (!planet.getFacilities().isEmpty()) {
+                ShaderProgram defaultShader = renderer.getDefaultShader();
+                defaultShader.bind();
+                defaultShader.setUniform("view", camera.getViewMatrix());
+                defaultShader.setUniform("projection", camera.getProjectionMatrix());
+                defaultShader.setUniform("viewPos", camera.getPosition());
+                defaultShader.setUniform("lightSpaceMatrix",
+                                         renderer.getCurrentLightSpaceMatrix());
+                defaultShader.setUniform("lightPosition", starLight.getPosition());
+                defaultShader.setUniform("lightColor", starLight.getColor());
+
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+                defaultShader.setUniform("shadowMap", 1);
+                glActiveTexture(GL_TEXTURE0);
+
+                planet.renderFacilities(defaultShader);
+                defaultShader.unbind();
+            }
+
+            // Render extra components (like Gas Giant rings)
+            planet.renderExtra(renderer, camera);
+        }
+
+        // Bind the primary star's light for the player rendering using the default shader
+        ShaderProgram defaultShader = renderer.getDefaultShader();
+        defaultShader.bind();
+        defaultShader.setUniform("view", camera.getViewMatrix());
+        defaultShader.setUniform("projection", camera.getProjectionMatrix());
+        defaultShader.setUniform("viewPos", camera.getPosition());
+        defaultShader.setUniform("lightSpaceMatrix",
+                                 renderer.getCurrentLightSpaceMatrix());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+        defaultShader.setUniform("shadowMap", 1);
+        glActiveTexture(GL_TEXTURE0);
+
+        Light playerLight = starSystem.getStar() != null
+                            ? starSystem.getStar().getLight()
+                            : null;
+        if (playerLight != null) {
+            defaultShader.setUniform("lightPosition", playerLight.getPosition());
+            defaultShader.setUniform("lightColor", playerLight.getColor());
+        }
+        player.render(defaultShader);
+        defaultShader.unbind();
+
+        // Render all unlit stars
         shaderStar.bind();
         shaderStar.setUniform("view", camera.getViewMatrix());
         shaderStar.setUniform("projection", camera.getProjectionMatrix());
-        starSystem.getStar().render(shaderStar);
+        for (Star star : starSystem.getStars()) {
+            star.render(shaderStar);
+        }
         shaderStar.unbind();
     }
 
@@ -174,6 +244,67 @@ public class Scene {
     public void recreateStarSystem() {
         starSystem.cleanupAll();
         starSystem = new StarSystem(10);
+    }
+
+    public void createDebugSystem() {
+        starSystem.cleanupAll();
+
+        List<Star> stars = new ArrayList<>();
+        ArrayList<Planet> planets = new ArrayList<>();
+
+        // Create the 7 stars: one of each type in StarType enum
+        StarInfo.StarType[] starTypes = StarInfo.StarType.values();
+        float starSpacing = 15000f; // Space between stars along X-axis
+
+        for (int i = 0; i < starTypes.length; i++) {
+            StarInfo.StarType type = starTypes[i];
+            Star star = new StarBuilder().withType(type)
+                                         .withName("Test " + type.name())
+                                         .build();
+            // Position the star sequentially along X axis
+            star.getPosition().set(i * starSpacing, 0, 0);
+            star.updateModelMatrix();
+            // Align the light position with the star position
+            star.getLight().getPosition().set(star.getPosition());
+
+            stars.add(star);
+        }
+
+        // We need exactly 5 of each planet type: ROCKY, GAS_GIANT, ICE_GIANT, ORGANIC
+        List<PlanetType> planetTypesPool = new ArrayList<>();
+        for (PlanetType type : PlanetType.values()) {
+            for (int k = 0; k < 5; k++) {
+                planetTypesPool.add(type);
+            }
+        }
+
+        // Distribute the 20 planets across the 7 stars:
+        // Stars 0-5 get 3 planets each, Star 6 gets 2 planets.
+        int planetIndex = 0;
+        for (int i = 0; i < stars.size(); i++) {
+            Star star = stars.get(i);
+            int planetsForThisStar = (i == stars.size() - 1) ? 2 : 3;
+
+            for (int j = 0; j < planetsForThisStar; j++) {
+                PlanetType type = planetTypesPool.get(planetIndex++);
+
+                // Position planets orbiting their home star at custom distances
+                float baseDistance = star.getRadius() + 300f;
+                float orbitDistance = baseDistance + (j * 400f);
+
+                Planet planet = PlanetBuilder.create(star, type)
+                                             .withOrbitDistance(orbitDistance)
+                                             .withOrbitSpeed(0.005f + j * 0.002f)
+                                             .withRadius(30f + j * 10f) //
+                                             // Distinct sizes
+                                             .build();
+
+                planets.add(planet);
+            }
+        }
+
+        // Instantiate the system with all stars and planets
+        starSystem = new StarSystem(stars, planets);
     }
 
     public Starfield getStarfield() {

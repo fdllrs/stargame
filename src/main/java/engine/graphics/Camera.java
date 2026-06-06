@@ -9,19 +9,19 @@ public class Camera {
     private static final float FOV_SPEED_FACTOR = 0.07f;
     private static final float NEAR_PLANE = 0.1f;
     private static final float FAR_PLANE = 100_000.0f;
+    private static final float turboMultiplier = 3f;
+    private static final float mouseSensitivity = 0.15f;
+    private static final float distanceFromPlayer = 15f;
+    private static final float maxSpeed = 800f;
+    private static final float brakeStrength = 0.95f;
     private final float acceleration = 100f;
-    private final float turboMultiplier = 2f;
-    private final float mouseSensitivity = 0.15f;
-    private final float distanceFromPlayer = 15f;
-    private final float maxSpeed = 800f;
-    private final float brakeStrength = 0.95f;
     private final Vector3f velocity = new Vector3f();
     private final Matrix4f projectionMatrix;
     public Vector3f position;
     public Vector3f rotation;
     Matrix4f viewMatrix;
     private float aspectRatio;
-    private float cachedFov = -1f; // sentinel so matrix is built on first frame
+    private float cachedFov = -1f;
 
     public Camera() {
         this(1280f / 720f);

@@ -1,9 +1,11 @@
 package game.objects.celestialBodies;
 
+import engine.graphics.Camera;
+import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.Describable;
 import game.components.StorageComponent;
-import game.geometry.PlanetGeometry;
+import game.core.Renderer;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
 import game.items.ItemType;
@@ -14,20 +16,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Planet extends CelestialBody implements Describable {
-    private static final int PLANET_RESOLUTION = 4;
-    private final Star homeStar;
-    private final PlanetInfo planetInfo;
-    private final StorageComponent planetStorage;
-    List<Facility> facilities;
-    private float orbitAngle;
+public abstract class Planet extends CelestialBody implements Describable {
+    protected final Star homeStar;
+    protected final PlanetInfo planetInfo;
+    protected final StorageComponent planetStorage;
+    protected final List<Facility> facilities;
+    protected float orbitAngle;
 
-    public Planet(PlanetInfo planetInfo) {
-        this(planetInfo, new StorageComponent(1000));
+    public Planet(Mesh mesh, PlanetInfo planetInfo) {
+        this(mesh, planetInfo, new StorageComponent(1000));
     }
 
-    public Planet(PlanetInfo planetInfo, StorageComponent planetStorage) {
-        super(PlanetGeometry.generate(PLANET_RESOLUTION, planetInfo.planetRadius()),
+    public Planet(Mesh mesh, PlanetInfo planetInfo, StorageComponent planetStorage) {
+        super(mesh,
               planetInfo.colorA(),
               planetInfo.homeStar()
                         .getPosition()
@@ -42,10 +43,17 @@ public class Planet extends CelestialBody implements Describable {
         this.colorB = planetInfo.colorB();
         this.radius = planetInfo.planetRadius();
         this.facilities = new ArrayList<>();
+
+        this.rotation.x = 15.0f;
+        this.rotation.z = 5.0f;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Star getHomeStar() {
+        return homeStar;
     }
 
     @Override public String getDisplayName() {
@@ -60,25 +68,10 @@ public class Planet extends CelestialBody implements Describable {
                                  String.format("%.1f", planetInfo.orbitDistance())),
                        Map.entry("Orbit Speed",
                                  String.format("%.5f", planetInfo.orbitSpeed())),
-                       Map.entry("Type", planetInfo.type().name()));
+                       Map.entry("Type", getType().name()));
     }
 
-    @Override public void render(ShaderProgram shader) {
-        shader.setUniform("isLightSource", 0);
-        shader.setUniform("model", modelMatrix);
-        shader.setUniform("normalMatrix", computeNormalMatrix());
-        shader.setUniform("colorA", colorA);
-        shader.setUniform("colorB", colorB);
-        shader.setUniform("noiseScale", 2.0f);
-        shader.setUniform("useVertexColor", 0);
-        setupStencilForSelection();
-        mesh.render();
-
-        // Render all constructed facilities on the surface
-        for (Facility facility : facilities) {
-            facility.render(shader, this.modelMatrix);
-        }
-    }
+    public abstract PlanetType getType();
 
     public void update(float deltaTime) {
         float orbitSpeed = planetInfo.orbitSpeed();
@@ -95,7 +88,6 @@ public class Planet extends CelestialBody implements Describable {
 
         rotate(deltaTime);
         updateModelMatrix();
-
     }
 
     public void tickFacilities() {
@@ -108,10 +100,6 @@ public class Planet extends CelestialBody implements Describable {
         planetStorage.deposit(resourceType, amount);
     }
 
-    public void withdraw(ItemType resourceType, int amount) {
-        planetStorage.withdraw(resourceType, amount);
-    }
-
     public StorageComponent getStorage() {
         return planetStorage;
     }
@@ -120,12 +108,37 @@ public class Planet extends CelestialBody implements Describable {
         planetStorage.addCapacity(capacity);
     }
 
-    public PlanetType getType() {
-        return planetInfo.type();
-    }
-
     public void addFacility(Facility facility) {
         facilities.add(facility);
+    }
+
+    @Override public void cleanup() {
+        super.cleanup();
+    }
+
+    @Override public void render(ShaderProgram shader) {
+        shader.setUniform("isLightSource", 0);
+        shader.setUniform("model", modelMatrix);
+        shader.setUniform("normalMatrix", computeNormalMatrix());
+        shader.setUniform("colorA", colorA);
+        shader.setUniform("colorB", colorB);
+        shader.setUniform("radius", radius);
+        setupStencilForSelection();
+        mesh.render();
+    }
+
+    public List<Facility> getFacilities() {
+        return facilities;
+    }
+
+    public void renderFacilities(ShaderProgram shader) {
+        for (Facility facility : facilities) {
+            facility.render(shader, this.modelMatrix);
+        }
+    }
+
+    public void renderExtra(Renderer renderer, Camera camera) {
+        // Default implementation does nothing
     }
 
 }

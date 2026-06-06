@@ -28,6 +28,8 @@ public class Game {
     private UIManager uiManager;
     private InfoPanel infoPanel;
     private PlayerResourcesPanel playerResourcesPanel;
+    private boolean wasOPressed = false;
+    private boolean wasTPressed = false;
 
     public void run() {
         init();
@@ -139,9 +141,19 @@ public class Game {
         if (input.consumeLeftClick()) {
             handleLeftClick();
         }
-        if (glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS) {
+        boolean isOPressed = glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS;
+        if (isOPressed && !wasOPressed) {
             scene.recreateStarSystem();
+            placePlayerAtFirstPlanet();
         }
+        wasOPressed = isOPressed;
+
+        boolean isTPressed = glfwGetKey(windowHandle, GLFW_KEY_T) == GLFW_PRESS;
+        if (isTPressed && !wasTPressed) {
+            scene.createDebugSystem();
+            placePlayerAtFirstPlanet();
+        }
+        wasTPressed = isTPressed;
 
         camera.applyMovement(deltaTime);
 
