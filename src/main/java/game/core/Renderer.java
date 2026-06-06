@@ -160,6 +160,7 @@ public class Renderer {
         // 3. Render planets (and their facilities) and player spacecraft to shadow map
         for (Planet planet : scene.getPlanets()) {
             planet.render(shaderShadow);
+            planet.renderFacilities(shaderShadow);
         }
         scene.getPlayer().render(shaderShadow);
 
