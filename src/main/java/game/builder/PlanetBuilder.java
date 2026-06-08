@@ -86,7 +86,6 @@ public abstract class PlanetBuilder {
     }
 
     @NotNull protected basicPlanetInfo buildBasicPlanetInfo() {
-        float finalRadius = (this.radius != null) ? this.radius : randomRadius();
         float finalDistance = (this.orbitDistance != null)
                               ? this.orbitDistance
                               : randomOrbitDistance();
@@ -103,8 +102,7 @@ public abstract class PlanetBuilder {
 
         Vector3f finalColorA = (this.colorA != null) ? this.colorA : randomColor();
         Vector3f finalColorB = (this.colorB != null) ? this.colorB : randomColor();
-        return new basicPlanetInfo(finalRadius,
-                                   finalDistance,
+        return new basicPlanetInfo(finalDistance,
                                    finalSpeed,
                                    finalAngle,
                                    finalColorA,
@@ -115,10 +113,6 @@ public abstract class PlanetBuilder {
         float minDistance = homeStar.getRadius() + MAX_EXTRA_RADIUS +
                             ORBIT_DISTANCE_PADDING;
         return minDistance + RANDOM.nextFloat() * (MAX_ORBIT_DISTANCE - minDistance);
-    }
-
-    protected float randomRadius() {
-        return RANDOM.nextFloat() * MAX_EXTRA_RADIUS + MIN_RADIUS;
     }
 
     abstract protected void generateColors();
@@ -135,8 +129,11 @@ public abstract class PlanetBuilder {
         return RANDOM.nextFloat() * (float) (Math.PI * 2.0);
     }
 
-    protected record basicPlanetInfo(float finalRadius,
-                                     float finalDistance,
+    protected float randomRadius() {
+        return RANDOM.nextFloat() * MAX_EXTRA_RADIUS + MIN_RADIUS;
+    }
+
+    protected record basicPlanetInfo(float finalDistance,
                                      float finalSpeed,
                                      float finalAngle,
                                      Vector3f finalColorA,

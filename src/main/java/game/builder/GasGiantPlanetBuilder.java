@@ -13,11 +13,12 @@ public class GasGiantPlanetBuilder extends PlanetBuilder {
 
     @Override public GasGiantPlanet build() {
         basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
+        float finalRadius = (this.radius != null) ? this.radius : randomRadius() * 6;
 
         PlanetInfo info = new PlanetInfo(homeStar,
                                          basicPlanetInfo.finalSpeed(),
                                          basicPlanetInfo.finalAngle(),
-                                         basicPlanetInfo.finalRadius(),
+                                         finalRadius,
                                          basicPlanetInfo.finalDistance(),
                                          basicPlanetInfo.finalColorA(),
                                          basicPlanetInfo.finalColorB(),
@@ -34,6 +35,7 @@ public class GasGiantPlanetBuilder extends PlanetBuilder {
         } else {
             setNeptuneColors();
         }
+
     }
 
     private void setNeptuneColors() {

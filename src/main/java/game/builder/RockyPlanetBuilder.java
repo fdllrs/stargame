@@ -15,10 +15,12 @@ public class RockyPlanetBuilder extends PlanetBuilder {
 
         basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 
+        float finalRadius = (this.radius != null) ? this.radius : randomRadius();
+
         PlanetInfo info = new PlanetInfo(homeStar,
                                          basicPlanetInfo.finalSpeed(),
                                          basicPlanetInfo.finalAngle(),
-                                         basicPlanetInfo.finalRadius(),
+                                         finalRadius,
                                          basicPlanetInfo.finalDistance(),
                                          basicPlanetInfo.finalColorA(),
                                          basicPlanetInfo.finalColorB(),

@@ -13,11 +13,12 @@ public class IceGiantPlanetBuilder extends PlanetBuilder {
 
     @Override public IceGiantPlanet build() {
         basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
+        float finalRadius = (this.radius != null) ? this.radius : randomRadius() * 5;
 
         PlanetInfo info = new PlanetInfo(homeStar,
                                          basicPlanetInfo.finalSpeed(),
                                          basicPlanetInfo.finalAngle(),
-                                         basicPlanetInfo.finalRadius(),
+                                         finalRadius,
                                          basicPlanetInfo.finalDistance(),
                                          basicPlanetInfo.finalColorA(),
                                          basicPlanetInfo.finalColorB(),
