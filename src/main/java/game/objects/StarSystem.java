@@ -3,6 +3,7 @@ package game.objects;
 import game.builder.PlanetBuilder;
 import game.builder.StarBuilder;
 import game.objects.celestialBodies.CelestialBody;
+import game.objects.celestialBodies.Moon;
 import game.objects.celestialBodies.Planet;
 import game.objects.celestialBodies.Star;
 
@@ -35,9 +36,140 @@ public class StarSystem {
     }
 
     private void generateRandomPlanets(int planetAmount) {
+        java.util.Random RANDOM = new java.util.Random();
+        float currentDistance = star.getRadius() + 400f;
+
         for (int i = 0; i < planetAmount; i++) {
-            this.planets.add(PlanetBuilder.createRandom(star).build());
+            currentDistance += 800f + RANDOM.nextFloat() * 1000f;
+            Planet planet = PlanetBuilder.createRandom(star, currentDistance).build();
+            this.planets.add(planet);
+
+            // Attach moons procedurally
+            boolean isGiant = (planet.getType() == game.info.PlanetType.GAS_GIANT ||
+                               planet.getType() == game.info.PlanetType.ICE_GIANT);
+            int moonCount = 0;
+            if (isGiant) {
+                if (RANDOM.nextFloat() < 0.75f) {
+                    moonCount = 1 + RANDOM.nextInt(3); // 1 to 3 moons
+                }
+            } else {
+                if (RANDOM.nextFloat() < 0.25f) {
+                    moonCount = 1; // 0 or 1 moon
+                }
+            }
+
+            for (int m = 0; m < moonCount; m++) {
+                // Giants can have organic or rocky moons, terrestrial only rocky
+                game.info.PlanetType moonType = game.info.PlanetType.ROCKY;
+                if (isGiant && RANDOM.nextFloat() < 0.20f) {
+                    moonType = game.info.PlanetType.ORGANIC;
+                }
+
+                float moonRadius;
+                if (isGiant) {
+                    moonRadius = planet.getRadius() *
+                                 (0.04f + RANDOM.nextFloat() * 0.04f); // 4% to 8%
+                } else {
+                    moonRadius = planet.getRadius() *
+                                 (0.20f + RANDOM.nextFloat() * 0.07f); // 20% to 27%
+                }
+
+                // Spacing
+                float baseStart = planet.getPlanetInfo().hasRings()
+                                  ? planet.getRadius() * 8f
+                                  : planet.getRadius() * 6f;
+                float moonDistance = baseStart + (m * planet.getRadius() * 0.8f);
+
+                float moonSpeed = (0.05f + RANDOM.nextFloat() * 0.05f);
+                float moonAngle = RANDOM.nextFloat() * (float) (Math.PI * 2.0);
+
+                org.joml.Vector3f[] colors = generateColorsForType(moonType);
+                String moonName = planet.getName() + "-" + (char) ('A' + m);
+
+                game.info.PlanetInfo moonInfo = new game.info.PlanetInfo(star,
+                                                                         moonSpeed,
+                                                                         moonAngle,
+                                                                         moonRadius,
+                                                                         moonDistance,
+                                                                         colors[0],
+                                                                         colors[1],
+                                                                         moonName,
+                                                                         moonType,
+                                                                         false);
+
+                Moon moon = new Moon(moonInfo, planet);
+                planet.addMoon(moon);
+            }
         }
+    }
+
+    private org.joml.Vector3f[] generateColorsForType(game.info.PlanetType type) {
+        org.joml.Vector3f colorA;
+        org.joml.Vector3f colorB;
+        java.util.Random RANDOM = new java.util.Random();
+        if (type == game.info.PlanetType.ROCKY) {
+            int archetype = RANDOM.nextInt(3);
+            if (archetype == 0) {
+                float h1 = (RANDOM.nextFloat() * 0.15f + 0.95f) % 1.0f;
+                float h2 = (h1 + (RANDOM.nextFloat() * 0.08f - 0.04f) + 1.0f) % 1.0f;
+                float s1 = 0.3f + RANDOM.nextFloat() * 0.5f;
+                float s2 = Math.max(0.2f,
+                                    Math.min(0.9f,
+                                             s1 + (RANDOM.nextFloat() * 0.2f - 0.1f)));
+                float l1 = 0.15f + RANDOM.nextFloat() * 0.35f;
+                float l2 = Math.max(0.1f,
+                                    Math.min(0.7f,
+                                             l1 + (RANDOM.nextFloat() * 0.2f - 0.1f)));
+                colorA = game.builder.PlanetBuilder.hslToRgb(h1, s1, l1);
+                colorB = game.builder.PlanetBuilder.hslToRgb(h2, s2, l2);
+            } else if (archetype == 1) {
+                float h1 = RANDOM.nextFloat();
+                float h2 = RANDOM.nextFloat();
+                float s1 = RANDOM.nextFloat() * 0.12f;
+                float s2 = RANDOM.nextFloat() * 0.12f;
+                float l1 = 0.15f + RANDOM.nextFloat() * 0.25f;
+                float l2 = 0.35f + RANDOM.nextFloat() * 0.35f;
+                colorA = game.builder.PlanetBuilder.hslToRgb(h1, s1, l1);
+                colorB = game.builder.PlanetBuilder.hslToRgb(h2, s2, l2);
+            } else {
+                float h1 = 0.5f + RANDOM.nextFloat() * 0.15f;
+                float h2 = (h1 + (RANDOM.nextFloat() * 0.06f - 0.03f) + 1.0f) % 1.0f;
+                float s1 = 0.05f + RANDOM.nextFloat() * 0.25f;
+                float s2 = 0.05f + RANDOM.nextFloat() * 0.25f;
+                float l1 = 0.4f + RANDOM.nextFloat() * 0.35f;
+                float l2 = Math.max(0.3f,
+                                    Math.min(0.85f,
+                                             l1 + (RANDOM.nextFloat() * 0.2f - 0.1f)));
+                colorA = game.builder.PlanetBuilder.hslToRgb(h1, s1, l1);
+                colorB = game.builder.PlanetBuilder.hslToRgb(h2, s2, l2);
+            }
+        } else { // ORGANIC
+            boolean alien = RANDOM.nextFloat() < 0.4f;
+            if (!alien) {
+                float h1 = 0.5f + RANDOM.nextFloat() * 0.15f;
+                float s1 = 0.4f + RANDOM.nextFloat() * 0.35f;
+                float l1 = 0.15f + RANDOM.nextFloat() * 0.25f;
+                colorA = game.builder.PlanetBuilder.hslToRgb(h1, s1, l1);
+                float h2 = RANDOM.nextBoolean()
+                           ? 0.22f + RANDOM.nextFloat() * 0.15f
+                           : 0.08f + RANDOM.nextFloat() * 0.08f;
+                float s2 = RANDOM.nextBoolean()
+                           ? 0.35f + RANDOM.nextFloat() * 0.35f
+                           : 0.25f + RANDOM.nextFloat() * 0.25f;
+                float l2 = 0.2f + RANDOM.nextFloat() * 0.25f;
+                colorB = game.builder.PlanetBuilder.hslToRgb(h2, s2, l2);
+            } else {
+                float h1 = RANDOM.nextFloat();
+                float s1 = 0.4f + RANDOM.nextFloat() * 0.4f;
+                float l1 = 0.2f + RANDOM.nextFloat() * 0.25f;
+                colorA = game.builder.PlanetBuilder.hslToRgb(h1, s1, l1);
+                float h2 = (h1 + 0.3f + RANDOM.nextFloat() * 0.4f) % 1.0f;
+                float s2 = 0.4f + RANDOM.nextFloat() * 0.4f;
+                float l2 = 0.2f + RANDOM.nextFloat() * 0.3f;
+                colorB = game.builder.PlanetBuilder.hslToRgb(h2, s2, l2);
+            }
+        }
+        return new org.joml.Vector3f[]{colorA, colorB};
     }
 
     public StarSystem(Star star, ArrayList<Planet> planets) {
@@ -66,6 +198,9 @@ public class StarSystem {
 
     public ArrayList<CelestialBody> getAllBodies() {
         ArrayList<CelestialBody> celestialBodies = new ArrayList<>(planets);
+        for (Planet planet : planets) {
+            celestialBodies.addAll(planet.getMoons());
+        }
         celestialBodies.addAll(stars);
         return celestialBodies;
     }

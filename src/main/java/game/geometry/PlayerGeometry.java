@@ -6,6 +6,6 @@ import engine.graphics.ModelLoader;
 public class PlayerGeometry {
     public static Mesh generatePlayerMesh() {
 
-        return ModelLoader.loadModelObj("src/main/resources/models/spaceship.obj");
+        return ModelLoader.loadModelObj("src/main/resources/models/spaceship.obj", 0.15f);
     }
 }

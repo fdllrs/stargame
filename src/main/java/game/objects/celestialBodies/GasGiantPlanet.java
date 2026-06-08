@@ -20,8 +20,13 @@ public class GasGiantPlanet extends Planet {
                                       planetInfo.planetRadius(),
                                       PlanetType.GAS_GIANT),
               planetInfo);
-        this.ringMesh = PlanetGeometry.generateRing(radius * 1.4f, radius * 2.3f, 64);
-        this.ringColor = new Vector3f(colorA).lerp(colorB, 0.5f);
+        if (planetInfo.hasRings()) {
+            this.ringMesh = PlanetGeometry.generateRing(radius * 1.4f, radius * 2.3f, 64);
+            this.ringColor = new Vector3f(colorA).lerp(colorB, 0.5f);
+        } else {
+            this.ringMesh = null;
+            this.ringColor = null;
+        }
     }
 
     @Override

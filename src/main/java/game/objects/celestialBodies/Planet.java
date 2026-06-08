@@ -21,6 +21,7 @@ public abstract class Planet extends CelestialBody implements Describable {
     protected final PlanetInfo planetInfo;
     protected final StorageComponent planetStorage;
     protected final List<Facility> facilities;
+    protected final List<Moon> moons = new ArrayList<>();
     protected float orbitAngle;
 
     public Planet(Mesh mesh, PlanetInfo planetInfo) {
@@ -56,6 +57,10 @@ public abstract class Planet extends CelestialBody implements Describable {
         return homeStar;
     }
 
+    public PlanetInfo getPlanetInfo() {
+        return planetInfo;
+    }
+
     @Override public String getDisplayName() {
         return "Planet: " + name;
     }
@@ -68,7 +73,8 @@ public abstract class Planet extends CelestialBody implements Describable {
                                  String.format("%.1f", planetInfo.orbitDistance())),
                        Map.entry("Orbit Speed",
                                  String.format("%.5f", planetInfo.orbitSpeed())),
-                       Map.entry("Type", getType().name()));
+                       Map.entry("Type", getType().name()),
+                       Map.entry("Rings", planetInfo.hasRings() ? "Yes" : "No"));
     }
 
     public abstract PlanetType getType();
@@ -88,6 +94,10 @@ public abstract class Planet extends CelestialBody implements Describable {
 
         rotate(deltaTime);
         updateModelMatrix();
+
+        for (Moon moon : moons) {
+            moon.update(deltaTime);
+        }
     }
 
     public void tickFacilities() {
@@ -112,8 +122,19 @@ public abstract class Planet extends CelestialBody implements Describable {
         facilities.add(facility);
     }
 
+    public List<Moon> getMoons() {
+        return moons;
+    }
+
+    public void addMoon(Moon moon) {
+        moons.add(moon);
+    }
+
     @Override public void cleanup() {
         super.cleanup();
+        for (Moon moon : moons) {
+            moon.cleanup();
+        }
     }
 
     @Override public void render(ShaderProgram shader) {

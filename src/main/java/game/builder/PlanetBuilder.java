@@ -23,6 +23,7 @@ public abstract class PlanetBuilder {
     protected Float orbitDistance = null;
     protected Vector3f colorA = null;
     protected Vector3f colorB = null;
+    protected Boolean hasRings = null;
 
     public PlanetBuilder(Star homeStar) {
         this.homeStar = homeStar;
@@ -51,6 +52,11 @@ public abstract class PlanetBuilder {
         return this;
     }
 
+    public PlanetBuilder withRings(boolean hasRings) {
+        this.hasRings = hasRings;
+        return this;
+    }
+
     public static PlanetBuilder create(Star homeStar, PlanetType type) {
         return switch (type) {
             case ROCKY -> new RockyPlanetBuilder(homeStar);
@@ -65,9 +71,12 @@ public abstract class PlanetBuilder {
                             ORBIT_DISTANCE_PADDING;
         float distance = minDistance +
                          RANDOM.nextFloat() * (MAX_ORBIT_DISTANCE - minDistance);
+        return createRandom(homeStar, distance);
+    }
 
+    public static PlanetBuilder createRandom(Star homeStar, float distance) {
         PlanetBuilder builder;
-        if (distance <= MAX_ORBIT_DISTANCE / 2.5f) {
+        if (distance <= homeStar.getRadius() * 25f) {
             builder = RANDOM.nextBoolean()
                       ? new RockyPlanetBuilder(homeStar)
                       : new OrganicPlanetBuilder(homeStar);
@@ -119,6 +128,29 @@ public abstract class PlanetBuilder {
 
     protected Vector3f randomColor() {
         return new Vector3f(RANDOM.nextFloat(), RANDOM.nextFloat(), RANDOM.nextFloat());
+    }
+
+    public static Vector3f hslToRgb(float h, float s, float l) {
+        float r, g, b;
+        if (s == 0f) {
+            r = g = b = l; // achromatic
+        } else {
+            float q = l < 0.5f ? l * (1f + s) : l + s - l * s;
+            float p = 2f * l - q;
+            r = hueToRgb(p, q, h + 1f/3f);
+            g = hueToRgb(p, q, h);
+            b = hueToRgb(p, q, h - 1f/3f);
+        }
+        return new Vector3f(r, g, b);
+    }
+
+    private static float hueToRgb(float p, float q, float t) {
+        if (t < 0f) t += 1f;
+        if (t > 1f) t -= 1f;
+        if (t < 1f/6f) return p + (q - p) * 6f * t;
+        if (t < 1f/2f) return q;
+        if (t < 2f/3f) return p + (q - p) * (2f/3f - t) * 6f;
+        return p;
     }
 
     protected float randomOrbitSpeed() {

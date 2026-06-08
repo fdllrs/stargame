@@ -122,6 +122,51 @@ public class Scene {
 
             // Render extra components (like Gas Giant rings)
             planet.renderExtra(renderer, camera);
+
+            // Render moons of this planet
+            for (game.objects.celestialBodies.Moon moon : planet.getMoons()) {
+                ShaderProgram moonShader = renderer.getShaderForType(moon.getType());
+                moonShader.bind();
+                moonShader.setUniform("view", camera.getViewMatrix());
+                moonShader.setUniform("projection", camera.getProjectionMatrix());
+                moonShader.setUniform("viewPos", camera.getPosition());
+                moonShader.setUniform("lightSpaceMatrix",
+                                        renderer.getCurrentLightSpaceMatrix());
+                moonShader.setUniform("lightPosition", starLight.getPosition());
+                moonShader.setUniform("lightColor", starLight.getColor());
+
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+                moonShader.setUniform("shadowMap", 1);
+                glActiveTexture(GL_TEXTURE0);
+
+                moon.render(moonShader);
+                moonShader.unbind();
+
+                // Render facilities on this moon using the default shader
+                if (!moon.getFacilities().isEmpty()) {
+                    ShaderProgram defaultShaderForMoon = renderer.getDefaultShader();
+                    defaultShaderForMoon.bind();
+                    defaultShaderForMoon.setUniform("view", camera.getViewMatrix());
+                    defaultShaderForMoon.setUniform("projection", camera.getProjectionMatrix());
+                    defaultShaderForMoon.setUniform("viewPos", camera.getPosition());
+                    defaultShaderForMoon.setUniform("lightSpaceMatrix",
+                                             renderer.getCurrentLightSpaceMatrix());
+                    defaultShaderForMoon.setUniform("lightPosition", starLight.getPosition());
+                    defaultShaderForMoon.setUniform("lightColor", starLight.getColor());
+
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+                    defaultShaderForMoon.setUniform("shadowMap", 1);
+                    glActiveTexture(GL_TEXTURE0);
+
+                    moon.renderFacilities(defaultShaderForMoon);
+                    defaultShaderForMoon.unbind();
+                }
+
+                // Render extra components (like rings, if any)
+                moon.renderExtra(renderer, camera);
+            }
         }
 
         // Bind the primary star's light for the player rendering using the default shader
@@ -289,15 +334,46 @@ public class Scene {
                 PlanetType type = planetTypesPool.get(planetIndex++);
 
                 // Position planets orbiting their home star at custom distances
-                float baseDistance = star.getRadius() + 300f;
-                float orbitDistance = baseDistance + (j * 400f);
+                float baseDistance = star.getRadius() + 400f;
+                float orbitDistance = baseDistance + (j * 1200f);
 
                 Planet planet = PlanetBuilder.create(star, type)
                                              .withOrbitDistance(orbitDistance)
                                              .withOrbitSpeed(0.005f + j * 0.002f)
-                                             .withRadius(30f + j * 10f) //
-                                             // Distinct sizes
                                              .build();
+
+                // Add a debug moon to the 2nd planet of each star
+                if (j == 1) {
+                    game.info.PlanetType moonType = game.info.PlanetType.ROCKY;
+                    boolean isGiant = (planet.getType() == game.info.PlanetType.GAS_GIANT || 
+                                       planet.getType() == game.info.PlanetType.ICE_GIANT);
+                    float moonRadius = isGiant ? planet.getRadius() * 0.06f : planet.getRadius() * 0.22f;
+                    float moonDistance = isGiant ? planet.getRadius() * 2.0f : planet.getRadius() * 1.8f;
+                    if (planet.getPlanetInfo().hasRings()) {
+                        moonDistance = planet.getRadius() * 2.8f;
+                    }
+                    float moonSpeed = 0.06f;
+                    float moonAngle = 0.0f;
+                    org.joml.Vector3f colorA = new org.joml.Vector3f(0.5f, 0.5f, 0.5f);
+                    org.joml.Vector3f colorB = new org.joml.Vector3f(0.3f, 0.3f, 0.3f);
+                    String moonName = planet.getName() + "-A";
+
+                    game.info.PlanetInfo moonInfo = new game.info.PlanetInfo(
+                            star,
+                            moonSpeed,
+                            moonAngle,
+                            moonRadius,
+                            moonDistance,
+                            colorA,
+                            colorB,
+                            moonName,
+                            moonType,
+                            false
+                    );
+
+                    game.objects.celestialBodies.Moon moon = new game.objects.celestialBodies.Moon(moonInfo, planet);
+                    planet.addMoon(moon);
+                }
 
                 planets.add(planet);
             }

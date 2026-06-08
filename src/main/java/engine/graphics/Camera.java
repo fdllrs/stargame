@@ -11,7 +11,7 @@ public class Camera {
     private static final float FAR_PLANE = 100_000.0f;
     private static final float turboMultiplier = 3f;
     private static final float mouseSensitivity = 0.15f;
-    private static final float distanceFromPlayer = 15f;
+    private static final float distanceFromPlayer = 3.75f;
     private static final float maxSpeed = 800f;
     private static final float brakeStrength = 0.95f;
     private final float acceleration = 100f;
@@ -22,10 +22,6 @@ public class Camera {
     Matrix4f viewMatrix;
     private float aspectRatio;
     private float cachedFov = -1f;
-
-    public Camera() {
-        this(1280f / 720f);
-    }
 
     public Camera(float aspectRatio) {
         this.aspectRatio = aspectRatio;

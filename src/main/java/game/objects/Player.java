@@ -8,11 +8,12 @@ import org.joml.Vector3f;
 
 public class Player extends GameObject {
     private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
-    private static final float PLAYER_RADIUS = 1.0f;
+    private static final float PLAYER_RADIUS = 0.15f;
     private final StorageComponent storage = new StorageComponent(1000);
 
     public Player() {
         super(playerMesh, new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0, 0, 0));
+        updateModelMatrix();
     }
 
     public float getRadius() {

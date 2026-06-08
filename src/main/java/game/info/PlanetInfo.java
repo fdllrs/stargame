@@ -11,4 +11,5 @@ public record PlanetInfo(Star homeStar,
                          Vector3f colorA,
                          Vector3f colorB,
                          String name,
-                         PlanetType type) {}
+                         PlanetType type,
+                         boolean hasRings) {}

@@ -23,7 +23,8 @@ public class CelestialBody extends GameObject {
         return radius;
     }
 
-    public float orbitInfluence() {
-        return radius + 5f;
+    public String getName() {
+        return name;
     }
+
 }
