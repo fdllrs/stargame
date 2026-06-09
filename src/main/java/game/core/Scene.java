@@ -3,10 +3,6 @@ package game.core;
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
-import game.builder.PlanetBuilder;
-import game.builder.StarBuilder;
-import game.info.PlanetType;
-import game.info.StarInfo;
 import game.objects.Player;
 import game.objects.StarSystem;
 import game.objects.Starfield;
@@ -16,7 +12,6 @@ import game.objects.celestialBodies.Star;
 import game.objects.entities.Light;
 import org.joml.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11C.GL_TEXTURE_2D;
@@ -131,7 +126,7 @@ public class Scene {
                 moonShader.setUniform("projection", camera.getProjectionMatrix());
                 moonShader.setUniform("viewPos", camera.getPosition());
                 moonShader.setUniform("lightSpaceMatrix",
-                                        renderer.getCurrentLightSpaceMatrix());
+                                      renderer.getCurrentLightSpaceMatrix());
                 moonShader.setUniform("lightPosition", starLight.getPosition());
                 moonShader.setUniform("lightColor", starLight.getColor());
 
@@ -148,11 +143,13 @@ public class Scene {
                     ShaderProgram defaultShaderForMoon = renderer.getDefaultShader();
                     defaultShaderForMoon.bind();
                     defaultShaderForMoon.setUniform("view", camera.getViewMatrix());
-                    defaultShaderForMoon.setUniform("projection", camera.getProjectionMatrix());
+                    defaultShaderForMoon.setUniform("projection",
+                                                    camera.getProjectionMatrix());
                     defaultShaderForMoon.setUniform("viewPos", camera.getPosition());
                     defaultShaderForMoon.setUniform("lightSpaceMatrix",
-                                             renderer.getCurrentLightSpaceMatrix());
-                    defaultShaderForMoon.setUniform("lightPosition", starLight.getPosition());
+                                                    renderer.getCurrentLightSpaceMatrix());
+                    defaultShaderForMoon.setUniform("lightPosition",
+                                                    starLight.getPosition());
                     defaultShaderForMoon.setUniform("lightColor", starLight.getColor());
 
                     glActiveTexture(GL_TEXTURE1);
@@ -291,98 +288,6 @@ public class Scene {
         starSystem = new StarSystem(10);
     }
 
-    public void createDebugSystem() {
-        starSystem.cleanupAll();
-
-        List<Star> stars = new ArrayList<>();
-        ArrayList<Planet> planets = new ArrayList<>();
-
-        // Create the 7 stars: one of each type in StarType enum
-        StarInfo.StarType[] starTypes = StarInfo.StarType.values();
-        float starSpacing = 15000f; // Space between stars along X-axis
-
-        for (int i = 0; i < starTypes.length; i++) {
-            StarInfo.StarType type = starTypes[i];
-            Star star = new StarBuilder().withType(type)
-                                         .withName("Test " + type.name())
-                                         .build();
-            // Position the star sequentially along X axis
-            star.getPosition().set(i * starSpacing, 0, 0);
-            star.updateModelMatrix();
-            // Align the light position with the star position
-            star.getLight().getPosition().set(star.getPosition());
-
-            stars.add(star);
-        }
-
-        // We need exactly 5 of each planet type: ROCKY, GAS_GIANT, ICE_GIANT, ORGANIC
-        List<PlanetType> planetTypesPool = new ArrayList<>();
-        for (PlanetType type : PlanetType.values()) {
-            for (int k = 0; k < 5; k++) {
-                planetTypesPool.add(type);
-            }
-        }
-
-        // Distribute the 20 planets across the 7 stars:
-        // Stars 0-5 get 3 planets each, Star 6 gets 2 planets.
-        int planetIndex = 0;
-        for (int i = 0; i < stars.size(); i++) {
-            Star star = stars.get(i);
-            int planetsForThisStar = (i == stars.size() - 1) ? 2 : 3;
-
-            for (int j = 0; j < planetsForThisStar; j++) {
-                PlanetType type = planetTypesPool.get(planetIndex++);
-
-                // Position planets orbiting their home star at custom distances
-                float baseDistance = star.getRadius() + 400f;
-                float orbitDistance = baseDistance + (j * 1200f);
-
-                Planet planet = PlanetBuilder.create(star, type)
-                                             .withOrbitDistance(orbitDistance)
-                                             .withOrbitSpeed(0.005f + j * 0.002f)
-                                             .build();
-
-                // Add a debug moon to the 2nd planet of each star
-                if (j == 1) {
-                    game.info.PlanetType moonType = game.info.PlanetType.ROCKY;
-                    boolean isGiant = (planet.getType() == game.info.PlanetType.GAS_GIANT || 
-                                       planet.getType() == game.info.PlanetType.ICE_GIANT);
-                    float moonRadius = isGiant ? planet.getRadius() * 0.06f : planet.getRadius() * 0.22f;
-                    float moonDistance = isGiant ? planet.getRadius() * 2.0f : planet.getRadius() * 1.8f;
-                    if (planet.getPlanetInfo().hasRings()) {
-                        moonDistance = planet.getRadius() * 2.8f;
-                    }
-                    float moonSpeed = 0.06f;
-                    float moonAngle = 0.0f;
-                    org.joml.Vector3f colorA = new org.joml.Vector3f(0.5f, 0.5f, 0.5f);
-                    org.joml.Vector3f colorB = new org.joml.Vector3f(0.3f, 0.3f, 0.3f);
-                    String moonName = planet.getName() + "-A";
-
-                    game.info.PlanetInfo moonInfo = new game.info.PlanetInfo(
-                            star,
-                            moonSpeed,
-                            moonAngle,
-                            moonRadius,
-                            moonDistance,
-                            colorA,
-                            colorB,
-                            moonName,
-                            moonType,
-                            false
-                    );
-
-                    game.objects.celestialBodies.Moon moon = new game.objects.celestialBodies.Moon(moonInfo, planet);
-                    planet.addMoon(moon);
-                }
-
-                planets.add(planet);
-            }
-        }
-
-        // Instantiate the system with all stars and planets
-        starSystem = new StarSystem(stars, planets);
-    }
-
     public Starfield getStarfield() {
         return starfield;
     }
@@ -403,6 +308,25 @@ public class Scene {
 
     public Player getPlayer() {
         return player;
+    }
+
+    public StarSystem getStarSystem() {
+        return starSystem;
+    }
+
+    public Star closestStarToPlayer() {
+        Star closest = null;
+        float minDist = Float.MAX_VALUE;
+        Vector3f playerPos = player.getPosition();
+        for (Star star : starSystem.getStars()) {
+            float d = star.getPosition().distance(playerPos);
+            if (d < minDist) {
+                minDist = d;
+                closest = star;
+            }
+        }
+        return closest;
+
     }
 
     public void tick() {

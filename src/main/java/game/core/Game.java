@@ -5,6 +5,7 @@ import engine.ui.Describable;
 import engine.ui.UIManager;
 import engine.ui.panels.InfoPanel;
 import engine.ui.panels.PlayerResourcesPanel;
+import engine.ui.panels.UIMapPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.objects.celestialBodies.CelestialBody;
@@ -19,6 +20,7 @@ public class Game {
     private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
     private static final int INITIAL_WIDTH = 1280;
     private static final int INITIAL_HEIGHT = 720;
+    private final boolean wasTPressed = false;
     private long windowHandle;
     private Window window;
     private Camera camera;
@@ -28,8 +30,10 @@ public class Game {
     private UIManager uiManager;
     private InfoPanel infoPanel;
     private PlayerResourcesPanel playerResourcesPanel;
+    private UIMapPanel uiMapPanel;
     private boolean wasOPressed = false;
-    private boolean wasTPressed = false;
+    private boolean wasMPressed = false;
+    private boolean wasCursorEnabledBeforeMap = false;
 
     public void run() {
         init();
@@ -70,6 +74,18 @@ public class Game {
         input = new Input(windowHandle, camera);
         uiManager.addElement(infoPanel);
         uiManager.addElement(playerResourcesPanel);
+
+        uiMapPanel = new UIMapPanel(INITIAL_WIDTH * 0.1f,
+                                    INITIAL_HEIGHT * 0.1f,
+                                    INITIAL_WIDTH * 0.8f,
+                                    INITIAL_HEIGHT * 0.8f,
+                                    new Vector4f(0.05f, 0.06f, 0.08f, 0.85f),
+                                    fontAtlas,
+                                    scene,
+                                    infoPanel,
+                                    windowHandle);
+        uiManager.addElement(uiMapPanel);
+
         registerResizeCallback();
         registerScrollCallback();
         placePlayerAtFirstPlanet();
@@ -134,6 +150,23 @@ public class Game {
     }
 
     private void update(float deltaTime) {
+        boolean isMPressed = glfwGetKey(windowHandle, GLFW_KEY_M) == GLFW_PRESS;
+        if (isMPressed && !wasMPressed) {
+            toggleMap();
+        }
+        wasMPressed = isMPressed;
+
+        if (uiMapPanel.isVisible()) {
+            camera.applyMovement(deltaTime);
+            scene.update(camera, false, deltaTime);
+            camera.updateViewMatrix();
+
+            if (input.consumeLeftClick()) {
+                handleLeftClick();
+            }
+            return;
+        }
+
         boolean isMoving = input.isForwardMovementPressed();
 
         input.handleCameraInput(deltaTime);
@@ -148,13 +181,6 @@ public class Game {
         }
         wasOPressed = isOPressed;
 
-        boolean isTPressed = glfwGetKey(windowHandle, GLFW_KEY_T) == GLFW_PRESS;
-        if (isTPressed && !wasTPressed) {
-            scene.createDebugSystem();
-            placePlayerAtFirstPlanet();
-        }
-        wasTPressed = isTPressed;
-
         camera.applyMovement(deltaTime);
 
         scene.update(camera, isMoving, deltaTime);
@@ -168,7 +194,7 @@ public class Game {
         if (uiManager.objectClicked(mouseX, mouseY)) {
             playerResourcesPanel.refreshAmounts();
 
-        } else {
+        } else if (!uiMapPanel.isVisible()) {
             CelestialBody clicked = scene.objectClicked(mouseX,
                                                         mouseY,
                                                         windowHandle,
@@ -177,6 +203,22 @@ public class Game {
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
         }
 
+    }
+
+    private void toggleMap() {
+        boolean nextState = !uiMapPanel.isVisible();
+        uiMapPanel.setVisible(nextState);
+
+        if (nextState) {
+            wasCursorEnabledBeforeMap = input.isCursorEnabled();
+            if (!wasCursorEnabledBeforeMap) {
+                input.toggleCursor();
+            }
+        } else {
+            if (input.isCursorEnabled() != wasCursorEnabledBeforeMap) {
+                input.toggleCursor();
+            }
+        }
     }
 
     private void cleanup() {

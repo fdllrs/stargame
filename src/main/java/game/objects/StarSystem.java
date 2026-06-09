@@ -225,6 +225,20 @@ public class StarSystem {
         return planets;
     }
 
+    public List<Planet> getPlanetsOrbitingStar(Star star) {
+        return planets.stream()
+                      .filter(p -> p.getHomeStar() == star)
+                      .toList();
+    }
+
+    public float maxOrbitDistance(Star star) {
+        return planets.stream()
+                      .filter(p -> p.getHomeStar() == star)
+                      .map(p -> p.getPlanetInfo().orbitDistance())
+                      .max(Float::compare)
+                      .orElse(star.getRadius() + 1000.0f);
+    }
+
     public Star getStar() {
         return star;
     }

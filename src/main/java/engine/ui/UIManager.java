@@ -61,6 +61,9 @@ public class UIManager {
     public void cleanup() {
         uiShader.cleanup();
         uiQuad.cleanup();
+        for (UIElement element : elements) {
+            element.cleanup();
+        }
     }
 
     public Boolean objectClicked(float mouseX, float mouseY) {

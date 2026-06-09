@@ -1,5 +1,7 @@
 package engine.ui.text;
 
+import engine.graphics.Mesh;
+import engine.graphics.ShaderProgram;
 import engine.graphics.Texture;
 
 import java.nio.file.Files;
@@ -25,10 +27,9 @@ public class FontAtlas {
             for (String line : lines) {
                 if (line.startsWith("common ")) {
                     // Extract the total image size (e.g., scaleW=512)
-                    scaleW = extractValue(line, "scaleW=") ;
+                    scaleW = extractValue(line, "scaleW=");
                     scaleH = extractValue(line, "scaleH=");
-                }
-                else if (line.startsWith("char ")) {
+                } else if (line.startsWith("char ")) {
                     // Extract all the data for a specific letter
                     int id = extractValue(line, "id=");
                     int x = extractValue(line, "x=");
@@ -39,7 +40,15 @@ public class FontAtlas {
                     int yOffset = extractValue(line, "yoffset=");
                     int xAdvance = extractValue(line, "xadvance=");
 
-                    characterMap.put(id, new CharacterInfo(id, x, y, width, height, xOffset, yOffset, xAdvance));
+                    characterMap.put(id,
+                                     new CharacterInfo(id,
+                                                       x,
+                                                       y,
+                                                       width,
+                                                       height,
+                                                       xOffset,
+                                                       yOffset,
+                                                       xAdvance));
                 }
             }
         } catch (Exception e) {
@@ -51,7 +60,8 @@ public class FontAtlas {
     private int extractValue(String line, String key) {
         int startIndex = line.indexOf(key) + key.length();
         int endIndex = line.indexOf(" ", startIndex);
-        if (endIndex == -1) endIndex = line.length();
+        if (endIndex == -1)
+            endIndex = line.length();
         return Integer.parseInt(line.substring(startIndex, endIndex).trim());
     }
 
@@ -59,8 +69,59 @@ public class FontAtlas {
         return characterMap.get(ascii);
     }
 
-    public Texture getTexture() { return texture; }
-    public float getScaleW() { return scaleW; }
-    public float getScaleH() { return scaleH; }
+    /**
+     * Renders a string at (startX, startY) using the given UI shader and quad.
+     * Caller is responsible for binding the shader and setting the projection uniform.
+     */
+    public void renderText(ShaderProgram shader,
+                           Mesh quad,
+                           String text,
+                           float startX,
+                           float startY,
+                           float fontSize,
+                           org.joml.Vector4f color) {
+        shader.setUniform("useTexture", 1);
+        shader.setUniform("uiTexture", 0);
+        shader.setUniform("uiColor", color);
+        texture.bind();
+
+        float fontSizeMultiplier = fontSize / UIText.REAL_FONT_SIZE;
+        float cursorX = startX;
+
+        org.joml.Matrix4f transform = new org.joml.Matrix4f();
+        org.joml.Vector2f uvScale = new org.joml.Vector2f();
+        org.joml.Vector2f uvOffset = new org.joml.Vector2f();
+
+        for (int i = 0; i < text.length(); i++) {
+            CharacterInfo info = characterMap.get((int) text.charAt(i));
+            if (info == null)
+                continue;
+
+            uvScale.set(info.width() / scaleW, info.height() / scaleH);
+            uvOffset.set(info.x() / scaleW, (scaleH - info.y() - info.height()) / scaleH);
+
+            shader.setUniform("uvScale", uvScale);
+            shader.setUniform("uvOffset", uvOffset);
+
+            transform.identity()
+                     .translate(cursorX + info.xOffset() * fontSizeMultiplier,
+                                startY + info.yOffset() * fontSizeMultiplier,
+                                0.0f)
+                     .scale(info.width() * fontSizeMultiplier,
+                            info.height() * fontSizeMultiplier,
+                            1.0f);
+
+            shader.setUniform("model", transform);
+            quad.render();
+
+            cursorX += info.xAdvance() * fontSizeMultiplier;
+        }
+    }
+
+    public Texture getTexture() {return texture;}
+
+    public float getScaleW() {return scaleW;}
+
+    public float getScaleH() {return scaleH;}
 
 }

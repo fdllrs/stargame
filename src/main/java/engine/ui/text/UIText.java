@@ -3,6 +3,7 @@ package engine.ui.text;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.UIElement;
+import engine.ui.panels.UIMapPanel;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -110,39 +111,31 @@ public class UIText extends UIElement {
 
         float cursorY = this.y;
 
-        // Split the text by lines so we can align each line individually
-        String[] lines = renderText.split("\n");
-
-        for (String line : lines) {
-            // 1. Calculate the starting X for THIS specific line
+        for (String line : renderText.split("\n")) {
             float cursorX = getAlignedStartX(line);
 
-            // 2. Draw the line
             for (int i = 0; i < line.length(); i++) {
-                char c = line.charAt(i);
-                CharacterInfo charInfo = font.getCharacter(c);
-                if (charInfo == null)
-                    continue;
+                CharacterInfo charInfo = font.getCharacter(line.charAt(i));
+                if (charInfo == null) continue;
 
                 uvScaleVec.set(charInfo.width() / scaleW, charInfo.height() / scaleH);
-                uvOffsetVec.set(charInfo.x() / scaleW,
-                                (scaleH - charInfo.y() - charInfo.height()) / scaleH);
+                uvOffsetVec.set(charInfo.x() / scaleW, (scaleH - charInfo.y() - charInfo.height()) / scaleH);
 
                 shader.setUniform("uvScale", uvScaleVec);
                 shader.setUniform("uvOffset", uvOffsetVec);
 
-                transformMatrix.identity();
-                float targetX = cursorX + (charInfo.xOffset() * fontSizeMultiplier);
-                float targetY = cursorY + (charInfo.yOffset() * fontSizeMultiplier);
-                transformMatrix.translate(targetX, targetY, 0.0f);
-                transformMatrix.scale(charInfo.width() * fontSizeMultiplier,
+                transformMatrix.identity()
+                               .translate(cursorX + charInfo.xOffset() * fontSizeMultiplier,
+                                          cursorY + charInfo.yOffset() * fontSizeMultiplier,
+                                          0.0f)
+                               .scale(charInfo.width() * fontSizeMultiplier,
                                       charInfo.height() * fontSizeMultiplier,
                                       1.0f);
 
                 shader.setUniform("model", transformMatrix);
                 uiQuad.render();
 
-                cursorX += (charInfo.xAdvance() * fontSizeMultiplier);
+                cursorX += charInfo.xAdvance() * fontSizeMultiplier;
             }
 
             cursorY += lineHeight;

@@ -42,6 +42,8 @@ public class GameObject extends GameEntity {
 
     public Vector3f getPosition() {return position;}
 
+    public Vector3f getRotation() {return rotation;}
+
     public Mesh getMesh() {
         return mesh;
     }

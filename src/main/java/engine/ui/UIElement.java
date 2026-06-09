@@ -65,4 +65,7 @@ public abstract class UIElement {
     public void onResize(int screenWidth, int screenHeight) {
     }
 
+    public void cleanup() {
+    }
+
 }

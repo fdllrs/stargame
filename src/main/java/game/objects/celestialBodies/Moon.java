@@ -17,6 +17,10 @@ public class Moon extends Planet {
         updatePosition();
     }
 
+    public Planet getParentPlanet() {
+        return parentPlanet;
+    }
+
     private void updatePosition() {
         float offsetX = (float) Math.cos(orbitAngle) * planetInfo.orbitDistance();
         float offsetZ = (float) Math.sin(orbitAngle) * planetInfo.orbitDistance();

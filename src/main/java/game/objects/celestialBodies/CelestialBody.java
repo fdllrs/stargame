@@ -14,6 +14,19 @@ public class CelestialBody extends GameObject {
         super(mesh, color, position);
     }
 
+    /**
+     * Projects this body's XZ position relative to a star origin into 2D map screen
+     * coordinates, given a map center and a world-to-screen scale factor.
+     */
+    public org.joml.Vector2f screenPosition(Vector3f starPos,
+                                            float scale,
+                                            float centerX,
+                                            float centerY) {
+        float dx = position.x - starPos.x;
+        float dz = position.z - starPos.z;
+        return new org.joml.Vector2f(centerX + dx * scale, centerY + dz * scale);
+    }
+
     public void rotate(float deltaTime) {
         float spinSpeedMultiplier = 0.1f;
         this.rotation.y += (float) Math.toDegrees(deltaTime * spinSpeedMultiplier);
