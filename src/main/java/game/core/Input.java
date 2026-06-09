@@ -1,43 +1,67 @@
 package game.core;
 
-import engine.graphics.Camera;
 import engine.window.Window;
 import org.joml.Vector2i;
+
+import java.util.Arrays;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class Input {
     private final long windowHandle;
-    private final Camera camera;
-    private final double[] mouseX = new double[1];
-    private final double[] mouseY = new double[1];
-    private boolean cursorEnabled;
-    private boolean leftClickPressed = false;
+    private final boolean[] keyPressAccumulator = new boolean[GLFW_KEY_LAST + 1];
+    private final boolean[] mouseButtonPressAccumulator = new boolean[
+            GLFW_MOUSE_BUTTON_LAST + 1];
+    private final boolean[] keysJustPressed = new boolean[GLFW_KEY_LAST + 1];
+    private final boolean[] mouseButtonsJustPressed = new boolean[GLFW_MOUSE_BUTTON_LAST +
+                                                                  1];
+    private float mouseX = 0;
+    private float mouseY = 0;
+    private float mouseDx = 0;
+    private float mouseDy = 0;
+    private float lastMouseX = 0;
+    private float lastMouseY = 0;
+    private double scrollDeltaX = 0;
+    private double scrollDeltaY = 0;
+    private double scrollAccumulatorX = 0;
+    private double scrollAccumulatorY = 0;
     private boolean firstMouse = true;
-    private double lastX;
-    private double lastY;
+    private boolean cursorEnabled = false;
 
-    public Input(long windowHandle, Camera camera) {
+    public Input(long windowHandle) {
         this.windowHandle = windowHandle;
-        cursorEnabled = false;
-        lastX = mouseX[0];
-        lastY = mouseY[0];
-        this.camera = camera;
-
         registerCallbacks();
-
     }
 
     private void registerCallbacks() {
-        registerTabToggleCallback(windowHandle);
-        registerClickDetectionCallback(windowHandle);
-
+        registerKeyboardCallback();
+        registerMouseButtonCallback();
+        registerScrollCallback();
     }
 
-    private void registerTabToggleCallback(long windowHandle) {
-        glfwSetKeyCallback(windowHandle, (_, key, _, action, _) -> {
-            if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
-                toggleCursor();
+    private void registerKeyboardCallback() {
+        glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
+            if (key >= 0 && key <= GLFW_KEY_LAST) {
+                if (action == GLFW_PRESS) {
+                    keyPressAccumulator[key] = true;
+                }
+            }
+        });
+    }
+
+    private void registerScrollCallback() {
+        glfwSetScrollCallback(windowHandle, (window, xOffset, yOffset) -> {
+            scrollAccumulatorX += xOffset;
+            scrollAccumulatorY += yOffset;
+        });
+    }
+
+    private void registerMouseButtonCallback() {
+        glfwSetMouseButtonCallback(windowHandle, (window, button, action, mods) -> {
+            if (button >= 0 && button <= GLFW_MOUSE_BUTTON_LAST) {
+                if (action == GLFW_PRESS) {
+                    mouseButtonPressAccumulator[button] = true;
+                }
             }
         });
     }
@@ -45,7 +69,7 @@ public class Input {
     public void toggleCursor() {
         if (cursorEnabled) {
             cursorEnabled = false;
-            glfwSetCursorPos(windowHandle, mouseX[0], mouseY[0]);
+            glfwSetCursorPos(windowHandle, mouseX, mouseY);
             glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             firstMouse = true;
         } else {
@@ -56,93 +80,112 @@ public class Input {
         }
     }
 
-    private void registerClickDetectionCallback(long windowHandle) {
-        glfwSetMouseButtonCallback(windowHandle, (_, button, action, _) -> {
-            if (button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS) {
-                return;
-            }
-
-            if (glfwGetInputMode(windowHandle, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-                return;
-            }
-            glfwGetCursorPos(windowHandle, mouseX, mouseY);
-            leftClickPressed = true;
-        });
-    }
-
     public boolean isCursorEnabled() {
         return cursorEnabled;
     }
 
+    public boolean isMouseButtonPressed(int button) {
+        if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST)
+            return false;
+        return glfwGetMouseButton(windowHandle, button) == GLFW_PRESS;
+    }
+
     public boolean isForwardMovementPressed() {
-        return glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS ||
-               glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS;
-    }
-
-    public void handleCameraInput(float deltaTime) {
-        if (!cursorEnabled) {
-            glfwGetCursorPos(windowHandle, mouseX, mouseY);
-            handleCameraRotation();
-        }
-        handleCameraMovement(deltaTime);
-
-    }
-
-    private void handleCameraRotation() {
-        if (firstMouse) {
-            lastX = mouseX[0];
-            lastY = mouseY[0];
-            firstMouse = false;
-        }
-
-        float deltaX = (float) (mouseX[0] - lastX);
-        float deltaY = (float) (mouseY[0] - lastY);
-
-        lastX = mouseX[0];
-        lastY = mouseY[0];
-
-        camera.addRotation(deltaX, deltaY);
-    }
-
-    public void handleCameraMovement(float deltaTime) {
-
-        if (isKeyPressed(GLFW_KEY_W)) {
-            if (isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-                camera.accelerateWithTurbo(deltaTime);
-            } else {
-                camera.accelerateForwards(deltaTime);
-            }
-        }
-        if (isKeyPressed(GLFW_KEY_A))
-            camera.accelerateLeft(deltaTime);
-        if (isKeyPressed(GLFW_KEY_S))
-            camera.accelerateBackwards(deltaTime);
-        if (isKeyPressed(GLFW_KEY_D))
-            camera.accelerateRight(deltaTime);
-
-        if (isKeyPressed(GLFW_KEY_SPACE))
-            camera.zeroAcceleration(false);
+        return isKeyPressed(GLFW_KEY_W) || isKeyPressed(GLFW_KEY_S);
     }
 
     public boolean isKeyPressed(int key) {
+        if (key < 0 || key > GLFW_KEY_LAST)
+            return false;
         return glfwGetKey(windowHandle, key) == GLFW_PRESS;
     }
 
-    public boolean consumeLeftClick() {
-
-        if (!leftClickPressed) {
+    public boolean isKeyJustPressed(int key) {
+        if (key < 0 || key > GLFW_KEY_LAST)
             return false;
-        }
+        return keysJustPressed[key];
+    }
 
-        leftClickPressed = false;
-        return true;
+    public boolean isMouseButtonJustPressed(int button) {
+        if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST)
+            return false;
+        return mouseButtonsJustPressed[button];
+    }
+
+    public boolean consumeMouseButtonJustPressed(int button) {
+        if (!cursorEnabled) {return false;}
+        if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST)
+            return false;
+        boolean pressed = mouseButtonsJustPressed[button];
+        mouseButtonsJustPressed[button] = false;
+        return pressed;
+    }
+
+    public void update() {
+        registerInputAndResetArray(keyPressAccumulator, keysJustPressed);
+        registerInputAndResetArray(mouseButtonPressAccumulator, mouseButtonsJustPressed);
+        processScroll();
+        processMousePosition();
+    }
+
+    private void processScroll() {
+        scrollDeltaX = scrollAccumulatorX;
+        scrollDeltaY = scrollAccumulatorY;
+        scrollAccumulatorX = 0;
+        scrollAccumulatorY = 0;
+    }
+
+    private void processMousePosition() {
+        double[] mx = new double[1];
+        double[] my = new double[1];
+        glfwGetCursorPos(windowHandle, mx, my);
+        float currentX = (float) mx[0];
+        float currentY = (float) my[0];
+        if (firstMouse) {
+            lastMouseX = currentX;
+            lastMouseY = currentY;
+            firstMouse = false;
+        }
+        mouseDx = currentX - lastMouseX;
+        mouseDy = currentY - lastMouseY;
+
+        lastMouseX = currentX;
+        lastMouseY = currentY;
+        mouseX = currentX;
+        mouseY = currentY;
+    }
+
+    private void registerInputAndResetArray(boolean[] inputAccumulator,
+                                            boolean[] justPressedArray) {
+        System.arraycopy(inputAccumulator,
+                         0,
+                         justPressedArray,
+                         0,
+                         justPressedArray.length);
+        Arrays.fill(inputAccumulator, false);
     }
 
     public float getMouseX() {
-        return (float) mouseX[0];
+        return mouseX;
     }
 
     public float getMouseY() {
-        return (float) mouseY[0];
+        return mouseY;
+    }
+
+    public float getMouseDx() {
+        return mouseDx;
+    }
+
+    public float getMouseDy() {
+        return mouseDy;
+    }
+
+    public double getScrollDeltaX() {
+        return scrollDeltaX;
+    }
+
+    public double getScrollDeltaY() {
+        return scrollDeltaY;
     }
 }

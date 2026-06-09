@@ -20,7 +20,6 @@ public class Game {
     private static final String FONT_TEXTURE = "src/main/resources/fonts/fontfile.png";
     private static final int INITIAL_WIDTH = 1280;
     private static final int INITIAL_HEIGHT = 720;
-    private final boolean wasTPressed = false;
     private long windowHandle;
     private Window window;
     private Camera camera;
@@ -31,8 +30,6 @@ public class Game {
     private InfoPanel infoPanel;
     private PlayerResourcesPanel playerResourcesPanel;
     private UIMapPanel uiMapPanel;
-    private boolean wasOPressed = false;
-    private boolean wasMPressed = false;
     private boolean wasCursorEnabledBeforeMap = false;
 
     public void run() {
@@ -71,7 +68,7 @@ public class Game {
                                                                      0.2f,
                                                                      0.8f));
 
-        input = new Input(windowHandle, camera);
+        input = new Input(windowHandle);
         uiManager.addElement(infoPanel);
         uiManager.addElement(playerResourcesPanel);
 
@@ -83,11 +80,11 @@ public class Game {
                                     fontAtlas,
                                     scene,
                                     infoPanel,
+                                    input,
                                     windowHandle);
         uiManager.addElement(uiMapPanel);
 
         registerResizeCallback();
-        registerScrollCallback();
         placePlayerAtFirstPlanet();
     }
 
@@ -104,24 +101,6 @@ public class Game {
             camera.onResize(width, height);
             uiManager.onResize(width, height);
             renderer.onResize(width, height);
-        });
-    }
-
-    private void registerScrollCallback() {
-        glfwSetScrollCallback(windowHandle, (win, _, yOffset) -> {
-            if (!input.isCursorEnabled()) {
-                return;
-            }
-
-            double[] xpos = new double[1];
-            double[] ypos = new double[1];
-            glfwGetCursorPos(win, xpos, ypos);
-            float mouseX = (float) xpos[0];
-            float mouseY = (float) ypos[0];
-
-            if (uiManager.handleScroll(mouseX, mouseY, yOffset)) {
-                playerResourcesPanel.refreshAmounts();
-            }
         });
     }
 
@@ -150,41 +129,69 @@ public class Game {
     }
 
     private void update(float deltaTime) {
-        boolean isMPressed = glfwGetKey(windowHandle, GLFW_KEY_M) == GLFW_PRESS;
-        if (isMPressed && !wasMPressed) {
+        input.update();
+
+        if (input.isKeyJustPressed(GLFW_KEY_M)) {
             toggleMap();
         }
-        wasMPressed = isMPressed;
 
-        if (uiMapPanel.isVisible()) {
-            camera.applyMovement(deltaTime);
-            scene.update(camera, false, deltaTime);
-            camera.updateViewMatrix();
-
-            if (input.consumeLeftClick()) {
-                handleLeftClick();
-            }
-            return;
+        if (input.isKeyJustPressed(GLFW_KEY_TAB)) {
+            input.toggleCursor();
         }
 
-        boolean isMoving = input.isForwardMovementPressed();
-
-        input.handleCameraInput(deltaTime);
-
-        if (input.consumeLeftClick()) {
+        if (input.consumeMouseButtonJustPressed(GLFW_MOUSE_BUTTON_LEFT)) {
             handleLeftClick();
         }
-        boolean isOPressed = glfwGetKey(windowHandle, GLFW_KEY_O) == GLFW_PRESS;
-        if (isOPressed && !wasOPressed) {
+
+        double scrollY = input.getScrollDeltaY();
+        if (scrollY != 0 && input.isCursorEnabled()) {
+            if (uiManager.handleScroll(input.getMouseX(), input.getMouseY(), scrollY)) {
+                playerResourcesPanel.refreshAmounts();
+            }
+        }
+
+        if (!uiMapPanel.isVisible()) {
+            updateCameraFromInput(deltaTime);
+        }
+
+        if (input.isKeyJustPressed(GLFW_KEY_O)) {
             scene.recreateStarSystem();
             placePlayerAtFirstPlanet();
         }
-        wasOPressed = isOPressed;
 
         camera.applyMovement(deltaTime);
-
-        scene.update(camera, isMoving, deltaTime);
+        scene.update(camera, input.isForwardMovementPressed(), deltaTime);
         camera.updateViewMatrix();
+    }
+
+    private void updateCameraFromInput(float deltaTime) {
+        handleCameraRotation();
+        handleCameraMovement(deltaTime);
+    }
+
+    private void handleCameraRotation() {
+        if (!input.isCursorEnabled()) {
+            camera.addRotation(input.getMouseDx(), input.getMouseDy());
+        }
+    }
+
+    public void handleCameraMovement(float deltaTime) {
+        if (input.isKeyPressed(GLFW_KEY_W)) {
+            if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+                camera.accelerateWithTurbo(deltaTime);
+            } else {
+                camera.accelerateForwards(deltaTime);
+            }
+        }
+        if (input.isKeyPressed(GLFW_KEY_A))
+            camera.accelerateLeft(deltaTime);
+        if (input.isKeyPressed(GLFW_KEY_S))
+            camera.accelerateBackwards(deltaTime);
+        if (input.isKeyPressed(GLFW_KEY_D))
+            camera.accelerateRight(deltaTime);
+
+        if (input.isKeyPressed(GLFW_KEY_SPACE))
+            camera.zeroAcceleration(false);
     }
 
     private void handleLeftClick() {
@@ -201,8 +208,10 @@ public class Game {
                                                         camera);
             scene.updateSelectedObject(clicked);
             infoPanel.setTarget(clicked instanceof Describable d ? d : null);
+        } else if (!uiMapPanel.contains(mouseX, mouseY)) {
+            uiMapPanel.setVisible(false);
+            input.toggleCursor();
         }
-
     }
 
     private void toggleMap() {
