@@ -3,6 +3,7 @@ package game.core;
 import engine.graphics.Camera;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
+import game.info.PlanetType;
 import game.objects.Player;
 import game.objects.StarSystem;
 import game.objects.Starfield;
@@ -20,10 +21,15 @@ import static org.lwjgl.opengl.GL13C.*;
 
 public class Scene {
     private static final float MAX_SELECTION_DISTANCE = 6000.0f;
+    private static final float DOCK_RANGE_MULTIPLIER = 4.0f;
+    private static final float DOCK_SPEED_THRESHOLD = 30.0f;
+    private static final float UNDOCK_SPEED_THRESHOLD = 80.0f;
     private final Player player;
     private final Starfield starfield;
+    private final Vector3f dockedBodyLastPos = new Vector3f();
     private StarSystem starSystem;
     private CelestialBody selectedObject;
+    private CelestialBody dockedBody;
 
     public Scene() {
         player = new Player();
@@ -34,6 +40,7 @@ public class Scene {
     public void update(Camera camera, boolean isMoving, float deltaTime) {
         starSystem.updateAll(deltaTime);
 
+        updateDocking(camera);
         checkCollisions(camera);
         player.syncWithCamera(camera, isMoving);
 
@@ -73,96 +80,49 @@ public class Scene {
         }
     }
 
+    /**
+     * Automatically dock to a nearby body when the player slows down,
+     * and undock when they accelerate away.
+     */
+    private void updateDocking(Camera camera) {
+        float speed = camera.getVelocity().length();
+
+        if (dockedBody != null) {
+            Vector3f currentPos = dockedBody.getPosition();
+            camera.translate(currentPos.x - dockedBodyLastPos.x,
+                             currentPos.y - dockedBodyLastPos.y,
+                             currentPos.z - dockedBodyLastPos.z);
+            dockedBodyLastPos.set(currentPos);
+
+            if (speed > UNDOCK_SPEED_THRESHOLD) {
+                dockedBody = null;
+            }
+            return;
+        }
+
+        if (speed >= DOCK_SPEED_THRESHOLD)
+            return;
+
+        Vector3f camPos = camera.getPosition();
+        for (CelestialBody body : starSystem.getAllBodies()) {
+            if (body instanceof Star)
+                continue;
+            float dockRange = body.getRadius() * DOCK_RANGE_MULTIPLIER;
+            if (camPos.distance(body.getPosition()) < dockRange) {
+                dockedBody = body;
+                dockedBodyLastPos.set(dockedBody.getPosition());
+                return;
+            }
+        }
+    }
+
     public void render(Renderer renderer, ShaderProgram shaderStar, Camera camera) {
         for (Planet planet : starSystem.getPlanets()) {
             Light starLight = planet.getHomeStar().getLight();
-            ShaderProgram planetShader = renderer.getShaderForType(planet.getType());
-            planetShader.bind();
-            planetShader.setUniform("view", camera.getViewMatrix());
-            planetShader.setUniform("projection", camera.getProjectionMatrix());
-            planetShader.setUniform("viewPos", camera.getPosition());
-            planetShader.setUniform("lightSpaceMatrix",
-                                    renderer.getCurrentLightSpaceMatrix());
-            planetShader.setUniform("lightPosition", starLight.getPosition());
-            planetShader.setUniform("lightColor", starLight.getColor());
+            renderCelestialBody(renderer, planet.getType(), camera, starLight, planet);
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
-            planetShader.setUniform("shadowMap", 1);
-            glActiveTexture(GL_TEXTURE0);
-
-            planet.render(planetShader);
-            planetShader.unbind();
-
-            // Render facilities on this planet using the default shader
-            if (!planet.getFacilities().isEmpty()) {
-                ShaderProgram defaultShader = renderer.getDefaultShader();
-                defaultShader.bind();
-                defaultShader.setUniform("view", camera.getViewMatrix());
-                defaultShader.setUniform("projection", camera.getProjectionMatrix());
-                defaultShader.setUniform("viewPos", camera.getPosition());
-                defaultShader.setUniform("lightSpaceMatrix",
-                                         renderer.getCurrentLightSpaceMatrix());
-                defaultShader.setUniform("lightPosition", starLight.getPosition());
-                defaultShader.setUniform("lightColor", starLight.getColor());
-
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
-                defaultShader.setUniform("shadowMap", 1);
-                glActiveTexture(GL_TEXTURE0);
-
-                planet.renderFacilities(defaultShader);
-                defaultShader.unbind();
-            }
-
-            // Render extra components (like Gas Giant rings)
-            planet.renderExtra(renderer, camera);
-
-            // Render moons of this planet
             for (game.objects.celestialBodies.Moon moon : planet.getMoons()) {
-                ShaderProgram moonShader = renderer.getShaderForType(moon.getType());
-                moonShader.bind();
-                moonShader.setUniform("view", camera.getViewMatrix());
-                moonShader.setUniform("projection", camera.getProjectionMatrix());
-                moonShader.setUniform("viewPos", camera.getPosition());
-                moonShader.setUniform("lightSpaceMatrix",
-                                      renderer.getCurrentLightSpaceMatrix());
-                moonShader.setUniform("lightPosition", starLight.getPosition());
-                moonShader.setUniform("lightColor", starLight.getColor());
-
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
-                moonShader.setUniform("shadowMap", 1);
-                glActiveTexture(GL_TEXTURE0);
-
-                moon.render(moonShader);
-                moonShader.unbind();
-
-                // Render facilities on this moon using the default shader
-                if (!moon.getFacilities().isEmpty()) {
-                    ShaderProgram defaultShaderForMoon = renderer.getDefaultShader();
-                    defaultShaderForMoon.bind();
-                    defaultShaderForMoon.setUniform("view", camera.getViewMatrix());
-                    defaultShaderForMoon.setUniform("projection",
-                                                    camera.getProjectionMatrix());
-                    defaultShaderForMoon.setUniform("viewPos", camera.getPosition());
-                    defaultShaderForMoon.setUniform("lightSpaceMatrix",
-                                                    renderer.getCurrentLightSpaceMatrix());
-                    defaultShaderForMoon.setUniform("lightPosition",
-                                                    starLight.getPosition());
-                    defaultShaderForMoon.setUniform("lightColor", starLight.getColor());
-
-                    glActiveTexture(GL_TEXTURE1);
-                    glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
-                    defaultShaderForMoon.setUniform("shadowMap", 1);
-                    glActiveTexture(GL_TEXTURE0);
-
-                    moon.renderFacilities(defaultShaderForMoon);
-                    defaultShaderForMoon.unbind();
-                }
-
-                // Render extra components (like rings, if any)
-                moon.renderExtra(renderer, camera);
+                renderCelestialBody(renderer, moon.getType(), camera, starLight, moon);
             }
         }
 
@@ -198,6 +158,46 @@ public class Scene {
             star.render(shaderStar);
         }
         shaderStar.unbind();
+    }
+
+    private static void renderCelestialBody(Renderer renderer,
+                                            PlanetType type,
+                                            Camera camera,
+                                            Light starLight,
+                                            Planet planet) {
+        ShaderProgram planetShader = renderer.getShaderForType(type);
+        configurePlanetLighting(renderer, camera, starLight, planetShader);
+
+        planet.render(planetShader);
+        planetShader.unbind();
+
+        if (planet.hasFacilities()) {
+            ShaderProgram defaultShader = renderer.getDefaultShader();
+            configurePlanetLighting(renderer, camera, starLight, defaultShader);
+            planet.renderFacilities(defaultShader);
+            defaultShader.unbind();
+        }
+
+        planet.renderExtra(renderer, camera);
+    }
+
+    private static void configurePlanetLighting(Renderer renderer,
+                                                Camera camera,
+                                                Light starLight,
+                                                ShaderProgram planetShader) {
+        planetShader.bind();
+        planetShader.setUniform("view", camera.getViewMatrix());
+        planetShader.setUniform("projection", camera.getProjectionMatrix());
+        planetShader.setUniform("viewPos", camera.getPosition());
+        planetShader.setUniform("lightSpaceMatrix",
+                                renderer.getCurrentLightSpaceMatrix());
+        planetShader.setUniform("lightPosition", starLight.getPosition());
+        planetShader.setUniform("lightColor", starLight.getColor());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, renderer.getShadowDepthTex());
+        planetShader.setUniform("shadowMap", 1);
+        glActiveTexture(GL_TEXTURE0);
     }
 
     public void cleanup() {

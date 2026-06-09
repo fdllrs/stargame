@@ -148,10 +148,6 @@ public abstract class Planet extends CelestialBody implements Describable {
         mesh.render();
     }
 
-    public List<Facility> getFacilities() {
-        return facilities;
-    }
-
     public void renderFacilities(ShaderProgram shader) {
         for (Facility facility : facilities) {
             facility.render(shader, this.modelMatrix);
@@ -162,4 +158,7 @@ public abstract class Planet extends CelestialBody implements Describable {
         // Default implementation does nothing
     }
 
+    public boolean hasFacilities() {
+        return !facilities.isEmpty();
+    }
 }

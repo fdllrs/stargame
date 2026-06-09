@@ -134,6 +134,11 @@ public class Camera {
         zeroAcceleration(true);
     }
 
+    /** Shift the camera position by a world-space delta without affecting velocity. */
+    public void translate(float dx, float dy, float dz) {
+        position.add(dx, dy, dz);
+    }
+
     public void zeroAcceleration(boolean hardBrake) {
         if (hardBrake) {
             velocity.zero();
