@@ -115,7 +115,7 @@ public class StarBuilder {
     private Vector3f generateBaseColor(StarType type) {
         return switch (type) {
             case O, B -> new Vector3f(0.5f, 0.7f, 1.0f); // Blue-white
-            case A, F -> new Vector3f(1.0f, 1.0f, 1.0f); // Pure white
+            case A, F -> new Vector3f(0.6f, 0.6f, 0.7f); // Pure white
             case G -> new Vector3f(1.0f, 0.9f, 0.2f);    // Yellow
             case K -> new Vector3f(1.0f, 0.5f, 0.0f);    // Orange
             case M -> new Vector3f(0.8f, 0.1f, 0.0f);    // Red

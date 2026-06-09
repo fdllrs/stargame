@@ -44,12 +44,39 @@ public class Star extends CelestialBody implements Describable {
         float noiseScale = NOISE_SCALE_MIN +
                            (t * 0.5f + 0.5f) * (NOISE_SCALE_MAX - NOISE_SCALE_MIN);
 
+        // Pass standard uniforms
         shader.setUniform("colorA", colorA);
         shader.setUniform("colorB", colorB);
         shader.setUniform("noiseScale", noiseScale);
+        shader.setUniform("time", elapsedTime);
+
+        // 1. Render the main solid star body
+        shader.setUniform("isGlowShell", 0);
         shader.setUniform("model", modelMatrix);
         setupStencilForSelection();
         mesh.render();
+
+        // 2. Render the outer glow/corona shell
+        // Scale model matrix to make a nice volumetric halo
+        org.joml.Matrix4f glowModelMatrix = new org.joml.Matrix4f(modelMatrix);
+        glowModelMatrix.scale(1.1f);
+
+        shader.setUniform("isGlowShell", 1);
+        shader.setUniform("model", glowModelMatrix);
+
+        // Configure OpenGL for transparent additive blending
+        org.lwjgl.opengl.GL11C.glDepthMask(false);
+        org.lwjgl.opengl.GL11C.glStencilMask(0x00);
+        org.lwjgl.opengl.GL11C.glEnable(org.lwjgl.opengl.GL11C.GL_BLEND);
+        org.lwjgl.opengl.GL11C.glBlendFunc(org.lwjgl.opengl.GL11C.GL_SRC_ALPHA,
+                                           org.lwjgl.opengl.GL11C.GL_ONE);
+
+        mesh.render();
+
+        // Restore OpenGL state
+        org.lwjgl.opengl.GL11C.glDepthMask(true);
+        org.lwjgl.opengl.GL11C.glStencilMask(0xFF);
+        org.lwjgl.opengl.GL11C.glDisable(org.lwjgl.opengl.GL11C.GL_BLEND);
     }
 
     public Light getLight() {
@@ -58,10 +85,6 @@ public class Star extends CelestialBody implements Describable {
 
     public float getRadius() {
         return starInfo.radius();
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override public String getDisplayName() {
