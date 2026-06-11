@@ -1,4 +1,4 @@
-package game.objects;
+package game.objects.entities;
 
 import engine.graphics.ShaderProgram;
 import org.joml.Vector3f;
@@ -13,6 +13,5 @@ public abstract class GameEntity {
     }
 
     public abstract void cleanup();
-
     public abstract void render(ShaderProgram shader);
 }

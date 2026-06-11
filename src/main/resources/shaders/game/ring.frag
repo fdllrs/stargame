@@ -22,7 +22,7 @@ void main() {
 
     // Soften the inner and outer boundaries of the ring
     float alpha = smoothstep(rInner, rInner + 0.1 * radius, dist) *
-                  (1.0 - smoothstep(rOuter - 0.1 * radius, rOuter, dist));
+    (1.0 - smoothstep(rOuter - 0.1 * radius, rOuter, dist));
 
     // Generate concentric stripes using a 1D slice of noise
     float n = fbm(vec3(dist * 6.0 / radius, 0.1, 0.1));

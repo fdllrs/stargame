@@ -18,9 +18,9 @@ out vec3 VertexEmissive;
 out vec4 fragPosLightSpace;
 
 void main() {
-    surfaceNormal   = normalMatrix * normal;
+    surfaceNormal = normalMatrix * normal;
     localPosition = position;
-    worldPosition  = vec3(model * vec4(position, 1.0));
+    worldPosition = vec3(model * vec4(position, 1.0));
     VertexColor = color;
     VertexEmissive = aEmissive;
     fragPosLightSpace = lightSpaceMatrix * vec4(worldPosition, 1.0);

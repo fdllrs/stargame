@@ -102,7 +102,7 @@ void main() {
 
         // Draw glowing cyan border
         if (pixelCoords.x < borderThickness || pixelCoords.x > elementSize.x - borderThickness ||
-        pixelCoords.y < borderThickness || pixelCoords.y > elementSize.y - borderThickness) {
+            pixelCoords.y < borderThickness || pixelCoords.y > elementSize.y - borderThickness) {
             FragColor = vec4(0.0, 0.8, 1.0, 0.8);
         }
 

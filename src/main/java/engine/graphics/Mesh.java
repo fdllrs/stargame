@@ -55,6 +55,61 @@ public class Mesh {
         glBindVertexArray(0);
     }
 
+    public void cleanup() {
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
+        glBindVertexArray(0);
+
+        for (int vboId : vboIdList) {
+            glDeleteBuffers(vboId);
+        }
+        glDeleteVertexArrays(vaoId);
+    }
+
+    /**
+     * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
+     */
+    public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
+        // Pass null for normals, colors, and emissive, and 2 for dimensions
+        return new Mesh(positions, indices, null, uvs, null, null, 2);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors and emissive properties.
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs,
+                                float[] colors,
+                                float[] emissive) {
+        return new Mesh(positions, indices, normals, uvs, colors, emissive, 3);
+    }
+
+    /**
+     * Builds a standard 3D model (requires Normals for lighting).
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs) {
+        return new Mesh(positions, indices, normals, uvs, null, null, 3);
+    }
+
+    /**
+     * Builds a standard 3D model with custom vertex colors.
+     */
+    public static Mesh create3D(float[] positions,
+                                int[] indices,
+                                float[] normals,
+                                float[] uvs,
+                                float[] colors) {
+        return new Mesh(positions, indices, normals, uvs, colors, null, 3);
+    }
+
     private void createFloatVbo(int attribute, int size, float[] data) {
         int vboId = glGenBuffers();
         vboIdList.add(vboId);
@@ -85,71 +140,16 @@ public class Mesh {
         }
     }
 
+    // --- 4. ENGINE METHODS ---
+
     public boolean hasVertexColors() {
         return hasVertexColors;
     }
-
-    /**
-     * Builds a standard 3D model (requires Normals for lighting).
-     */
-    public static Mesh create3D(float[] positions,
-                                int[] indices,
-                                float[] normals,
-                                float[] uvs) {
-        return new Mesh(positions, indices, normals, uvs, null, null, 3);
-    }
-
-    /**
-     * Builds a standard 3D model with custom vertex colors.
-     */
-    public static Mesh create3D(float[] positions,
-                                int[] indices,
-                                float[] normals,
-                                float[] uvs,
-                                float[] colors) {
-        return new Mesh(positions, indices, normals, uvs, colors, null, 3);
-    }
-
-    /**
-     * Builds a standard 3D model with custom vertex colors and emissive properties.
-     */
-    public static Mesh create3D(float[] positions,
-                                int[] indices,
-                                float[] normals,
-                                float[] uvs,
-                                float[] colors,
-                                float[] emissive) {
-        return new Mesh(positions, indices, normals, uvs, colors, emissive, 3);
-    }
-
-    /**
-     * Builds a flat 2D UI element (no Normals required, Z-axis ignored).
-     */
-    public static Mesh create2DUI(float[] positions, int[] indices, float[] uvs) {
-        // Pass null for normals, colors, and emissive, and 2 for dimensions
-        return new Mesh(positions, indices, null, uvs, null, null, 2);
-    }
-
-    // --- 4. ENGINE METHODS ---
 
     public void render() {
         glBindVertexArray(vaoId);
         glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
-    }
-
-    public void cleanup() {
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
-        glDisableVertexAttribArray(3);
-        glDisableVertexAttribArray(4);
-        glBindVertexArray(0);
-
-        for (int vboId : vboIdList) {
-            glDeleteBuffers(vboId);
-        }
-        glDeleteVertexArrays(vaoId);
     }
 }

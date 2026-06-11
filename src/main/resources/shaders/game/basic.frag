@@ -24,7 +24,7 @@ void main() {
     float extraAmbient = 0.0;
 
     if (useVertexColor != 0) {
-        objectColor  = VertexColor;
+        objectColor = VertexColor;
         extraAmbient = 0.3;
     } else {
         objectColor = mix(colorA, colorB, 0.5);
@@ -36,7 +36,7 @@ void main() {
     vec3 ambient = (AMBIENT_STRENGTH + extraAmbient) * objectColor;
 
     float biasScale = (useVertexColor != 0) ? 0.0005 : 0.005;
-    float biasMin   = (useVertexColor != 0) ? 0.00005 : 0.0005;
+    float biasMin = (useVertexColor != 0) ? 0.00005 : 0.0005;
     float shadow = calculateShadow(fragPosLightSpace, biasScale, biasMin);
 
     vec3 diffuse = (1.0 - shadow) * lightColor * brightness * objectColor;

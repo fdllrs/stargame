@@ -26,8 +26,37 @@ public class UIManager {
         rebuildProjection(windowSize.x, windowSize.y);
     }
 
-    private void rebuildProjection(int width, int height) {
-        uiProjection.setOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+    public void addElement(UIElement element) {
+        elements.add(element);
+    }
+
+    public void cleanup() {
+        uiShader.cleanup();
+        uiQuad.cleanup();
+        for (UIElement element : elements) {
+            element.cleanup();
+        }
+    }
+
+    public boolean handleScroll(float mouseX, float mouseY, double yOffset) {
+        for (UIElement element : elements) {
+            if (element.contains(mouseX, mouseY)) {
+                element.handleScroll(mouseX, mouseY, yOffset);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Boolean objectClicked(float mouseX, float mouseY) {
+        for (UIElement element : elements) {
+            if (element.contains(mouseX, mouseY)) {
+                element.handleClick(mouseX, mouseY);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void onResize(int width, int height) {
@@ -37,8 +66,8 @@ public class UIManager {
         }
     }
 
-    public void addElement(UIElement element) {
-        elements.add(element);
+    private void rebuildProjection(int width, int height) {
+        uiProjection.setOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     }
 
     public void renderAll() {
@@ -56,34 +85,5 @@ public class UIManager {
 
         uiShader.unbind();
         glDisable(GL_BLEND);
-    }
-
-    public void cleanup() {
-        uiShader.cleanup();
-        uiQuad.cleanup();
-        for (UIElement element : elements) {
-            element.cleanup();
-        }
-    }
-
-    public Boolean objectClicked(float mouseX, float mouseY) {
-        for (UIElement element : elements) {
-            if (element.contains(mouseX, mouseY)) {
-                element.handleClick(mouseX, mouseY);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public boolean handleScroll(float mouseX, float mouseY, double yOffset) {
-        for (UIElement element : elements) {
-            if (element.contains(mouseX, mouseY)) {
-                element.handleScroll(mouseX, mouseY, yOffset);
-                return true;
-            }
-        }
-        return false;
     }
 }

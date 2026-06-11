@@ -8,6 +8,7 @@ import engine.ui.text.UIText;
 import game.components.StorageComponent;
 import game.items.ItemType;
 import game.items.RawResource;
+import game.objects.celestialBodies.Hub;
 import game.objects.celestialBodies.Planet;
 import game.objects.facilities.FacilityConfig;
 import game.objects.facilities.ResourceExtractor;
@@ -19,35 +20,77 @@ import java.util.List;
 import java.util.Map;
 
 public class UIBuildTab {
-    public static List<UIElement> build(Planet planet,
-                                        StorageComponent playerStorage,
-                                        FontAtlas font,
-                                        float width,
-                                        Runnable onRebuild) {
-        List<UIElement> elements = new ArrayList<>();
-        Vector4f textCol = new Vector4f(1, 1, 1, 1);
-        Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
+    private static void BuildSilo(Planet planet,
+                                  StorageComponent playerStorage,
+                                  Runnable onRebuild) {
+        if (canAfford(playerStorage, "Storage Silo")) {
+            deductCost(playerStorage, "Storage Silo");
+            new StorageSilo(planet);
+            onRebuild.run();
+        }
+    }
 
-        elements.add(new UIText("Construct Orbital Infrastructure:",
-                                UIText.Alignment.LEFT,
-                                textCol,
-                                20,
-                                15,
-                                10,
-                                font,
-                                width));
+    private static void addBuildingButtons(Planet planet,
+                                           StorageComponent playerStorage,
+                                           FontAtlas font,
+                                           Runnable onRebuild,
+                                           Vector4f buildBtnBg,
+                                           Vector4f textCol,
+                                           List<UIElement> elements) {
+        List<RawResource> harvestableResources = planet.getType()
+                                                       .getHarvestableResources();
+        int totalBuildActions = harvestableResources.size() + 1;
+        float buildBtnWidth = (350f - (10f * (totalBuildActions - 1))) /
+                              totalBuildActions;
 
-        addBuildingButtons(planet,
-                           playerStorage,
-                           font,
-                           onRebuild,
-                           buildBtnBg,
-                           textCol,
-                           elements);
+        UIRow buildRow = new UIRow(10);
 
-        addMiningButtons(planet, font, onRebuild, textCol, elements);
+        for (RawResource resource : harvestableResources) {
+            String facilityButtonLabel = resource.name() + " Extractor" + " cost:" +
+                                         FacilityConfig.COSTS.get("Extractor").toString();
 
-        return elements;
+            UIButton buildExtractorButton = new UIButton(buildBtnWidth,
+                                                         80,
+                                                         buildBtnBg,
+                                                         textCol,
+                                                         facilityButtonLabel,
+                                                         () -> buildExtractor(planet,
+                                                                              playerStorage,
+                                                                              onRebuild,
+                                                                              resource),
+                                                         font);
+            buildExtractorButton.setEnabled(canAfford(playerStorage, "Extractor"));
+            buildRow.addElement(buildExtractorButton);
+        }
+        boolean hasHub = planet.getHub() != null;
+        UIButton buildHubButton = new UIButton(buildBtnWidth,
+                                               80,
+                                               buildBtnBg,
+                                               textCol,
+                                               hasHub ? "Hub Built" : "Build Hub",
+                                               () -> buildHub(planet,
+                                                              playerStorage,
+                                                              onRebuild),
+                                               font);
+        buildHubButton.setEnabled(!hasHub && canAfford(playerStorage, "Hub"));
+        buildRow.addElement(buildHubButton);
+
+        String siloButtonLabel = "Storage Silo " + " cost:" +
+                                 FacilityConfig.COSTS.get("Storage Silo").toString() +
+                                 " Capacity: " + StorageSilo.initialCapacity;
+        UIButton buildSiloButton = new UIButton(buildBtnWidth,
+                                                80,
+                                                buildBtnBg,
+                                                textCol,
+                                                siloButtonLabel,
+                                                () -> BuildSilo(planet,
+                                                                playerStorage,
+                                                                onRebuild),
+                                                font);
+        buildSiloButton.setEnabled(canAfford(playerStorage, "Storage Silo"));
+        buildRow.addElement(buildSiloButton);
+
+        elements.add(buildRow);
     }
 
     private static void addMiningButtons(Planet planet,
@@ -91,65 +134,35 @@ public class UIBuildTab {
         }
     }
 
-    private static void addBuildingButtons(Planet planet,
-                                           StorageComponent playerStorage,
-                                           FontAtlas font,
-                                           Runnable onRebuild,
-                                           Vector4f buildBtnBg,
-                                           Vector4f textCol,
-                                           List<UIElement> elements) {
-        List<RawResource> harvestableResources = planet.getType()
-                                                       .getHarvestableResources();
-        int totalBuildActions = harvestableResources.size() + 1;
-        float buildBtnWidth = (350f - (10f * (totalBuildActions - 1))) /
-                              totalBuildActions;
+    public static List<UIElement> build(Planet planet,
+                                        StorageComponent playerStorage,
+                                        FontAtlas font,
+                                        float width,
+                                        Runnable onRebuild) {
+        List<UIElement> elements = new ArrayList<>();
+        Vector4f textCol = new Vector4f(1, 1, 1, 1);
+        Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
 
-        UIRow buildRow = new UIRow(10);
+        elements.add(new UIText("Construct Orbital Infrastructure:",
+                                UIText.Alignment.LEFT,
+                                textCol,
+                                20,
+                                15,
+                                10,
+                                font,
+                                width));
 
-        for (RawResource resource : harvestableResources) {
-            String facilityButtonLabel = resource.name() + " Extractor" + " cost:" +
-                                         FacilityConfig.COSTS.get("Extractor").toString();
+        addBuildingButtons(planet,
+                           playerStorage,
+                           font,
+                           onRebuild,
+                           buildBtnBg,
+                           textCol,
+                           elements);
 
-            UIButton buildExtractorButton = new UIButton(buildBtnWidth,
-                                                         80,
-                                                         buildBtnBg,
-                                                         textCol,
-                                                         facilityButtonLabel,
-                                                         () -> buildExtractor(planet,
-                                                                              playerStorage,
-                                                                              onRebuild,
-                                                                              resource),
-                                                         font);
-            buildExtractorButton.setEnabled(canAfford(playerStorage, "Extractor"));
-            buildRow.addElement(buildExtractorButton);
-        }
+        addMiningButtons(planet, font, onRebuild, textCol, elements);
 
-        String siloButtonLabel = "Storage Silo " + " cost:" +
-                                 FacilityConfig.COSTS.get("Storage Silo").toString() +
-                                 " Capacity: " + StorageSilo.initialCapacity;
-        UIButton buildSiloButton = new UIButton(buildBtnWidth,
-                                                80,
-                                                buildBtnBg,
-                                                textCol,
-                                                siloButtonLabel,
-                                                () -> BuildSilo(planet,
-                                                                playerStorage,
-                                                                onRebuild),
-                                                font);
-        buildSiloButton.setEnabled(canAfford(playerStorage, "Storage Silo"));
-        buildRow.addElement(buildSiloButton);
-
-        elements.add(buildRow);
-    }
-
-    private static void BuildSilo(Planet planet,
-                                  StorageComponent playerStorage,
-                                  Runnable onRebuild) {
-        if (canAfford(playerStorage, "Storage Silo")) {
-            deductCost(playerStorage, "Storage Silo");
-            new StorageSilo(planet);
-            onRebuild.run();
-        }
+        return elements;
     }
 
     private static void buildExtractor(Planet planet,
@@ -160,6 +173,18 @@ public class UIBuildTab {
             deductCost(playerStorage, "Extractor");
 
             new ResourceExtractor(resource, planet);
+
+            onRebuild.run();
+        }
+    }
+
+    private static void buildHub(Planet planet,
+                                 StorageComponent playerStorage,
+                                 Runnable onRebuild) {
+        if (canAfford(playerStorage, "Hub") && planet.getHub() == null) {
+            deductCost(playerStorage, "Hub");
+
+            new Hub(planet);
 
             onRebuild.run();
         }

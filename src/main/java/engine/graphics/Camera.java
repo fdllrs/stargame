@@ -32,6 +32,85 @@ public class Camera {
         rebuildProjection(BASE_FOV);
     }
 
+    public void accelerateBackwards(float deltaTime) {
+        velocity.sub(localForwardDirection().mul(acceleration * deltaTime));
+    }
+
+    public void accelerateForwards(float deltaTime) {
+        velocity.add(localForwardDirection().mul(acceleration * deltaTime));
+    }
+
+    public void accelerateLeft(float deltaTime) {
+        velocity.sub(localRightDirection().mul(acceleration * deltaTime));
+    }
+
+    public void accelerateRight(float deltaTime) {
+        velocity.add(localRightDirection().mul(acceleration * deltaTime));
+    }
+
+    public void accelerateWithTurbo(float deltaTime) {
+        velocity.add(localForwardDirection().mul(
+                acceleration * turboMultiplier * deltaTime));
+    }
+
+    public void addRotation(float deltaX, float deltaY) {
+        rotation.x += deltaY * mouseSensitivity;
+        rotation.y += deltaX * mouseSensitivity;
+
+        rotation.x = Math.clamp(rotation.x, -89.0f, 89.0f);
+    }
+
+    public void applyMovement(float deltaTime) {
+        if (velocity.lengthSquared() > maxSpeed * maxSpeed) {
+            velocity.normalize(maxSpeed);
+        }
+        position.fma(deltaTime, velocity);
+
+    }
+
+    public Vector3f getPosition() {
+        return position;
+    }
+
+    public Matrix4f getProjectionMatrix() {
+        return projectionMatrix;
+    }
+
+    public Vector3f getVelocity() {
+        return velocity;
+    }
+
+    public Matrix4f getViewMatrix() {
+        return viewMatrix;
+    }
+
+    private Vector3f localForwardDirection() {
+        float yawRad = (float) Math.toRadians(rotation.y);
+        float pitchRad = (float) Math.toRadians(rotation.x);
+        return new Vector3f((float) (Math.sin(yawRad) * Math.cos(pitchRad)),
+                            (float) (-Math.sin(pitchRad)),
+                            (float) (-Math.cos(yawRad) * Math.cos(pitchRad))).normalize();
+    }
+
+    private Vector3f localRightDirection() {
+        return new Vector3f(localForwardDirection().cross(new Vector3f(0, 1, 0))
+                                                   .normalize()).mul(
+                SIDE_VELOCITY_DOWNSCALE_FACTOR);
+    }
+
+    public void moveTo(Vector3f position) {
+        this.position = position;
+        zeroAcceleration(true);
+    }
+
+    /**
+     * Call when the framebuffer is resized to keep the projection matrix in sync.
+     */
+    public void onResize(int width, int height) {
+        this.aspectRatio = (float) width / height;
+        rebuildProjection(cachedFov);
+    }
+
     private void rebuildProjection(float fov) {
         cachedFov = fov;
         projectionMatrix.setPerspective((float) Math.toRadians(fov),
@@ -42,11 +121,10 @@ public class Camera {
     }
 
     /**
-     * Call when the framebuffer is resized to keep the projection matrix in sync.
+     * Shift the camera position by a world-space delta without affecting velocity.
      */
-    public void onResize(int width, int height) {
-        this.aspectRatio = (float) width / height;
-        rebuildProjection(cachedFov);
+    public void translate(float dx, float dy, float dz) {
+        position.add(dx, dy, dz);
     }
 
     public void updateViewMatrix() {
@@ -61,82 +139,6 @@ public class Camera {
         if (Math.abs(targetFov - cachedFov) > 0.01f) {
             rebuildProjection(targetFov);
         }
-    }
-
-    public void addRotation(float deltaX, float deltaY) {
-        rotation.x += deltaY * mouseSensitivity;
-        rotation.y += deltaX * mouseSensitivity;
-
-        rotation.x = Math.clamp(rotation.x, -89.0f, 89.0f);
-    }
-
-    public void accelerateWithTurbo(float deltaTime) {
-        velocity.add(localForwardDirection().mul(
-                acceleration * turboMultiplier * deltaTime));
-    }
-
-    private Vector3f localForwardDirection() {
-        float yawRad = (float) Math.toRadians(rotation.y);
-        float pitchRad = (float) Math.toRadians(rotation.x);
-        return new Vector3f((float) (Math.sin(yawRad) * Math.cos(pitchRad)),
-                            (float) (-Math.sin(pitchRad)),
-                            (float) (-Math.cos(yawRad) * Math.cos(pitchRad))).normalize();
-    }
-
-    public void accelerateForwards(float deltaTime) {
-        velocity.add(localForwardDirection().mul(acceleration * deltaTime));
-    }
-
-    public void accelerateBackwards(float deltaTime) {
-        velocity.sub(localForwardDirection().mul(acceleration * deltaTime));
-    }
-
-    public void accelerateLeft(float deltaTime) {
-        velocity.sub(localRightDirection().mul(acceleration * deltaTime));
-    }
-
-    private Vector3f localRightDirection() {
-        return new Vector3f(localForwardDirection().cross(new Vector3f(0, 1, 0))
-                                                   .normalize()).mul(
-                SIDE_VELOCITY_DOWNSCALE_FACTOR);
-    }
-
-    public void accelerateRight(float deltaTime) {
-        velocity.add(localRightDirection().mul(acceleration * deltaTime));
-    }
-
-    public void applyMovement(float deltaTime) {
-        if (velocity.lengthSquared() > maxSpeed * maxSpeed) {
-            velocity.normalize(maxSpeed);
-        }
-        position.fma(deltaTime, velocity);
-
-    }
-
-    public Matrix4f getViewMatrix() {
-        return viewMatrix;
-    }
-
-    public Matrix4f getProjectionMatrix() {
-        return projectionMatrix;
-    }
-
-    public Vector3f getPosition() {
-        return position;
-    }
-
-    public Vector3f getVelocity() {
-        return velocity;
-    }
-
-    public void moveTo(Vector3f position) {
-        this.position = position;
-        zeroAcceleration(true);
-    }
-
-    /** Shift the camera position by a world-space delta without affecting velocity. */
-    public void translate(float dx, float dy, float dz) {
-        position.add(dx, dy, dz);
     }
 
     public void zeroAcceleration(boolean hardBrake) {

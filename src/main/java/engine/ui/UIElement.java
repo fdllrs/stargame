@@ -23,27 +23,11 @@ public abstract class UIElement {
         updateMatrix();
     }
 
-    protected void updateMatrix() {
-        modelMatrix.identity();
-        modelMatrix.translate(x, y, 0);
-        modelMatrix.scale(width, height, 1);
-    }
-
     public abstract float getBoundingHeight();
     public abstract void handleClick(float mouseX, float mouseY);
     public abstract void render(ShaderProgram shader, Mesh uiQuad);
 
-    public void handleScroll(float mouseX, float mouseY, double yOffset) {
-    }
-
-    public Vector2f getSize() {
-        return new Vector2f(width, height);
-    }
-
-    public void setPosition(float x, float y) {
-        this.x = x;
-        this.y = y;
-        updateMatrix();
+    public void cleanup() {
     }
 
     public boolean contains(float mouseX, float mouseY) {
@@ -52,20 +36,36 @@ public abstract class UIElement {
         return conditionX && conditionY;
     }
 
-    public void setSize(float width, float height) {
-        this.width = width;
-        this.height = height;
-        updateMatrix();
+    public Vector2f getSize() {
+        return new Vector2f(width, height);
+    }
+
+    public void handleScroll(float mouseX, float mouseY, double yOffset) {
+    }
+
+    public void onResize(int screenWidth, int screenHeight) {
     }
 
     public void setOpacity(float opacity) {
         this.color.w = opacity;
     }
 
-    public void onResize(int screenWidth, int screenHeight) {
+    public void setPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
+        updateMatrix();
     }
 
-    public void cleanup() {
+    public void setSize(float width, float height) {
+        this.width = width;
+        this.height = height;
+        updateMatrix();
+    }
+
+    protected void updateMatrix() {
+        modelMatrix.identity();
+        modelMatrix.translate(x, y, 0);
+        modelMatrix.scale(width, height, 1);
     }
 
 }

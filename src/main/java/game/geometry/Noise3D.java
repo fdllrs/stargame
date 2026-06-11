@@ -1,6 +1,10 @@
 package game.geometry;
 
 public class Noise3D {
+    private static float dot(float x, float y, float z) {
+        return x * 12.9898f + y * 78.233f + z * 45.164f;
+    }
+
     public static float fbm(float x, float y, float z) {
         float sum = 0.0f;
         float amplitude = 0.5f;
@@ -13,6 +17,14 @@ public class Noise3D {
             amplitude *= 0.5f;
         }
         return sum;
+    }
+
+    private static double fract(double val) {
+        return val - Math.floor(val);
+    }
+
+    public static float hash(float x, float y, float z) {
+        return (float) fract(Math.sin(dot(x, y, z)) * 43758.5453);
     }
 
     public static float noise(float x, float y, float z) {
@@ -50,17 +62,5 @@ public class Noise3D {
 
         // Interpolate along z
         return nxy0 + uz * (nxy1 - nxy0);
-    }
-
-    public static float hash(float x, float y, float z) {
-        return (float) fract(Math.sin(dot(x, y, z)) * 43758.5453);
-    }
-
-    private static double fract(double val) {
-        return val - Math.floor(val);
-    }
-
-    private static float dot(float x, float y, float z) {
-        return x * 12.9898f + y * 78.233f + z * 45.164f;
     }
 }

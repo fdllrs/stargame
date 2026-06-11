@@ -82,15 +82,6 @@ public class UITabBar extends UIRow {
         }
     }
 
-    public void selectTab(UITab tabToSelect) {
-        for (UITab tab : tabs) {
-            tab.setSelected(tab == tabToSelect);
-        }
-        if (onTabChanged != null) {
-            onTabChanged.run();
-        }
-    }
-
     public UITab getActiveTab() {
         for (UITab tab : tabs) {
             if (tab.isSelected()) {
@@ -98,5 +89,14 @@ public class UITabBar extends UIRow {
             }
         }
         return null;
+    }
+
+    public void selectTab(UITab tabToSelect) {
+        for (UITab tab : tabs) {
+            tab.setSelected(tab == tabToSelect);
+        }
+        if (onTabChanged != null) {
+            onTabChanged.run();
+        }
     }
 }

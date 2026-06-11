@@ -4,25 +4,31 @@ import engine.graphics.Camera;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.Describable;
+import engine.ui.panels.InfoPanelController;
+import engine.ui.panels.PlanetPanelController;
+import engine.ui.text.FontAtlas;
+import game.components.OrbitComponent;
 import game.components.StorageComponent;
 import game.core.Renderer;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
 import game.items.ItemType;
+import game.objects.entities.Light;
 import game.objects.facilities.Facility;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
-public abstract class Planet extends CelestialBody implements Describable {
+public abstract class Planet extends SpaceBody implements Describable {
+    public final List<SpaceBody> satellites = new ArrayList<>();
     protected final Star homeStar;
     protected final PlanetInfo planetInfo;
     protected final StorageComponent planetStorage;
     protected final List<Facility> facilities;
-    protected final List<Moon> moons = new ArrayList<>();
-    protected float orbitAngle;
+    private final OrbitComponent orbit;
 
     public Planet(Mesh mesh, PlanetInfo planetInfo) {
         this(mesh, planetInfo, new StorageComponent(1000));
@@ -39,7 +45,6 @@ public abstract class Planet extends CelestialBody implements Describable {
         this.name = planetInfo.name();
         this.planetInfo = planetInfo;
         this.homeStar = planetInfo.homeStar();
-        this.orbitAngle = planetInfo.initialOrbitAngle();
         this.colorA = planetInfo.colorA();
         this.colorB = planetInfo.colorB();
         this.radius = planetInfo.planetRadius();
@@ -47,18 +52,44 @@ public abstract class Planet extends CelestialBody implements Describable {
 
         this.rotation.x = 15.0f;
         this.rotation.z = 5.0f;
+
+        this.orbit = new OrbitComponent(homeStar,
+                                        planetInfo.orbitDistance(),
+                                        planetInfo.orbitSpeed(),
+                                        planetInfo.initialOrbitAngle());
+        this.orbit.update(this, 0f);
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public abstract PlanetType getType();
+
+    public void addCapacity(int capacity) {
+        planetStorage.addCapacity(capacity);
     }
 
-    public Star getHomeStar() {
-        return homeStar;
+    public void addFacility(Facility facility) {
+        facilities.add(facility);
     }
 
-    public PlanetInfo getPlanetInfo() {
-        return planetInfo;
+    @Override public void cleanup() {
+        super.cleanup();
+        for (SpaceBody orbiter : satellites) {
+            orbiter.cleanup();
+        }
+    }
+
+    @Override public void render(ShaderProgram shader) {
+        shader.setUniform("isLightSource", 0);
+        shader.setUniform("model", modelMatrix);
+        shader.setUniform("normalMatrix", computeNormalMatrix());
+        shader.setUniform("colorA", colorA);
+        shader.setUniform("colorB", colorB);
+        shader.setUniform("radius", radius);
+        setupStencilForSelection();
+        mesh.render();
+    }
+
+    public void deposit(ItemType resourceType, int amount) {
+        planetStorage.deposit(resourceType, amount);
     }
 
     @Override public String getDisplayName() {
@@ -77,17 +108,25 @@ public abstract class Planet extends CelestialBody implements Describable {
                        Map.entry("Rings", planetInfo.hasRings() ? "Yes" : "No"));
     }
 
-    public abstract PlanetType getType();
+    @Override public void renderBody(Renderer renderer, Camera camera, Light starLight) {
+        ShaderProgram planetShader = renderer.getShaderForType(getType());
+        setupPlanetShader(renderer, camera, starLight, planetShader);
+
+        render(planetShader);
+        planetShader.unbind();
+
+        if (!facilities.isEmpty()) {
+            ShaderProgram defaultShader = setupDefaultShader(renderer, camera, starLight);
+
+            renderFacilities(defaultShader);
+            defaultShader.unbind();
+        }
+
+        renderExtra(renderer, camera);
+    }
 
     public void update(float deltaTime) {
-        float orbitSpeed = planetInfo.orbitSpeed();
-        orbitAngle += orbitSpeed * deltaTime;
-
-        float offsetX = (float) Math.cos(orbitAngle) * planetInfo.orbitDistance();
-        float offsetZ = (float) Math.sin(orbitAngle) * planetInfo.orbitDistance();
-
-        Vector3f starPos = homeStar.getPosition();
-        this.position.set(starPos.x + offsetX, starPos.y, starPos.z + offsetZ);
+        orbit.update(this, deltaTime);
 
         float spinSpeed = 0.5f;
         this.rotation.y += spinSpeed * deltaTime;
@@ -95,57 +134,62 @@ public abstract class Planet extends CelestialBody implements Describable {
         rotate(deltaTime);
         updateModelMatrix();
 
-        for (Moon moon : moons) {
-            moon.update(deltaTime);
+        for (SpaceBody orbiter : satellites) {
+            orbiter.update(deltaTime);
         }
     }
 
-    public void tickFacilities() {
-        for (Facility facility : facilities) {
-            facility.tick(this);
-        }
+    public Star getHomeStar() {
+        return homeStar;
     }
 
-    public void deposit(ItemType resourceType, int amount) {
-        planetStorage.deposit(resourceType, amount);
+    public Hub getHub() {
+        for (SpaceBody orbiter : satellites) {
+            if (orbiter instanceof Hub hub) {
+                return hub;
+            }
+        }
+        return null;
+    }
+
+    public List<Moon> getMoons() {
+        List<Moon> moons = new ArrayList<>();
+        for (SpaceBody orbiter : satellites) {
+            if (orbiter instanceof Moon moon) {
+                moons.add(moon);
+            }
+        }
+        return moons;
+    }
+
+    @Override
+    public InfoPanelController getPanelController(StorageComponent playerStorage,
+                                                  FontAtlas font,
+                                                  float width,
+                                                  Runnable onRebuild,
+                                                  Consumer<SpaceBody> onSelectTarget) {
+        return new PlanetPanelController(this,
+                                         playerStorage,
+                                         font,
+                                         width,
+                                         onRebuild,
+                                         onSelectTarget);
+    }
+
+    public PlanetInfo getPlanetInfo() {
+        return planetInfo;
     }
 
     public StorageComponent getStorage() {
         return planetStorage;
     }
 
-    public void addCapacity(int capacity) {
-        planetStorage.addCapacity(capacity);
+    public boolean hasHub() {
+        return getHub() != null;
     }
 
-    public void addFacility(Facility facility) {
-        facilities.add(facility);
-    }
-
-    public List<Moon> getMoons() {
-        return moons;
-    }
-
-    public void addMoon(Moon moon) {
-        moons.add(moon);
-    }
-
-    @Override public void cleanup() {
-        super.cleanup();
-        for (Moon moon : moons) {
-            moon.cleanup();
-        }
-    }
-
-    @Override public void render(ShaderProgram shader) {
-        shader.setUniform("isLightSource", 0);
-        shader.setUniform("model", modelMatrix);
-        shader.setUniform("normalMatrix", computeNormalMatrix());
-        shader.setUniform("colorA", colorA);
-        shader.setUniform("colorB", colorB);
-        shader.setUniform("radius", radius);
-        setupStencilForSelection();
-        mesh.render();
+    public void renderExtra(Renderer renderer, Camera camera) {
+        // Default implementation does nothing
     }
 
     public void renderFacilities(ShaderProgram shader) {
@@ -154,11 +198,35 @@ public abstract class Planet extends CelestialBody implements Describable {
         }
     }
 
-    public void renderExtra(Renderer renderer, Camera camera) {
-        // Default implementation does nothing
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public boolean hasFacilities() {
-        return !facilities.isEmpty();
+    static void setupPlanetShader(Renderer renderer,
+                                  Camera camera,
+                                  Light starLight,
+                                  ShaderProgram planetShader) {
+        planetShader.bind();
+        planetShader.setUniform("view", camera.getViewMatrix());
+        planetShader.setUniform("projection", camera.getProjectionMatrix());
+        planetShader.setUniform("viewPos", camera.getPosition());
+        planetShader.setUniform("lightSpaceMatrix",
+                                renderer.getCurrentLightSpaceMatrix());
+        if (starLight != null) {
+            planetShader.setUniform("lightPosition", starLight.getPosition());
+            planetShader.setUniform("lightColor", starLight.getColor());
+        }
+
+        org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE1);
+        org.lwjgl.opengl.GL11C.glBindTexture(org.lwjgl.opengl.GL11C.GL_TEXTURE_2D,
+                                             renderer.getShadowDepthTex());
+        planetShader.setUniform("shadowMap", 1);
+        org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE0);
+    }
+
+    public void tickFacilities() {
+        for (Facility facility : facilities) {
+            facility.tick(this);
+        }
     }
 }

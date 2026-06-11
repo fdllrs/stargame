@@ -1,7 +1,6 @@
 package game.objects.entities;
 
 import engine.graphics.ShaderProgram;
-import game.objects.GameEntity;
 import org.joml.Vector3f;
 
 public class Light extends GameEntity {
@@ -16,19 +15,19 @@ public class Light extends GameEntity {
         // Uniforms are bound dynamic-array style via Scene/Renderer
     }
 
-    public Vector3f getPosition() {
-        return position;
-    }
-
-    public void setPosition(Vector3f position) {
-        this.position.set(position);
-    }
-
     public Vector3f getColor() {
         return color;
     }
 
     public void setColor(Vector3f color) {
         this.color.set(color);
+    }
+
+    public Vector3f getPosition() {
+        return position;
+    }
+
+    public void setPosition(Vector3f position) {
+        this.position.set(position);
     }
 }

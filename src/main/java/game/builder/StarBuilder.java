@@ -16,32 +16,6 @@ public class StarBuilder {
     private Vector3f colorA = null;
     private Vector3f colorB = null;
 
-    public StarBuilder withName(String name) {
-        this.name = name;
-        return this;
-    }
-
-    public StarBuilder withType(StarType type) {
-        this.type = type;
-        return this;
-    }
-
-    public StarBuilder withRadius(float radius) {
-        this.radius = radius;
-        return this;
-    }
-
-    public StarBuilder withMass(float mass) {
-        this.mass = mass;
-        return this;
-    }
-
-    public StarBuilder withColors(Vector3f colorA, Vector3f colorB) {
-        this.colorA = colorA;
-        this.colorB = colorB;
-        return this;
-    }
-
     public Star build() {
         String finalName = (this.name != null) ? this.name : generateRandomName();
 
@@ -74,7 +48,41 @@ public class StarBuilder {
         return new Star(info);
     }
 
-    // --- PROCEDURAL GENERATORS ---
+    private Vector3f generateBaseColor(StarType type) {
+        return switch (type) {
+            case O, B -> new Vector3f(0.5f, 0.7f, 1.0f); // Blue-white
+            case A, F -> new Vector3f(0.6f, 0.6f, 0.7f); // Pure white
+            case G -> new Vector3f(1.0f, 0.9f, 0.2f);    // Yellow
+            case K -> new Vector3f(1.0f, 0.5f, 0.0f);    // Orange
+            case M -> new Vector3f(0.8f, 0.1f, 0.0f);    // Red
+        };
+    }
+
+    private Vector3f generateCoronaColor(StarType type) {
+        return switch (type) {
+            case O, B -> new Vector3f(0.2f, 0.4f, 1.0f);
+            case A, F -> new Vector3f(0.9f, 0.9f, 1.0f);
+            case G -> new Vector3f(1.0f, 0.6f, 0.0f);
+            case K -> new Vector3f(0.8f, 0.2f, 0.0f);
+            case M -> new Vector3f(0.5f, 0.0f, 0.0f);
+        };
+    }
+
+    private float generateMassForType(StarType type) {
+        return generateRadiusForType(type) * 1.5f; // Simplified mass calculation
+    }
+
+    private float generateRadiusForType(StarType type) {
+        return switch (type) {
+            case O -> 800f + RANDOM.nextFloat() * 40f;
+            case B -> 500f + RANDOM.nextFloat() * 30f;
+            case A -> 350f + RANDOM.nextFloat() * 15f;
+            case F -> 250f + RANDOM.nextFloat() * 10f;
+            case G -> 200f + RANDOM.nextFloat() * 5f;   // Sun-like
+            case K -> 150f + RANDOM.nextFloat() * 5f;
+            case M -> 80f + RANDOM.nextFloat() * 7f;    // Red Dwarf
+        };
+    }
 
     private String generateRandomName() {
         String[] greekLetters = {"Alpha",
@@ -96,39 +104,31 @@ public class StarBuilder {
                constellations[RANDOM.nextInt(constellations.length)];
     }
 
-    private float generateRadiusForType(StarType type) {
-        return switch (type) {
-            case O -> 800f + RANDOM.nextFloat() * 40f;
-            case B -> 500f + RANDOM.nextFloat() * 30f;
-            case A -> 350f + RANDOM.nextFloat() * 15f;
-            case F -> 250f + RANDOM.nextFloat() * 10f;
-            case G -> 200f + RANDOM.nextFloat() * 5f;   // Sun-like
-            case K -> 150f + RANDOM.nextFloat() * 5f;
-            case M -> 80f + RANDOM.nextFloat() * 7f;    // Red Dwarf
-        };
+    // --- PROCEDURAL GENERATORS ---
+
+    public StarBuilder withColors(Vector3f colorA, Vector3f colorB) {
+        this.colorA = colorA;
+        this.colorB = colorB;
+        return this;
     }
 
-    private float generateMassForType(StarType type) {
-        return generateRadiusForType(type) * 1.5f; // Simplified mass calculation
+    public StarBuilder withMass(float mass) {
+        this.mass = mass;
+        return this;
     }
 
-    private Vector3f generateBaseColor(StarType type) {
-        return switch (type) {
-            case O, B -> new Vector3f(0.5f, 0.7f, 1.0f); // Blue-white
-            case A, F -> new Vector3f(0.6f, 0.6f, 0.7f); // Pure white
-            case G -> new Vector3f(1.0f, 0.9f, 0.2f);    // Yellow
-            case K -> new Vector3f(1.0f, 0.5f, 0.0f);    // Orange
-            case M -> new Vector3f(0.8f, 0.1f, 0.0f);    // Red
-        };
+    public StarBuilder withName(String name) {
+        this.name = name;
+        return this;
     }
 
-    private Vector3f generateCoronaColor(StarType type) {
-        return switch (type) {
-            case O, B -> new Vector3f(0.2f, 0.4f, 1.0f);
-            case A, F -> new Vector3f(0.9f, 0.9f, 1.0f);
-            case G -> new Vector3f(1.0f, 0.6f, 0.0f);
-            case K -> new Vector3f(0.8f, 0.2f, 0.0f);
-            case M -> new Vector3f(0.5f, 0.0f, 0.0f);
-        };
+    public StarBuilder withRadius(float radius) {
+        this.radius = radius;
+        return this;
+    }
+
+    public StarBuilder withType(StarType type) {
+        this.type = type;
+        return this;
     }
 }

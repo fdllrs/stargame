@@ -14,6 +14,12 @@ import static org.lwjgl.opengl.GL11C.glEnable;
 public class Window {
     public long windowHandle;
 
+    public void cleanup() {
+        org.lwjgl.glfw.Callbacks.glfwFreeCallbacks(windowHandle);
+        glfwDestroyWindow(windowHandle);
+        glfwTerminate();
+    }
+
     public static Vector2i getWindowSize(long windowHandle) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer pWidth = stack.mallocInt(1);
@@ -42,7 +48,9 @@ public class Window {
         windowHandle = glfwCreateWindow(width, height, "stargame", 0L, 0);
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         assert videoMode != null;
-        glfwSetWindowPos(windowHandle, (videoMode.width() - width) / 2, (videoMode.height() - height) / 2);
+        glfwSetWindowPos(windowHandle,
+                         (videoMode.width() - width) / 2,
+                         (videoMode.height() - height) / 2);
 
         glfwMakeContextCurrent(windowHandle);
         GL.createCapabilities();
@@ -50,12 +58,6 @@ public class Window {
 
         glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glEnable(GL_DEPTH_TEST);
-    }
-
-    public void cleanup() {
-        org.lwjgl.glfw.Callbacks.glfwFreeCallbacks(windowHandle);
-        glfwDestroyWindow(windowHandle);
-        glfwTerminate();
     }
 
 }

@@ -30,31 +30,30 @@ public abstract class PlanetBuilder {
     }
 
     public abstract Planet build();
+    abstract protected void generateColors();
 
-    public PlanetBuilder withRadius(float radius) {
-        this.radius = radius;
-        return this;
-    }
+    @NotNull protected basicPlanetInfo buildBasicPlanetInfo() {
+        float finalDistance = (this.orbitDistance != null)
+                              ? this.orbitDistance
+                              : randomOrbitDistance();
+        float finalSpeed = (this.orbitSpeed != null)
+                           ? this.orbitSpeed
+                           : randomOrbitSpeed();
+        float finalAngle = (this.orbitAngle != null)
+                           ? this.orbitAngle
+                           : randomOrbitAngle();
 
-    public PlanetBuilder withOrbitSpeed(float speed) {
-        this.orbitSpeed = speed;
-        return this;
-    }
+        if (this.colorA == null || this.colorB == null) {
+            generateColors();
+        }
 
-    public PlanetBuilder withOrbitAngle(float angle) {
-        this.orbitAngle = angle;
-        return this;
-    }
-
-    public PlanetBuilder withColors(Vector3f colorA, Vector3f colorB) {
-        this.colorA = colorA;
-        this.colorB = colorB;
-        return this;
-    }
-
-    public PlanetBuilder withRings(boolean hasRings) {
-        this.hasRings = hasRings;
-        return this;
+        Vector3f finalColorA = (this.colorA != null) ? this.colorA : randomColor();
+        Vector3f finalColorB = (this.colorB != null) ? this.colorB : randomColor();
+        return new basicPlanetInfo(finalDistance,
+                                   finalSpeed,
+                                   finalAngle,
+                                   finalColorA,
+                                   finalColorB);
     }
 
     public static PlanetBuilder create(Star homeStar, PlanetType type) {
@@ -89,33 +88,40 @@ public abstract class PlanetBuilder {
         return builder;
     }
 
-    public PlanetBuilder withOrbitDistance(float distance) {
-        this.orbitDistance = distance;
-        return this;
+    public static Vector3f hslToRgb(float h, float s, float l) {
+        float r, g, b;
+        if (s == 0f) {
+            r = g = b = l; // achromatic
+        } else {
+            float q = l < 0.5f ? l * (1f + s) : l + s - l * s;
+            float p = 2f * l - q;
+            r = hueToRgb(p, q, h + 1f / 3f);
+            g = hueToRgb(p, q, h);
+            b = hueToRgb(p, q, h - 1f / 3f);
+        }
+        return new Vector3f(r, g, b);
     }
 
-    @NotNull protected basicPlanetInfo buildBasicPlanetInfo() {
-        float finalDistance = (this.orbitDistance != null)
-                              ? this.orbitDistance
-                              : randomOrbitDistance();
-        float finalSpeed = (this.orbitSpeed != null)
-                           ? this.orbitSpeed
-                           : randomOrbitSpeed();
-        float finalAngle = (this.orbitAngle != null)
-                           ? this.orbitAngle
-                           : randomOrbitAngle();
+    private static float hueToRgb(float p, float q, float t) {
+        if (t < 0f)
+            t += 1f;
+        if (t > 1f)
+            t -= 1f;
+        if (t < 1f / 6f)
+            return p + (q - p) * 6f * t;
+        if (t < 1f / 2f)
+            return q;
+        if (t < 2f / 3f)
+            return p + (q - p) * (2f / 3f - t) * 6f;
+        return p;
+    }
 
-        if (this.colorA == null || this.colorB == null) {
-            generateColors();
-        }
+    protected Vector3f randomColor() {
+        return new Vector3f(RANDOM.nextFloat(), RANDOM.nextFloat(), RANDOM.nextFloat());
+    }
 
-        Vector3f finalColorA = (this.colorA != null) ? this.colorA : randomColor();
-        Vector3f finalColorB = (this.colorB != null) ? this.colorB : randomColor();
-        return new basicPlanetInfo(finalDistance,
-                                   finalSpeed,
-                                   finalAngle,
-                                   finalColorA,
-                                   finalColorB);
+    protected float randomOrbitAngle() {
+        return RANDOM.nextFloat() * (float) (Math.PI * 2.0);
     }
 
     protected float randomOrbitDistance() {
@@ -124,45 +130,43 @@ public abstract class PlanetBuilder {
         return minDistance + RANDOM.nextFloat() * (MAX_ORBIT_DISTANCE - minDistance);
     }
 
-    abstract protected void generateColors();
-
-    protected Vector3f randomColor() {
-        return new Vector3f(RANDOM.nextFloat(), RANDOM.nextFloat(), RANDOM.nextFloat());
-    }
-
-    public static Vector3f hslToRgb(float h, float s, float l) {
-        float r, g, b;
-        if (s == 0f) {
-            r = g = b = l; // achromatic
-        } else {
-            float q = l < 0.5f ? l * (1f + s) : l + s - l * s;
-            float p = 2f * l - q;
-            r = hueToRgb(p, q, h + 1f/3f);
-            g = hueToRgb(p, q, h);
-            b = hueToRgb(p, q, h - 1f/3f);
-        }
-        return new Vector3f(r, g, b);
-    }
-
-    private static float hueToRgb(float p, float q, float t) {
-        if (t < 0f) t += 1f;
-        if (t > 1f) t -= 1f;
-        if (t < 1f/6f) return p + (q - p) * 6f * t;
-        if (t < 1f/2f) return q;
-        if (t < 2f/3f) return p + (q - p) * (2f/3f - t) * 6f;
-        return p;
-    }
-
     protected float randomOrbitSpeed() {
         return (RANDOM.nextFloat() * MAX_EXTRA_ORBIT_SPEED + MIN_ORBIT_SPEED) * 0.001f;
     }
 
-    protected float randomOrbitAngle() {
-        return RANDOM.nextFloat() * (float) (Math.PI * 2.0);
-    }
-
     protected float randomRadius() {
         return RANDOM.nextFloat() * MAX_EXTRA_RADIUS + MIN_RADIUS;
+    }
+
+    public PlanetBuilder withColors(Vector3f colorA, Vector3f colorB) {
+        this.colorA = colorA;
+        this.colorB = colorB;
+        return this;
+    }
+
+    public PlanetBuilder withOrbitAngle(float angle) {
+        this.orbitAngle = angle;
+        return this;
+    }
+
+    public PlanetBuilder withOrbitDistance(float distance) {
+        this.orbitDistance = distance;
+        return this;
+    }
+
+    public PlanetBuilder withOrbitSpeed(float speed) {
+        this.orbitSpeed = speed;
+        return this;
+    }
+
+    public PlanetBuilder withRadius(float radius) {
+        this.radius = radius;
+        return this;
+    }
+
+    public PlanetBuilder withRings(boolean hasRings) {
+        this.hasRings = hasRings;
+        return this;
     }
 
     protected record basicPlanetInfo(float finalDistance,

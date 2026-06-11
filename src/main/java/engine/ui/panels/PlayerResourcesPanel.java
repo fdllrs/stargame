@@ -40,33 +40,6 @@ public class PlayerResourcesPanel extends UIPanel {
 
     }
 
-    private void setExpanded(boolean expanded) {
-        this.expanded = expanded;
-        if (expanded) {
-            setSize(width, expandedHeight);
-            setPosition(x, expandedY);
-            rebuildElements();
-        } else {
-            setSize(width, 80);
-            setPosition(x, expandedY + (expandedHeight - 80));
-            rebuildElements();
-        }
-    }
-
-    @Override protected void rebuildElements() {
-        children.clear();
-        resourceLabels.clear();
-
-        setPanelTitle("Inventory");
-        addStorageCapacityText();
-
-        if (expanded) {
-            addResourceAmountsText();
-        }
-        layout();
-
-    }
-
     private void addResourceAmountsText() {
         List<ItemType> allItems = new ArrayList<>(List.of(RawResource.values()));
         for (ItemType type : allItems) {
@@ -85,10 +58,6 @@ public class PlayerResourcesPanel extends UIPanel {
         }
     }
 
-    @NotNull private String getNameAndAmountText(ItemType type) {
-        return type.name() + ": " + storageComponent.getAmount(type);
-    }
-
     private void addStorageCapacityText() {
         UIText storageFillText = new UIText(
                 storageComponent.getFillForDisplay() + " " + "items",
@@ -103,12 +72,30 @@ public class PlayerResourcesPanel extends UIPanel {
         children.add(storageFillText);
     }
 
+    @NotNull private String getNameAndAmountText(ItemType type) {
+        return type.name() + ": " + storageComponent.getAmount(type);
+    }
+
     @Override protected void layout() {
         float currentY = this.y + vPadding;
         for (UIElement element : children) {
             element.setPosition(this.x, currentY);
             currentY += element.getBoundingHeight();
         }
+    }
+
+    @Override protected void rebuildElements() {
+        children.clear();
+        resourceLabels.clear();
+
+        setPanelTitle("Inventory");
+        addStorageCapacityText();
+
+        if (expanded) {
+            addResourceAmountsText();
+        }
+        layout();
+
     }
 
     @Override public float getBoundingHeight() {
@@ -139,6 +126,19 @@ public class PlayerResourcesPanel extends UIPanel {
         storageFillText.setText(storageComponent.getFillForDisplay() + " " + "items");
 
         resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
+    }
+
+    private void setExpanded(boolean expanded) {
+        this.expanded = expanded;
+        if (expanded) {
+            setSize(width, expandedHeight);
+            setPosition(x, expandedY);
+            rebuildElements();
+        } else {
+            setSize(width, 80);
+            setPosition(x, expandedY + (expandedHeight - 80));
+            rebuildElements();
+        }
     }
 
 }

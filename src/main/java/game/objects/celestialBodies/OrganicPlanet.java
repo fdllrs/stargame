@@ -10,12 +10,10 @@ public class OrganicPlanet extends Planet {
     public OrganicPlanet(PlanetInfo planetInfo) {
         super(PlanetGeometry.generate(PLANET_RESOLUTION,
                                       planetInfo.planetRadius(),
-                                      PlanetType.ORGANIC),
-              planetInfo);
+                                      PlanetType.ORGANIC), planetInfo);
     }
 
-    @Override
-    public PlanetType getType() {
+    @Override public PlanetType getType() {
         return PlanetType.ORGANIC;
     }
 }

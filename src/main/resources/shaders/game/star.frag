@@ -22,10 +22,10 @@ float noise(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
 
     return mix(
-    mix(mix(hash(p + vec3(0, 0, 0)), hash(p + vec3(1, 0, 0)), f.x),
-    mix(hash(p + vec3(0, 1, 0)), hash(p + vec3(1, 1, 0)), f.x), f.y),
-    mix(mix(hash(p + vec3(0, 0, 1)), hash(p + vec3(1, 0, 1)), f.x),
-    mix(hash(p + vec3(0, 1, 1)), hash(p + vec3(1, 1, 1)), f.x), f.y), f.z);
+            mix(mix(hash(p + vec3(0, 0, 0)), hash(p + vec3(1, 0, 0)), f.x),
+                    mix(hash(p + vec3(0, 1, 0)), hash(p + vec3(1, 1, 0)), f.x), f.y),
+            mix(mix(hash(p + vec3(0, 0, 1)), hash(p + vec3(1, 0, 1)), f.x),
+                    mix(hash(p + vec3(0, 1, 1)), hash(p + vec3(1, 1, 1)), f.x), f.y), f.z);
 }
 
 float fbm(vec3 p) {
@@ -55,7 +55,7 @@ void main() {
         float falloff = pow(NdotV, 1.1);// Fades to 0 at the silhouette edge of the shell
 
         // Dynamic flare intensity
-        float intensity = falloff *  0.7 * coronaNoise;
+        float intensity = falloff * 0.7 * coronaNoise;
 
         // Interpolate colors: colorA (hot center) -> colorB (cooler edge) -> transparent
         vec3 glowColor = mix(colorB * 0.7, colorA * 0.5, falloff);

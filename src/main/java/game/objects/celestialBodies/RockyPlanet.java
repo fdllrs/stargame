@@ -10,12 +10,10 @@ public class RockyPlanet extends Planet {
     public RockyPlanet(PlanetInfo planetInfo) {
         super(PlanetGeometry.generate(PLANET_RESOLUTION,
                                       planetInfo.planetRadius(),
-                                      PlanetType.ROCKY),
-              planetInfo);
+                                      PlanetType.ROCKY), planetInfo);
     }
 
-    @Override
-    public PlanetType getType() {
+    @Override public PlanetType getType() {
         return PlanetType.ROCKY;
     }
 }

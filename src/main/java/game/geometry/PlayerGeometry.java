@@ -4,7 +4,7 @@ import engine.graphics.Mesh;
 import engine.graphics.ModelLoader;
 
 public class PlayerGeometry {
-    public static Mesh generatePlayerMesh() {
+    public static Mesh getPlayerMesh() {
 
         return ModelLoader.loadModelObj("src/main/resources/models/spaceship.obj", 0.15f);
     }

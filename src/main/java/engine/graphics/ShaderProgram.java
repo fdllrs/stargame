@@ -28,15 +28,6 @@ public class ShaderProgram {
 
     }
 
-    public static ShaderProgram initShader(String vertexPath, String fragmentPath) {
-        try {
-            return new ShaderProgram("/shaders/" + vertexPath,
-                                     "/shaders/" + fragmentPath);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize shader", e);
-        }
-    }
-
     public void bind() {
         glUseProgram(programId);
     }
@@ -44,10 +35,6 @@ public class ShaderProgram {
     public void cleanup() {
         unbind();
         glDeleteProgram(programId);
-    }
-
-    public void unbind() {
-        glUseProgram(0);
     }
 
     private int compileShader(String shaderPath, int shaderType) {
@@ -62,6 +49,15 @@ public class ShaderProgram {
             throw new RuntimeException("shader compilation failed: " + info);
         }
         return shaderId;
+    }
+
+    public static ShaderProgram initShader(String vertexPath, String fragmentPath) {
+        try {
+            return new ShaderProgram("/shaders/" + vertexPath,
+                                     "/shaders/" + fragmentPath);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize shader", e);
+        }
     }
 
     private String loadShader(String shaderPath) {
@@ -151,6 +147,10 @@ public class ShaderProgram {
         if (location == -1)
             return;
         glUniform4f(location, value.x, value.y, value.z, value.w);
+    }
+
+    public void unbind() {
+        glUseProgram(0);
     }
 
 }

@@ -2,9 +2,9 @@ package game.objects;
 
 import game.builder.PlanetBuilder;
 import game.builder.StarBuilder;
-import game.objects.celestialBodies.CelestialBody;
 import game.objects.celestialBodies.Moon;
 import game.objects.celestialBodies.Planet;
+import game.objects.celestialBodies.SpaceBody;
 import game.objects.celestialBodies.Star;
 
 import java.util.ArrayList;
@@ -24,82 +24,27 @@ public class StarSystem {
         nameAllPlanets();
     }
 
-    private void nameAllPlanets() {
-        int nameSufix = 1;
-        for (Planet planet : planets) {
-            String starName = planet.getHomeStar().getName();
-            String[] parts = starName.split(" ");
-            String baseName = parts.length > 1 ? parts[1] : starName;
-            planet.setName(baseName + " " + nameSufix);
-            nameSufix++;
-        }
+    public StarSystem(Star star, ArrayList<Planet> planets) {
+        this.star = star;
+        this.stars = new ArrayList<>(List.of(star));
+        this.planets = planets;
+        nameAllPlanets();
     }
 
-    private void generateRandomPlanets(int planetAmount) {
-        java.util.Random RANDOM = new java.util.Random();
-        float currentDistance = star.getRadius() + 400f;
+    public StarSystem(List<Star> stars, ArrayList<Planet> planets) {
+        this.star = stars.isEmpty() ? null : stars.getFirst();
+        this.stars = new ArrayList<>(stars);
+        this.planets = planets;
+        nameAllPlanets();
+    }
 
-        for (int i = 0; i < planetAmount; i++) {
-            currentDistance += 800f + RANDOM.nextFloat() * 1000f;
-            Planet planet = PlanetBuilder.createRandom(star, currentDistance).build();
-            this.planets.add(planet);
+    public void cleanupAll() {
+        for (Planet planet : planets) {
+            planet.cleanup();
+        }
 
-            // Attach moons procedurally
-            boolean isGiant = (planet.getType() == game.info.PlanetType.GAS_GIANT ||
-                               planet.getType() == game.info.PlanetType.ICE_GIANT);
-            int moonCount = 0;
-            if (isGiant) {
-                if (RANDOM.nextFloat() < 0.75f) {
-                    moonCount = 1 + RANDOM.nextInt(3); // 1 to 3 moons
-                }
-            } else {
-                if (RANDOM.nextFloat() < 0.25f) {
-                    moonCount = 1; // 0 or 1 moon
-                }
-            }
-
-            for (int m = 0; m < moonCount; m++) {
-                // Giants can have organic or rocky moons, terrestrial only rocky
-                game.info.PlanetType moonType = game.info.PlanetType.ROCKY;
-                if (isGiant && RANDOM.nextFloat() < 0.20f) {
-                    moonType = game.info.PlanetType.ORGANIC;
-                }
-
-                float moonRadius;
-                if (isGiant) {
-                    moonRadius = planet.getRadius() *
-                                 (0.04f + RANDOM.nextFloat() * 0.04f); // 4% to 8%
-                } else {
-                    moonRadius = planet.getRadius() *
-                                 (0.20f + RANDOM.nextFloat() * 0.07f); // 20% to 27%
-                }
-
-                // Spacing
-                float baseStart = planet.getPlanetInfo().hasRings()
-                                  ? planet.getRadius() * 8f
-                                  : planet.getRadius() * 6f;
-                float moonDistance = baseStart + (m * planet.getRadius() * 0.8f);
-
-                float moonSpeed = (0.05f + RANDOM.nextFloat() * 0.05f);
-                float moonAngle = RANDOM.nextFloat() * (float) (Math.PI * 2.0);
-
-                org.joml.Vector3f[] colors = generateColorsForType(moonType);
-                String moonName = planet.getName() + "-" + (char) ('A' + m);
-
-                game.info.PlanetInfo moonInfo = new game.info.PlanetInfo(star,
-                                                                         moonSpeed,
-                                                                         moonAngle,
-                                                                         moonRadius,
-                                                                         moonDistance,
-                                                                         colors[0],
-                                                                         colors[1],
-                                                                         moonName,
-                                                                         moonType,
-                                                                         false);
-
-                Moon moon = new Moon(moonInfo, planet);
-                planet.addMoon(moon);
-            }
+        for (Star s : stars) {
+            s.cleanup();
         }
     }
 
@@ -172,53 +117,80 @@ public class StarSystem {
         return new org.joml.Vector3f[]{colorA, colorB};
     }
 
-    public StarSystem(Star star, ArrayList<Planet> planets) {
-        this.star = star;
-        this.stars = new ArrayList<>(List.of(star));
-        this.planets = planets;
-        nameAllPlanets();
-    }
+    private void generateRandomPlanets(int planetAmount) {
+        java.util.Random RANDOM = new java.util.Random();
+        float currentDistance = star.getRadius() + 400f;
 
-    public StarSystem(List<Star> stars, ArrayList<Planet> planets) {
-        this.star = stars.isEmpty() ? null : stars.getFirst();
-        this.stars = new ArrayList<>(stars);
-        this.planets = planets;
-        nameAllPlanets();
-    }
+        for (int i = 0; i < planetAmount; i++) {
+            currentDistance += 800f + RANDOM.nextFloat() * 1000f;
+            Planet planet = PlanetBuilder.createRandom(star, currentDistance).build();
+            this.planets.add(planet);
 
-    public void cleanupAll() {
-        for (Planet planet : planets) {
-            planet.cleanup();
+            // Attach moons procedurally
+            boolean isGiant = (planet.getType() == game.info.PlanetType.GAS_GIANT ||
+                               planet.getType() == game.info.PlanetType.ICE_GIANT);
+            int moonCount = 0;
+            if (isGiant) {
+                if (RANDOM.nextFloat() < 0.75f) {
+                    moonCount = 1 + RANDOM.nextInt(3); // 1 to 3 moons
+                }
+            } else {
+                if (RANDOM.nextFloat() < 0.25f) {
+                    moonCount = 1; // 0 or 1 moon
+                }
+            }
+
+            for (int m = 0; m < moonCount; m++) {
+                // Giants can have organic or rocky moons, terrestrial only rocky
+                game.info.PlanetType moonType = game.info.PlanetType.ROCKY;
+                if (isGiant && RANDOM.nextFloat() < 0.20f) {
+                    moonType = game.info.PlanetType.ORGANIC;
+                }
+
+                float moonRadius;
+                if (isGiant) {
+                    moonRadius = planet.getRadius() *
+                                 (0.04f + RANDOM.nextFloat() * 0.04f); // 4% to 8%
+                } else {
+                    moonRadius = planet.getRadius() *
+                                 (0.20f + RANDOM.nextFloat() * 0.07f); // 20% to 27%
+                }
+
+                // Spacing
+                float baseStart = planet.getPlanetInfo().hasRings()
+                                  ? planet.getRadius() * 8f
+                                  : planet.getRadius() * 6f;
+                float moonDistance = baseStart + (m * planet.getRadius() * 0.8f);
+
+                float moonSpeed = (0.05f + RANDOM.nextFloat() * 0.05f);
+                float moonAngle = RANDOM.nextFloat() * (float) (Math.PI * 2.0);
+
+                org.joml.Vector3f[] colors = generateColorsForType(moonType);
+                String moonName = planet.getName() + "-" + (char) ('A' + m);
+
+                game.info.PlanetInfo moonInfo = new game.info.PlanetInfo(star,
+                                                                         moonSpeed,
+                                                                         moonAngle,
+                                                                         moonRadius,
+                                                                         moonDistance,
+                                                                         colors[0],
+                                                                         colors[1],
+                                                                         moonName,
+                                                                         moonType,
+                                                                         false);
+
+                new Moon(moonInfo, planet);
+            }
         }
-
-        for (Star s : stars) {
-            s.cleanup();
-        }
     }
 
-    public ArrayList<CelestialBody> getAllBodies() {
-        ArrayList<CelestialBody> celestialBodies = new ArrayList<>(planets);
+    public ArrayList<SpaceBody> getAllBodies() {
+        ArrayList<SpaceBody> celestialBodies = new ArrayList<>(planets);
         for (Planet planet : planets) {
-            celestialBodies.addAll(planet.getMoons());
+            celestialBodies.addAll(planet.satellites);
         }
         celestialBodies.addAll(stars);
         return celestialBodies;
-    }
-
-    public void updateAll(float deltaTime) {
-        for (Star s : stars) {
-            s.update(deltaTime);
-        }
-
-        for (Planet planet : planets) {
-            planet.update(deltaTime);
-        }
-    }
-
-    public void tickAllFacilities() {
-        for (Planet planet : planets) {
-            planet.tickFacilities();
-        }
     }
 
     public List<Planet> getPlanets() {
@@ -226,9 +198,15 @@ public class StarSystem {
     }
 
     public List<Planet> getPlanetsOrbitingStar(Star star) {
-        return planets.stream()
-                      .filter(p -> p.getHomeStar() == star)
-                      .toList();
+        return planets.stream().filter(p -> p.getHomeStar() == star).toList();
+    }
+
+    public Star getStar() {
+        return star;
+    }
+
+    public List<Star> getStars() {
+        return stars;
     }
 
     public float maxOrbitDistance(Star star) {
@@ -239,11 +217,30 @@ public class StarSystem {
                       .orElse(star.getRadius() + 1000.0f);
     }
 
-    public Star getStar() {
-        return star;
+    private void nameAllPlanets() {
+        int nameSufix = 1;
+        for (Planet planet : planets) {
+            String starName = planet.getHomeStar().getName();
+            String[] parts = starName.split(" ");
+            String baseName = parts.length > 1 ? parts[1] : starName;
+            planet.setName(baseName + " " + nameSufix);
+            nameSufix++;
+        }
     }
 
-    public List<Star> getStars() {
-        return stars;
+    public void tickAllFacilities() {
+        for (Planet planet : planets) {
+            planet.tickFacilities();
+        }
+    }
+
+    public void updateAll(float deltaTime) {
+        for (Star s : stars) {
+            s.update(deltaTime);
+        }
+
+        for (Planet planet : planets) {
+            planet.update(deltaTime);
+        }
     }
 }

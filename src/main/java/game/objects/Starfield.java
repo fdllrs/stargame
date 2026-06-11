@@ -9,14 +9,14 @@ import java.util.Random;
 
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL20C.*;
-import static org.lwjgl.opengl.GL30C.*;
+import static org.lwjgl.opengl.GL20C.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL30C.glBindVertexArray;
+import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 import static org.lwjgl.opengl.GL32C.GL_PROGRAM_POINT_SIZE;
 
 public class Starfield {
-
     private final int vaoId;
-    private final int vboId;
     private final int starCount;
 
     public Starfield(int count, float radius) {
@@ -49,7 +49,7 @@ public class Starfield {
         vaoId = glGenVertexArrays();
         glBindVertexArray(vaoId);
 
-        vboId = glGenBuffers();
+        int vboId = glGenBuffers();
         FloatBuffer buffer = MemoryUtil.memAllocFloat(starData.length);
         buffer.put(starData).flip();
 
@@ -75,7 +75,9 @@ public class Starfield {
         MemoryUtil.memFree(buffer);
     }
 
-    public void render(ShaderProgram shader, Matrix4f viewMatrix, Matrix4f projectionMatrix) {
+    public void render(ShaderProgram shader,
+                       Matrix4f viewMatrix,
+                       Matrix4f projectionMatrix) {
         shader.bind();
 
         Matrix4f skyboxView = new Matrix4f(viewMatrix);

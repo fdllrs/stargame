@@ -81,6 +81,12 @@ public class UIResourceSlot extends UIElement {
         }
     }
 
+    @Override public void setPosition(float x, float y) {
+        super.setPosition(x, y);
+        labelName.setPosition(x, y);
+        labelAmounts.setPosition(x, y);
+    }
+
     private void transferItemsFromTo(StorageComponent sourceStorage,
                                      StorageComponent targetStorage,
                                      int transferAmount) {
@@ -89,11 +95,5 @@ public class UIResourceSlot extends UIElement {
         } else if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, 1)) {
             onTransfer.run();
         }
-    }
-
-    @Override public void setPosition(float x, float y) {
-        super.setPosition(x, y);
-        labelName.setPosition(x, y);
-        labelAmounts.setPosition(x, y);
     }
 }

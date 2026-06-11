@@ -11,7 +11,7 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 
-public class Star extends CelestialBody implements Describable {
+public class Star extends SpaceBody implements Describable {
     private static final float NOISE_SCALE_MIN = 4.0f;
     private static final float NOISE_SCALE_MAX = 8.0f;
     private static final float NOISE_PULSE_SPEED = 0.01f; // full oscillations per second
@@ -33,10 +33,32 @@ public class Star extends CelestialBody implements Describable {
         this.light = new Light(new Vector3f(0, 0, 0), lightColor);
     }
 
+    @Override public String getDisplayName() {
+        return "Star: " + name;
+    }
+
+    @Override public List<Map.Entry<String, String>> getDisplayProperties() {
+        return List.of(new AbstractMap.SimpleEntry<>("Type", starInfo.type().name()),
+                       new AbstractMap.SimpleEntry<>("Radius",
+                                                     String.format("%.1f",
+                                                                   starInfo.radius())),
+                       new AbstractMap.SimpleEntry<>("Mass",
+                                                     String.format("%.1f",
+                                                                   starInfo.mass())));
+    }
+
+    public float getRadius() {
+        return starInfo.radius();
+    }
+
     public void update(float deltaTime) {
         elapsedTime += deltaTime;
         this.rotate(deltaTime);
         updateModelMatrix();
+    }
+
+    public Light getLight() {
+        return light;
     }
 
     @Override public void render(ShaderProgram shader) {
@@ -77,27 +99,5 @@ public class Star extends CelestialBody implements Describable {
         org.lwjgl.opengl.GL11C.glDepthMask(true);
         org.lwjgl.opengl.GL11C.glStencilMask(0xFF);
         org.lwjgl.opengl.GL11C.glDisable(org.lwjgl.opengl.GL11C.GL_BLEND);
-    }
-
-    public Light getLight() {
-        return light;
-    }
-
-    public float getRadius() {
-        return starInfo.radius();
-    }
-
-    @Override public String getDisplayName() {
-        return "Star: " + name;
-    }
-
-    @Override public List<Map.Entry<String, String>> getDisplayProperties() {
-        return List.of(new AbstractMap.SimpleEntry<>("Type", starInfo.type().name()),
-                       new AbstractMap.SimpleEntry<>("Radius",
-                                                     String.format("%.1f",
-                                                                   starInfo.radius())),
-                       new AbstractMap.SimpleEntry<>("Mass",
-                                                     String.format("%.1f",
-                                                                   starInfo.mass())));
     }
 }

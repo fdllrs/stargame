@@ -7,7 +7,7 @@ import game.geometry.PlayerGeometry;
 import org.joml.Vector3f;
 
 public class Player extends GameObject {
-    private static final Mesh playerMesh = PlayerGeometry.generatePlayerMesh();
+    private static final Mesh playerMesh = PlayerGeometry.getPlayerMesh();
     private static final float PLAYER_RADIUS = 0.15f;
     private final StorageComponent storage = new StorageComponent(1000);
 
@@ -20,16 +20,8 @@ public class Player extends GameObject {
         return PLAYER_RADIUS;
     }
 
-    public void syncWithCamera(Camera camera, boolean isMoving) {
-        this.position.set(camera.position);
-
-        if (isMoving) {
-            float turnSpeed = 0.15f;
-
-            this.rotation.x = lerpAngle(this.rotation.x, -camera.rotation.x, turnSpeed);
-            this.rotation.y = lerpAngle(this.rotation.y, -camera.rotation.y, turnSpeed);
-        }
-        updateModelMatrix();
+    public StorageComponent getStorage() {
+        return storage;
     }
 
     private float lerpAngle(float current, float target, float speed) {
@@ -43,7 +35,15 @@ public class Player extends GameObject {
         return current + (difference * speed);
     }
 
-    public StorageComponent getStorage() {
-        return storage;
+    public void syncWithCamera(Camera camera, boolean isMoving) {
+        this.position.set(camera.position);
+
+        if (isMoving) {
+            float turnSpeed = 0.15f;
+
+            this.rotation.x = lerpAngle(this.rotation.x, -camera.rotation.x, turnSpeed);
+            this.rotation.y = lerpAngle(this.rotation.y, -camera.rotation.y, turnSpeed);
+        }
+        updateModelMatrix();
     }
 }

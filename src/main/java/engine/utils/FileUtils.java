@@ -5,7 +5,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class FileUtils {
-
+    private static void assertPathStreamExists(String path, InputStream pathStream) {
+        if (pathStream == null) {
+            throw new IllegalArgumentException("Resource not found: " + path);
+        }
+    }
 
     public String readFile(String path) {
 
@@ -18,12 +22,5 @@ public class FileUtils {
         }
 
     }
-
-    private static void assertPathStreamExists(String path, InputStream pathStream) {
-        if (pathStream == null) {
-            throw new IllegalArgumentException("Resource not found: " + path);
-        }
-    }
-
 
 }

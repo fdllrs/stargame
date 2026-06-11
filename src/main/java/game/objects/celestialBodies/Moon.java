@@ -1,45 +1,56 @@
 package game.objects.celestialBodies;
 
+import engine.ui.panels.DefaultPanelController;
+import engine.ui.panels.InfoPanelController;
+import engine.ui.text.FontAtlas;
+import game.components.OrbitComponent;
+import game.components.StorageComponent;
 import game.geometry.PlanetGeometry;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
-import org.joml.Vector3f;
+
+import java.util.function.Consumer;
 
 public class Moon extends Planet {
     private static final int MOON_RESOLUTION = 40;
     private final Planet parentPlanet;
+    private final OrbitComponent orbit;
 
     public Moon(PlanetInfo planetInfo, Planet parentPlanet) {
         super(PlanetGeometry.generate(MOON_RESOLUTION,
                                       planetInfo.planetRadius(),
                                       planetInfo.type()), planetInfo);
         this.parentPlanet = parentPlanet;
-        updatePosition();
+        this.orbit = new OrbitComponent(parentPlanet,
+                                        planetInfo.orbitDistance(),
+                                        planetInfo.orbitSpeed(),
+                                        planetInfo.initialOrbitAngle());
+        this.orbit.update(this, 0f);
+        parentPlanet.satellites.add(this);
     }
 
     public Planet getParentPlanet() {
         return parentPlanet;
     }
 
-    private void updatePosition() {
-        float offsetX = (float) Math.cos(orbitAngle) * planetInfo.orbitDistance();
-        float offsetZ = (float) Math.sin(orbitAngle) * planetInfo.orbitDistance();
-        Vector3f parentPos = parentPlanet.getPosition();
-        this.position.set(parentPos.x + offsetX, parentPos.y, parentPos.z + offsetZ);
-        updateModelMatrix();
+    @Override public void update(float deltaTime) {
+        orbit.update(this, deltaTime);
+
+        float spinSpeed = 0.5f;
+        this.rotation.y += spinSpeed * deltaTime;
+        rotate(deltaTime);
     }
 
     @Override public PlanetType getType() {
         return planetInfo.type();
     }
 
-    @Override public void update(float deltaTime) {
-        float orbitSpeed = planetInfo.orbitSpeed();
-        orbitAngle += orbitSpeed * deltaTime;
-        updatePosition();
-
-        float spinSpeed = 0.5f;
-        this.rotation.y += spinSpeed * deltaTime;
-        rotate(deltaTime);
+    @Override
+    public InfoPanelController getPanelController(StorageComponent playerStorage,
+                                                  FontAtlas font,
+                                                  float width,
+                                                  Runnable onRebuild,
+                                                  Consumer<SpaceBody> onSelectTarget) {
+        return new DefaultPanelController();
     }
 }

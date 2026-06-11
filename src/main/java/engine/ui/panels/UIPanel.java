@@ -25,6 +25,7 @@ public abstract class UIPanel extends UIElement {
         this.hPadding = 10;
     }
 
+    protected abstract void layout();
     protected abstract void rebuildElements();
 
     @Override public float getBoundingHeight() {
@@ -86,12 +87,6 @@ public abstract class UIPanel extends UIElement {
         layout();
     }
 
-    protected abstract void layout();
-
-    protected boolean shouldRender() {
-        return true;
-    }
-
     protected void setPanelTitle(String title) {
         children.addFirst(new UIText(title,
                                      UIText.Alignment.CENTER,
@@ -101,5 +96,9 @@ public abstract class UIPanel extends UIElement {
                                      10,
                                      font,
                                      width));
+    }
+
+    protected boolean shouldRender() {
+        return true;
     }
 }

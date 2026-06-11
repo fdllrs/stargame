@@ -1,14 +1,13 @@
 package game.core;
 
 import engine.graphics.Camera;
-import engine.ui.Describable;
 import engine.ui.UIManager;
 import engine.ui.panels.InfoPanel;
 import engine.ui.panels.PlayerResourcesPanel;
 import engine.ui.panels.UIMapPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
-import game.objects.celestialBodies.CelestialBody;
+import game.objects.celestialBodies.SpaceBody;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -32,10 +31,77 @@ public class Game {
     private UIMapPanel uiMapPanel;
     private boolean wasCursorEnabledBeforeMap = false;
 
-    public void run() {
-        init();
-        gameLoop();
-        cleanup();
+    private void cleanup() {
+        scene.cleanup();
+        renderer.cleanup();
+        uiManager.cleanup();
+        window.cleanup();
+    }
+
+    private void gameLoop() {
+        double lastTime = glfwGetTime();
+        double tickAccumulator = 0.0;
+        while (!glfwWindowShouldClose(windowHandle)) {
+            double currentTime = glfwGetTime();
+            float deltaTime = (float) (currentTime - lastTime);
+            lastTime = currentTime;
+
+            glfwPollEvents();
+            update(deltaTime);
+
+            tickAccumulator += deltaTime;
+            if (tickAccumulator >= TICK_TIME) {
+                scene.tick();
+                infoPanel.tick();
+                tickAccumulator -= TICK_TIME;
+            }
+
+            renderer.render(scene, camera, windowHandle);
+            uiManager.renderAll();
+            glfwSwapBuffers(windowHandle);
+        }
+    }
+
+    public void handleCameraMovement(float deltaTime) {
+        if (input.isKeyPressed(GLFW_KEY_W)) {
+            if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+                camera.accelerateWithTurbo(deltaTime);
+            } else {
+                camera.accelerateForwards(deltaTime);
+            }
+        }
+        if (input.isKeyPressed(GLFW_KEY_A))
+            camera.accelerateLeft(deltaTime);
+        if (input.isKeyPressed(GLFW_KEY_S))
+            camera.accelerateBackwards(deltaTime);
+        if (input.isKeyPressed(GLFW_KEY_D))
+            camera.accelerateRight(deltaTime);
+
+        if (input.isKeyPressed(GLFW_KEY_SPACE))
+            camera.zeroAcceleration(false);
+    }
+
+    private void handleCameraRotation() {
+        if (!input.isCursorEnabled()) {
+            camera.addRotation(input.getMouseDx(), input.getMouseDy());
+        }
+    }
+
+    private void handleLeftClick() {
+        float mouseX = input.getMouseX();
+        float mouseY = input.getMouseY();
+
+        if (uiManager.objectClicked(mouseX, mouseY)) {
+            playerResourcesPanel.refreshAmounts();
+
+        } else if (!uiMapPanel.isVisible()) {
+            SpaceBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
+            scene.updateSelectedObject(clicked);
+            infoPanel.setTarget(clicked);
+        } else if (!uiMapPanel.contains(mouseX, mouseY)) {
+            uiMapPanel.setVisible(false);
+            input.toggleCursor();
+        }
     }
 
     private void init() {
@@ -69,7 +135,12 @@ public class Game {
                                                                      0.8f));
 
         input = new Input(windowHandle);
+        infoPanel.setOnSelectTarget(body -> {
+            scene.updateSelectedObject(body);
+            infoPanel.setTarget(body);
+        });
         uiManager.addElement(infoPanel);
+
         uiManager.addElement(playerResourcesPanel);
 
         uiMapPanel = new UIMapPanel(INITIAL_WIDTH * 0.1f,
@@ -104,27 +175,25 @@ public class Game {
         });
     }
 
-    private void gameLoop() {
-        double lastTime = glfwGetTime();
-        double tickAccumulator = 0.0;
-        while (!glfwWindowShouldClose(windowHandle)) {
-            double currentTime = glfwGetTime();
-            float deltaTime = (float) (currentTime - lastTime);
-            lastTime = currentTime;
+    public void run() {
+        init();
+        gameLoop();
+        cleanup();
+    }
 
-            glfwPollEvents();
-            update(deltaTime);
+    private void toggleMap() {
+        boolean nextState = !uiMapPanel.isVisible();
+        uiMapPanel.setVisible(nextState);
 
-            tickAccumulator += deltaTime;
-            if (tickAccumulator >= TICK_TIME) {
-                scene.tick();
-                infoPanel.tick();
-                tickAccumulator -= TICK_TIME;
+        if (nextState) {
+            wasCursorEnabledBeforeMap = input.isCursorEnabled();
+            if (!wasCursorEnabledBeforeMap) {
+                input.toggleCursor();
             }
-
-            renderer.render(scene, camera, windowHandle);
-            uiManager.renderAll();
-            glfwSwapBuffers(windowHandle);
+        } else {
+            if (input.isCursorEnabled() != wasCursorEnabledBeforeMap) {
+                input.toggleCursor();
+            }
         }
     }
 
@@ -167,74 +236,6 @@ public class Game {
     private void updateCameraFromInput(float deltaTime) {
         handleCameraRotation();
         handleCameraMovement(deltaTime);
-    }
-
-    private void handleCameraRotation() {
-        if (!input.isCursorEnabled()) {
-            camera.addRotation(input.getMouseDx(), input.getMouseDy());
-        }
-    }
-
-    public void handleCameraMovement(float deltaTime) {
-        if (input.isKeyPressed(GLFW_KEY_W)) {
-            if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-                camera.accelerateWithTurbo(deltaTime);
-            } else {
-                camera.accelerateForwards(deltaTime);
-            }
-        }
-        if (input.isKeyPressed(GLFW_KEY_A))
-            camera.accelerateLeft(deltaTime);
-        if (input.isKeyPressed(GLFW_KEY_S))
-            camera.accelerateBackwards(deltaTime);
-        if (input.isKeyPressed(GLFW_KEY_D))
-            camera.accelerateRight(deltaTime);
-
-        if (input.isKeyPressed(GLFW_KEY_SPACE))
-            camera.zeroAcceleration(false);
-    }
-
-    private void handleLeftClick() {
-        float mouseX = input.getMouseX();
-        float mouseY = input.getMouseY();
-
-        if (uiManager.objectClicked(mouseX, mouseY)) {
-            playerResourcesPanel.refreshAmounts();
-
-        } else if (!uiMapPanel.isVisible()) {
-            CelestialBody clicked = scene.objectClicked(mouseX,
-                                                        mouseY,
-                                                        windowHandle,
-                                                        camera);
-            scene.updateSelectedObject(clicked);
-            infoPanel.setTarget(clicked instanceof Describable d ? d : null);
-        } else if (!uiMapPanel.contains(mouseX, mouseY)) {
-            uiMapPanel.setVisible(false);
-            input.toggleCursor();
-        }
-    }
-
-    private void toggleMap() {
-        boolean nextState = !uiMapPanel.isVisible();
-        uiMapPanel.setVisible(nextState);
-
-        if (nextState) {
-            wasCursorEnabledBeforeMap = input.isCursorEnabled();
-            if (!wasCursorEnabledBeforeMap) {
-                input.toggleCursor();
-            }
-        } else {
-            if (input.isCursorEnabled() != wasCursorEnabledBeforeMap) {
-                input.toggleCursor();
-            }
-        }
-    }
-
-    private void cleanup() {
-        scene.cleanup();
-        renderer.cleanup();
-        uiManager.cleanup();
-        window.cleanup();
     }
 
 }

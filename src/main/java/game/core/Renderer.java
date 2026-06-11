@@ -6,8 +6,8 @@ import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
 import game.info.PlanetType;
-import game.objects.celestialBodies.CelestialBody;
 import game.objects.celestialBodies.Planet;
+import game.objects.celestialBodies.SpaceBody;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -109,6 +109,44 @@ public class Renderer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    public void cleanup() {
+        shader3D.cleanup();
+        shaderStar.cleanup();
+        shaderPixelArt.cleanup();
+        shaderOutline.cleanup();
+        shaderStarfield.cleanup();
+        shaderShadow.cleanup();
+        shaderRocky.cleanup();
+        shaderOrganic.cleanup();
+        shaderGasGiant.cleanup();
+        shaderIceGiant.cleanup();
+        shaderRing.cleanup();
+        glDeleteFramebuffers(shadowFbo);
+        glDeleteTextures(shadowDepthTex);
+        fbo.cleanup();
+        screenQuad.cleanup();
+    }
+
+    public Matrix4f getCurrentLightSpaceMatrix() {
+        return currentLightSpaceMatrix;
+    }
+
+    public ShaderProgram getDefaultShader() {
+        return shader3D;
+    }
+
+    public ShaderProgram getShaderForType(PlanetType type) {
+        return planetShaders[type.ordinal()];
+    }
+
+    public ShaderProgram getShaderRing() {
+        return shaderRing;
+    }
+
+    public int getShadowDepthTex() {
+        return shadowDepthTex;
+    }
+
     /**
      * Re-create the FBO at the new (downscaled) size after a window resize.
      */
@@ -124,6 +162,58 @@ public class Renderer {
         renderShadowPass(scene, camera);
         renderScenePass(scene, camera, windowHandle);
         renderUpscalePass();
+    }
+
+    private void renderObjects(Scene scene, Camera camera) {
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+
+        scene.render(this, shaderStar, camera);
+    }
+
+    private void renderOutline(Scene scene, Camera camera) {
+        SpaceBody selected = scene.getSelectedObject();
+        if (selected != null) {
+            shaderOutline.bind();
+            shaderOutline.setUniform("view", camera.getViewMatrix());
+            shaderOutline.setUniform("projection", camera.getProjectionMatrix());
+
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST);
+
+            Matrix4f shellMatrix = new Matrix4f(selected.getModelMatrix());
+            shellMatrix.scale(1.05f);
+
+            shaderOutline.setUniform("model", shellMatrix);
+            shaderOutline.setUniform("outlineColor", new Vector3f(0.0f, 1.0f, 1.0f));
+
+            selected.getMesh().render();
+
+            // Cleanup Outline State
+            glEnable(GL_DEPTH_TEST);
+            shaderOutline.unbind();
+        }
+    }
+
+    private void renderScenePass(Scene scene, Camera camera, long windowHandle) {
+        fbo.bind();
+
+        renderStarfield(scene, camera);
+
+        renderOutline(scene, camera);
+
+        renderObjects(scene, camera);
+
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glDisable(GL_STENCIL_TEST);
+
+        Vector2i screenSize = Window.getWindowSize(windowHandle);
+        fbo.unbind(screenSize.x, screenSize.y);
     }
 
     private void renderShadowPass(Scene scene, Camera camera) {
@@ -157,67 +247,19 @@ public class Renderer {
         currentLightSpaceMatrix.set(lightProjection).mul(lightView);
         shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
 
-        // 3. Render planets (and their facilities) and player spacecraft to shadow map
+        // 3. Render planets (and their facilities/orbiters) and player spacecraft to
+        // shadow map
         for (Planet planet : scene.getPlanets()) {
             planet.render(shaderShadow);
             planet.renderFacilities(shaderShadow);
+            for (SpaceBody orbiter : planet.satellites) {
+                orbiter.render(shaderShadow);
+            }
         }
         scene.getPlayer().render(shaderShadow);
 
         shaderShadow.unbind();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    private void renderScenePass(Scene scene, Camera camera, long windowHandle) {
-        fbo.bind();
-
-        renderStarfield(scene, camera);
-
-        renderOutline(scene, camera);
-
-        renderObjects(scene, camera);
-
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glDisable(GL_STENCIL_TEST);
-
-        Vector2i screenSize = Window.getWindowSize(windowHandle);
-        fbo.unbind(screenSize.x, screenSize.y);
-    }
-
-    private void renderObjects(Scene scene, Camera camera) {
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
-
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-
-        scene.render(this, shaderStar, camera);
-    }
-
-    private void renderOutline(Scene scene, Camera camera) {
-        CelestialBody selected = scene.getSelectedObject();
-        if (selected != null) {
-            shaderOutline.bind();
-            shaderOutline.setUniform("view", camera.getViewMatrix());
-            shaderOutline.setUniform("projection", camera.getProjectionMatrix());
-
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
-
-            Matrix4f shellMatrix = new Matrix4f(selected.getModelMatrix());
-            shellMatrix.scale(1.05f);
-
-            shaderOutline.setUniform("model", shellMatrix);
-            shaderOutline.setUniform("outlineColor", new Vector3f(0.0f, 1.0f, 1.0f));
-
-            selected.getMesh().render();
-
-            // Cleanup Outline State
-            glEnable(GL_DEPTH_TEST);
-            shaderOutline.unbind();
-        }
     }
 
     private void renderStarfield(Scene scene, Camera camera) {
@@ -239,43 +281,5 @@ public class Renderer {
         glBindTexture(GL_TEXTURE_2D, fbo.textureId);
         screenQuad.render();
         shaderPixelArt.unbind();
-    }
-
-    public ShaderProgram getDefaultShader() {
-        return shader3D;
-    }
-
-    public ShaderProgram getShaderRing() {
-        return shaderRing;
-    }
-
-    public Matrix4f getCurrentLightSpaceMatrix() {
-        return currentLightSpaceMatrix;
-    }
-
-    public int getShadowDepthTex() {
-        return shadowDepthTex;
-    }
-
-    public ShaderProgram getShaderForType(PlanetType type) {
-        return planetShaders[type.ordinal()];
-    }
-
-    public void cleanup() {
-        shader3D.cleanup();
-        shaderStar.cleanup();
-        shaderPixelArt.cleanup();
-        shaderOutline.cleanup();
-        shaderStarfield.cleanup();
-        shaderShadow.cleanup();
-        shaderRocky.cleanup();
-        shaderOrganic.cleanup();
-        shaderGasGiant.cleanup();
-        shaderIceGiant.cleanup();
-        shaderRing.cleanup();
-        glDeleteFramebuffers(shadowFbo);
-        glDeleteTextures(shadowDepthTex);
-        fbo.cleanup();
-        screenQuad.cleanup();
     }
 }

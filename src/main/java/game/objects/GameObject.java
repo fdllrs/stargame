@@ -2,6 +2,7 @@ package game.objects;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
+import game.objects.entities.GameEntity;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -25,33 +26,6 @@ public class GameObject extends GameEntity {
         updateModelMatrix();
     }
 
-    public void updateModelMatrix() {
-        modelMatrix.identity();
-        modelMatrix.translate(position);
-
-        modelMatrix.rotateY((float) Math.toRadians(rotation.y));
-        modelMatrix.rotateX((float) Math.toRadians(rotation.x));
-        modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
-
-        modelMatrix.scale(scale);
-    }
-
-    public Matrix4f getModelMatrix() {
-        return modelMatrix;
-    }
-
-    public Vector3f getPosition() {return position;}
-
-    public Vector3f getRotation() {return rotation;}
-
-    public Mesh getMesh() {
-        return mesh;
-    }
-
-    public void setSelected(boolean selected) {
-        this.isSelected = selected;
-    }
-
     @Override public void cleanup() {
         mesh.cleanup();
     }
@@ -72,6 +46,22 @@ public class GameObject extends GameEntity {
         return new Matrix3f(modelMatrix).invert().transpose();
     }
 
+    public Mesh getMesh() {
+        return mesh;
+    }
+
+    public Matrix4f getModelMatrix() {
+        return modelMatrix;
+    }
+
+    public Vector3f getPosition() {return position;}
+
+    public Vector3f getRotation() {return rotation;}
+
+    public void setSelected(boolean selected) {
+        this.isSelected = selected;
+    }
+
     protected void setupStencilForSelection() {
         if (isSelected) {
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -80,6 +70,17 @@ public class GameObject extends GameEntity {
             glStencilFunc(GL_ALWAYS, 0, 0xFF);
             glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         }
+    }
+
+    public void updateModelMatrix() {
+        modelMatrix.identity();
+        modelMatrix.translate(position);
+
+        modelMatrix.rotateY((float) Math.toRadians(rotation.y));
+        modelMatrix.rotateX((float) Math.toRadians(rotation.x));
+        modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
+
+        modelMatrix.scale(scale);
     }
 
 }

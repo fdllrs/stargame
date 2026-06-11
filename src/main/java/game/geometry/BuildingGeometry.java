@@ -7,22 +7,6 @@ public class BuildingGeometry {
     private static Mesh extractorMesh;
     private static Mesh siloMesh;
 
-    public static Mesh getExtractorMesh() {
-        if (extractorMesh == null) {
-            extractorMesh = ModelLoader.loadModelObj(
-                    "src/main/resources/models/mining.obj",
-                    0.2f);
-        }
-        return extractorMesh;
-    }
-
-    public static Mesh getSiloMesh() {
-        if (siloMesh == null) {
-            siloMesh = generateBox(2.5f, 2.0f, 2.5f);
-        }
-        return siloMesh;
-    }
-
     public static Mesh generateBox(float sizeX, float sizeY, float sizeZ) {
         float x = sizeX / 2.0f;
         float y = sizeY / 2.0f;
@@ -71,5 +55,21 @@ public class BuildingGeometry {
         float[] uvs = new float[24 * 2];
 
         return Mesh.create3D(positions, indices, normals, uvs);
+    }
+
+    public static Mesh getExtractorMesh() {
+        if (extractorMesh == null) {
+            extractorMesh = ModelLoader.loadModelObj(
+                    "src/main/resources/models/mining.obj",
+                    0.2f);
+        }
+        return extractorMesh;
+    }
+
+    public static Mesh getSiloMesh() {
+        if (siloMesh == null) {
+            siloMesh = generateBox(2.5f, 2.0f, 2.5f);
+        }
+        return siloMesh;
     }
 }

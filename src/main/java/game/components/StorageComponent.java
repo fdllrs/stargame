@@ -18,18 +18,6 @@ public class StorageComponent {
         this.capacity += capacity;
     }
 
-    public String getFillForDisplay() {
-        return getOccupancy() + "/" + getCapacity();
-    }
-
-    public int getOccupancy() {
-        return inventory.values().stream().mapToInt(Integer::intValue).sum();
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
     public boolean attemptMoveItemsTo(StorageComponent otherStorage,
                                       ItemType item,
                                       int amount) {
@@ -41,22 +29,18 @@ public class StorageComponent {
         return true;
     }
 
+    public boolean canDeposit(int amount) {
+        return getOccupancy() + amount <= getCapacity();
+    }
+
     private boolean canMoveItemsTo(StorageComponent otherStorage,
                                    ItemType item,
                                    int amount) {
         return canWithdraw(item, amount) & otherStorage.canDeposit(amount);
     }
 
-    public boolean canDeposit(int amount) {
-        return getOccupancy() + amount <= getCapacity();
-    }
-
     public boolean canWithdraw(ItemType item, int amount) {
         return getAmount(item) >= amount;
-    }
-
-    public int getAmount(ItemType item) {
-        return inventory.getOrDefault(item, 0);
     }
 
     public void deposit(ItemType item, int amount) {
@@ -64,6 +48,22 @@ public class StorageComponent {
             return;
         }
         inventory.merge(item, amount, Integer::sum);
+    }
+
+    public int getAmount(ItemType item) {
+        return inventory.getOrDefault(item, 0);
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
+    public String getFillForDisplay() {
+        return getOccupancy() + "/" + getCapacity();
+    }
+
+    public int getOccupancy() {
+        return inventory.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     public void withdraw(ItemType item, int amount) {

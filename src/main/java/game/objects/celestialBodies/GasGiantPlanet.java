@@ -18,8 +18,7 @@ public class GasGiantPlanet extends Planet {
     public GasGiantPlanet(PlanetInfo planetInfo) {
         super(PlanetGeometry.generate(PLANET_RESOLUTION,
                                       planetInfo.planetRadius(),
-                                      PlanetType.GAS_GIANT),
-              planetInfo);
+                                      PlanetType.GAS_GIANT), planetInfo);
         if (planetInfo.hasRings()) {
             this.ringMesh = PlanetGeometry.generateRing(radius * 1.4f, radius * 2.3f, 64);
             this.ringColor = new Vector3f(colorA).lerp(colorB, 0.5f);
@@ -29,16 +28,18 @@ public class GasGiantPlanet extends Planet {
         }
     }
 
-    @Override
-    public void cleanup() {
+    @Override public PlanetType getType() {
+        return PlanetType.GAS_GIANT;
+    }
+
+    @Override public void cleanup() {
         super.cleanup();
         if (ringMesh != null) {
             ringMesh.cleanup();
         }
     }
 
-    @Override
-    public void renderExtra(Renderer renderer, Camera camera) {
+    @Override public void renderExtra(Renderer renderer, Camera camera) {
         if (ringMesh != null) {
             ShaderProgram shaderRing = renderer.getShaderRing();
             shaderRing.bind();
@@ -59,10 +60,5 @@ public class GasGiantPlanet extends Planet {
             ringMesh.render();
             shaderRing.unbind();
         }
-    }
-
-    @Override
-    public PlanetType getType() {
-        return PlanetType.GAS_GIANT;
     }
 }
