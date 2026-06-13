@@ -6,7 +6,6 @@ import engine.ui.UIRow;
 import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
-import game.items.RawResource;
 import game.objects.celestialBodies.SpaceBody;
 import org.joml.Vector4f;
 
@@ -18,6 +17,8 @@ public class InfoPanel extends UIPanel {
 	private InfoPanelController currentController;
 	private Consumer<SpaceBody> onSelectTarget;
 
+	private boolean dirty = true;
+
 	public InfoPanel(float x,
 			float y,
 			float width,
@@ -27,8 +28,10 @@ public class InfoPanel extends UIPanel {
 			StorageComponent playerStorage) {
 		super(x, y, width, height, color, font);
 		this.playerStorage = playerStorage;
+	}
 
-		playerStorage.deposit(RawResource.METAL, 10000);
+	public void markDirty() {
+		this.dirty = true;
 	}
 
 	@Override
@@ -36,7 +39,7 @@ public class InfoPanel extends UIPanel {
 		float currentY = this.y + vPadding;
 		for (UIElement element : children) {
 			float elementX = this.x;
-			if (element instanceof UIButton || element instanceof UIRow) {
+			if (element.getLayoutAlignment() == UIElement.LayoutAlignment.CENTER) {
 				elementX = this.x + ( this.width - element.getSize().x ) / 2.0f;
 			}
 			element.setPosition(elementX, currentY);
@@ -62,15 +65,6 @@ public class InfoPanel extends UIPanel {
 		return this.height + vPadding;
 	}
 
-	public void handleClick(float mouseX, float mouseY) {
-		for (UIElement element : children) {
-			if (element.contains(mouseX, mouseY)) {
-				element.handleClick(mouseX, mouseY);
-				return;
-			}
-		}
-	}
-
 	@Override
 	public boolean shouldRender() {
 		return currentTarget != null;
@@ -91,16 +85,19 @@ public class InfoPanel extends UIPanel {
 			this.currentController = target.getPanelController(playerStorage,
 															   font,
 															   width,
-															   this::rebuildElements,
+															   this::markDirty,
 															   onSelectTarget);
 		}
 		else {
 			this.currentController = null;
 		}
-		rebuildElements();
+		markDirty();
 	}
 
 	public void tick() {
-		rebuildElements();
+		if (dirty) {
+			rebuildElements();
+			dirty = false;
+		}
 	}
 }

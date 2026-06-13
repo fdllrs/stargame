@@ -16,6 +16,8 @@ public class Mesh {
     private final int vertexCount;
     private final List<Integer> vboIdList;
     private boolean hasVertexColors = false;
+    private Texture diffuseTexture;
+    private Texture emissiveTexture;
 
     private Mesh(float[] positions,
                  int[] indices,
@@ -146,10 +148,57 @@ public class Mesh {
         return hasVertexColors;
     }
 
+    public void setDiffuseTexture(Texture texture) {
+        this.diffuseTexture = texture;
+    }
+
+    public void setEmissiveTexture(Texture texture) {
+        this.emissiveTexture = texture;
+    }
+
+    public Texture getDiffuseTexture() {
+        return diffuseTexture;
+    }
+
+    public Texture getEmissiveTexture() {
+        return emissiveTexture;
+    }
+
     public void render() {
         glBindVertexArray(vaoId);
         glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
-
         glBindVertexArray(0);
+    }
+
+    public void render(ShaderProgram shader) {
+        boolean hasDiffuse = (diffuseTexture != null);
+        boolean hasEmissive = (emissiveTexture != null);
+
+        if (hasDiffuse) {
+            diffuseTexture.bind(org.lwjgl.opengl.GL13C.GL_TEXTURE0);
+            shader.setUniform("useTexture", 1);
+            shader.setUniform("diffuseMap", 0);
+        } else {
+            shader.setUniform("useTexture", 0);
+        }
+
+        if (hasEmissive) {
+            emissiveTexture.bind(org.lwjgl.opengl.GL13C.GL_TEXTURE2);
+            shader.setUniform("useEmissiveMap", 1);
+            shader.setUniform("emissiveMap", 2);
+        } else {
+            shader.setUniform("useEmissiveMap", 0);
+        }
+
+        glBindVertexArray(vaoId);
+        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        if (hasDiffuse) {
+            diffuseTexture.unbind();
+        }
+        if (hasEmissive) {
+            emissiveTexture.unbind();
+        }
     }
 }

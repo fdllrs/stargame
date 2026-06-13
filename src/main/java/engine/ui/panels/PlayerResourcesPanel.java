@@ -6,6 +6,7 @@ import engine.ui.text.UIText;
 import engine.ui.text.UIText.Alignment;
 import game.components.StorageComponent;
 import game.items.ItemType;
+import game.items.ProcessedItem;
 import game.items.RawResource;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector4f;
@@ -16,129 +17,138 @@ import java.util.List;
 import java.util.Map;
 
 public class PlayerResourcesPanel extends UIPanel {
-    private final StorageComponent storageComponent;
-    private final Map<ItemType, UIText> resourceLabels;
-    private final float expandedHeight;
-    private float expandedY;
-    private UIText storageFillText;
-    private boolean expanded;
+	private final StorageComponent storageComponent;
+	private final Map<ItemType, UIText> resourceLabels;
+	private final float expandedHeight;
+	private float expandedY;
+	private UIText storageFillText;
+	private boolean expanded;
 
-    public PlayerResourcesPanel(float x,
-                                float y,
-                                float width,
-                                float height,
-                                FontAtlas font,
-                                StorageComponent storageComponent,
-                                Vector4f color) {
-        super(x, y, width, height, color, font);
-        this.resourceLabels = new HashMap<>();
-        this.storageComponent = storageComponent;
-        this.expandedHeight = height;
-        this.expandedY = y;
+	public PlayerResourcesPanel(float x,
+			float y,
+			float width,
+			float height,
+			FontAtlas font,
+			StorageComponent storageComponent,
+			Vector4f color) {
+		super(x, y, width, height, color, font);
+		this.resourceLabels = new HashMap<>();
+		this.storageComponent = storageComponent;
+		this.expandedHeight = height;
+		this.expandedY = y;
 
-        setExpanded(false);
+		storageComponent.deposit(RawResource.METAL, 500);
+		storageComponent.deposit(ProcessedItem.ALLOY, 500);
 
-    }
+		setExpanded(false);
+	}
 
-    private void addResourceAmountsText() {
-        List<ItemType> allItems = new ArrayList<>(List.of(RawResource.values()));
-        for (ItemType type : allItems) {
-            String text = getNameAndAmountText(type);
-            UIText label = new UIText(text,
-                                      Alignment.LEFT,
-                                      new Vector4f(1, 1, 1, 1),
-                                      16,
-                                      10,
-                                      15,
-                                      font,
-                                      width);
+	private void addResourceAmountsText() {
+		List<ItemType> rawResources = new ArrayList<>(List.of(RawResource.values()));
+		List<ItemType> processedItems = new ArrayList<>(List.of(ProcessedItem.values()));
+		List<ItemType> allItems = new ArrayList<>(rawResources);
+		allItems.addAll(processedItems);
+		for (ItemType type : allItems) {
+			String text = getNameAndAmountText(type);
+			UIText label = new UIText(text,
+									  Alignment.LEFT,
+									  new Vector4f(1, 1, 1, 1),
+									  16,
+									  10,
+									  15,
+									  font,
+									  width);
 
-            resourceLabels.put(type, label);
-            children.add(label);
-        }
-    }
+			resourceLabels.put(type, label);
+			children.add(label);
+		}
+	}
 
-    private void addStorageCapacityText() {
-        UIText storageFillText = new UIText(
-                storageComponent.getFillForDisplay() + " " + "items",
-                Alignment.CENTER,
-                new Vector4f(1, 1, 1, 1),
-                16,
-                10,
-                5,
-                font,
-                width);
-        this.storageFillText = storageFillText;
-        children.add(storageFillText);
-    }
+	private void addStorageCapacityText() {
+		UIText storageFillText = new UIText(storageComponent.getFillForDisplay() + " " + "items",
+											Alignment.CENTER,
+											new Vector4f(1, 1, 1, 1),
+											16,
+											10,
+											5,
+											font,
+											width);
+		this.storageFillText = storageFillText;
+		children.add(storageFillText);
+	}
 
-    @NotNull private String getNameAndAmountText(ItemType type) {
-        return type.name() + ": " + storageComponent.getAmount(type);
-    }
+	@NotNull
+	private String getNameAndAmountText(ItemType type) {
+		return type.name() + ": " + storageComponent.getAmount(type);
+	}
 
-    @Override protected void layout() {
-        float currentY = this.y + vPadding;
-        for (UIElement element : children) {
-            element.setPosition(this.x, currentY);
-            currentY += element.getBoundingHeight();
-        }
-    }
+	@Override
+	protected void layout() {
+		float currentY = this.y + vPadding;
+		for (UIElement element : children) {
+			element.setPosition(this.x, currentY);
+			currentY += element.getBoundingHeight();
+		}
+	}
 
-    @Override protected void rebuildElements() {
-        children.clear();
-        resourceLabels.clear();
+	@Override
+	protected void rebuildElements() {
+		children.clear();
+		resourceLabels.clear();
 
-        setPanelTitle("Inventory");
-        addStorageCapacityText();
+		setPanelTitle("Inventory");
+		addStorageCapacityText();
 
-        if (expanded) {
-            addResourceAmountsText();
-        }
-        layout();
+		if (expanded) {
+			addResourceAmountsText();
+		}
+		layout();
+	}
 
-    }
+	@Override
+	public float getBoundingHeight() {
+		float currentY = this.y + vPadding;
+		for (UIElement element : children) {
+			currentY += element.getBoundingHeight();
+		}
+		return currentY;
+	}
 
-    @Override public float getBoundingHeight() {
-        float currentY = this.y + vPadding;
-        for (UIElement element : children) {
-            currentY += element.getBoundingHeight();
-        }
-        return currentY;
-    }
+	public void handleClick(float mouseX, float mouseY) {
 
-    public void handleClick(float mouseX, float mouseY) {
+		setExpanded(!expanded);
 
-        setExpanded(!expanded);
+		super.handleClick(mouseX, mouseY);
+	}
 
-        super.handleClick(mouseX, mouseY);
-    }
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		this.expandedY = screenHeight - this.expandedHeight - 20;
+		if (expanded) {
+			setPosition(screenWidth - this.width - 20, expandedY);
+		}
+		else {
+			setPosition(screenWidth - this.width - 20, expandedY + ( expandedHeight - 80 ));
+		}
+	}
 
-    @Override public void onResize(int screenWidth, int screenHeight) {
-        this.expandedY = screenHeight - this.expandedHeight - 20;
-        if (expanded) {
-            setPosition(screenWidth - this.width - 20, expandedY);
-        } else {
-            setPosition(screenWidth - this.width - 20, expandedY + (expandedHeight - 80));
-        }
-    }
+	public void refreshAmounts() {
+		storageFillText.setText(storageComponent.getFillForDisplay() + " " + "items");
 
-    public void refreshAmounts() {
-        storageFillText.setText(storageComponent.getFillForDisplay() + " " + "items");
+		resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
+	}
 
-        resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
-    }
-
-    private void setExpanded(boolean expanded) {
-        this.expanded = expanded;
-        if (expanded) {
-            setSize(width, expandedHeight);
-            setPosition(x, expandedY);
-            rebuildElements();
-        } else {
-            setSize(width, 80);
-            setPosition(x, expandedY + (expandedHeight - 80));
-            rebuildElements();
-        }
-    }
-
+	private void setExpanded(boolean expanded) {
+		this.expanded = expanded;
+		if (expanded) {
+			setSize(width, expandedHeight);
+			setPosition(x, expandedY);
+			rebuildElements();
+		}
+		else {
+			setSize(width, 80);
+			setPosition(x, expandedY + ( expandedHeight - 80 ));
+			rebuildElements();
+		}
+	}
 }

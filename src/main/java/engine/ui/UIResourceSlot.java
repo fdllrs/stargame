@@ -9,91 +9,99 @@ import game.items.ItemType;
 import org.joml.Vector4f;
 
 public class UIResourceSlot extends UIElement {
-    private final ItemType itemType;
-    private final StorageComponent planetStorage;
-    private final StorageComponent playerStorage;
-    private final UIText labelName;
-    private final UIText labelAmounts;
-    private final Runnable onTransfer;
+	private final ItemType itemType;
+	private final StorageComponent planetStorage;
+	private final StorageComponent playerStorage;
+	private final UIText labelName;
+	private final UIText labelAmounts;
+	private final Runnable onTransfer;
 
-    public UIResourceSlot(float width,
-                          float height,
-                          ItemType itemType,
-                          StorageComponent planetStorage,
-                          StorageComponent playerStorage,
-                          FontAtlas font,
-                          Runnable onTransfer,
-                          Vector4f color) {
-        super(0, 0, width, height, color);
+	public UIResourceSlot(float width,
+			float height,
+			ItemType itemType,
+			StorageComponent planetStorage,
+			StorageComponent playerStorage,
+			FontAtlas font,
+			Runnable onTransfer,
+			Vector4f color) {
+		super(0, 0, width, height, color);
 
-        this.vPadding = 20;
-        this.itemType = itemType;
-        this.planetStorage = planetStorage;
-        this.playerStorage = playerStorage;
-        this.onTransfer = onTransfer;
+		this.vPadding = 20;
+		this.itemType = itemType;
+		this.planetStorage = planetStorage;
+		this.playerStorage = playerStorage;
+		this.onTransfer = onTransfer;
 
-        this.labelName = new UIText(itemType.name(),
-                                    UIText.Alignment.LEFT,
-                                    new Vector4f(1.0f, 1.0f, 1.0f, 1.0f),
-                                    16,
-                                    10,
-                                    5,
-                                    font,
-                                    width);
-        this.labelAmounts = new UIText(getAmountsText(),
-                                       UIText.Alignment.RIGHT,
-                                       new Vector4f(1f, 1f, 1f, 1.0f),
-                                       18,
-                                       10,
-                                       5,
-                                       font,
-                                       width);
-    }
+		this.labelName = new UIText(itemType.name(),
+									UIText.Alignment.LEFT,
+									new Vector4f(1.0f, 1.0f, 1.0f, 1.0f),
+									16,
+									10,
+									5,
+									font,
+									width);
+		this.labelAmounts = new UIText(getAmountsText(),
+									   UIText.Alignment.RIGHT,
+									   new Vector4f(1f, 1f, 1f, 1.0f),
+									   18,
+									   10,
+									   5,
+									   font,
+									   width);
+	}
 
-    private String getAmountsText() {
-        int planetAmt = planetStorage.getAmount(itemType);
-        int shipAmt = playerStorage.getAmount(itemType);
-        return planetAmt + "   |   " + shipAmt;
-    }
+	private String getAmountsText() {
+		int planetAmt = planetStorage.getAmount(itemType);
+		int shipAmt = playerStorage.getAmount(itemType);
+		return planetAmt + "   |   " + shipAmt;
+	}
 
-    @Override public float getBoundingHeight() {
-        return height + vPadding;
-    }
+	@Override
+	public float getBoundingHeight() {
+		return height + vPadding;
+	}
 
-    @Override public void handleClick(float mouseX, float mouseY) {
-    }
+	@Override
+	public void handleClick(float mouseX, float mouseY) {
+	}
 
-    @Override public void render(ShaderProgram shader, Mesh uiQuad) {
-        shader.setUniform("useTexture", 0);
-        shader.setUniform("uiColor", this.color);
-        shader.setUniform("model", this.modelMatrix);
-        uiQuad.render();
-        labelName.render(shader, uiQuad);
-        labelAmounts.render(shader, uiQuad);
-    }
+	@Override
+	public void render(ShaderProgram shader, Mesh uiQuad) {
+		shader.setUniform("useTexture", 0);
+		shader.setUniform("uiColor", this.color);
+		shader.setUniform("model", this.modelMatrix);
+		uiQuad.render();
+		labelName.render(shader, uiQuad);
+		labelAmounts.render(shader, uiQuad);
+	}
 
-    @Override public void handleScroll(float mouseX, float mouseY, double yOffset) {
-        int transferAmount = 10;
-        if (yOffset < 0) {
-            transferItemsFromTo(planetStorage, playerStorage, transferAmount);
-        } else if (yOffset > 0) {
-            transferItemsFromTo(playerStorage, planetStorage, transferAmount);
-        }
-    }
+	@Override
+	public void handleScroll(float mouseX, float mouseY, double yOffset) {
+		int transferAmount = 10;
+		if (yOffset < 0) {
+			transferItemsFromTo(planetStorage, playerStorage, transferAmount);
+		}
+		else if (yOffset > 0) {
+			transferItemsFromTo(playerStorage, planetStorage, transferAmount);
+		}
+		labelAmounts.setText(getAmountsText());
+	}
 
-    @Override public void setPosition(float x, float y) {
-        super.setPosition(x, y);
-        labelName.setPosition(x, y);
-        labelAmounts.setPosition(x, y);
-    }
+	@Override
+	public void setPosition(float x, float y) {
+		super.setPosition(x, y);
+		labelName.setPosition(x, y);
+		labelAmounts.setPosition(x, y);
+	}
 
-    private void transferItemsFromTo(StorageComponent sourceStorage,
-                                     StorageComponent targetStorage,
-                                     int transferAmount) {
-        if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, transferAmount)) {
-            onTransfer.run();
-        } else if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, 1)) {
-            onTransfer.run();
-        }
-    }
+	private void transferItemsFromTo(StorageComponent sourceStorage,
+			StorageComponent targetStorage,
+			int transferAmount) {
+		if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, transferAmount)) {
+			onTransfer.run();
+		}
+		else if (sourceStorage.attemptMoveItemsTo(targetStorage, itemType, 1)) {
+			onTransfer.run();
+		}
+	}
 }

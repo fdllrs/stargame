@@ -35,19 +35,17 @@ public class PlanetPanelController implements InfoPanelController {
             return UIStatsTab.build(planet, font, width, selectHubAction);
         };
 
-        List<UIElement> storageSupplier = UIStorageTab.build(planet.getStorage(),
-                                                             playerStorage,
-                                                             font,
-                                                             width,
-                                                             onRebuild);
-        List<UIElement> buildSupplier = UIBuildTab.build(planet,
-                                                         playerStorage,
-                                                         font,
-                                                         width,
-                                                         onRebuild);
-        this.tabBar.addTab("Stats", statsSupplier);
-        this.tabBar.addTab("Storage", () -> storageSupplier);
-        this.tabBar.addTab("Build", () -> buildSupplier);
+		this.tabBar.addTab("Stats", statsSupplier);
+		this.tabBar.addTab("Storage", () -> UIStorageTab.build(planet.getStorage(),
+															   playerStorage,
+															   font,
+															   width,
+															   onRebuild));
+		this.tabBar.addTab("Build", () -> UIBuildTab.build(planet,
+														   playerStorage,
+														   font,
+														   width,
+														   onRebuild));
     }
 
     @Override

@@ -55,16 +55,18 @@ public class UIStorageTab {
         Vector4f bg = new Vector4f(0.1f, 0.5f, 0.1f, 0.5f);
 
         for (ItemType item : allItems) {
-            bg.y += 0.1f;
-            bg.z += 0.1f;
-            elements.add(new UIResourceSlot(width,
-                                            20,
-                                            item,
-                                            planetStorage,
-                                            playerStorage,
-                                            font,
-                                            onRebuild,
-                                            new Vector4f(bg)));
+            if (planetStorage.getAmount(item) > 0 || playerStorage.getAmount(item) > 0) {
+                bg.y += 0.1f;
+                bg.z += 0.1f;
+                elements.add(new UIResourceSlot(width,
+                                                20,
+                                                item,
+                                                planetStorage,
+                                                playerStorage,
+                                                font,
+                                                onRebuild,
+                                                new Vector4f(bg)));
+            }
         }
         return elements;
     }

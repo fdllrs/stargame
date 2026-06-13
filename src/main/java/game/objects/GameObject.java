@@ -39,7 +39,7 @@ public class GameObject extends GameEntity {
         shader.setUniform("useVertexColor", 1);
         shader.setUniform("isLightSource", 0);
         setupStencilForSelection();
-        mesh.render();
+        mesh.render(shader);
     }
 
     protected Matrix3f computeNormalMatrix() {

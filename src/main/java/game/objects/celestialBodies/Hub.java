@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class Hub extends SpaceBody implements Describable {
+    public static final Map<game.items.ItemType, Integer> COST = Map.of(game.items.RawResource.METAL, 50);
     private static final Mesh hubMesh = HubGeometry.getHubMesh();
     private final Planet parentPlanet;
     private final OrbitComponent orbit;
