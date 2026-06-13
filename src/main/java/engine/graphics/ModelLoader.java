@@ -11,8 +11,13 @@ import java.util.List;
 import java.util.Map;
 
 public class ModelLoader {
-	public static Mesh loadModelObj(String modelPath) {
-		return loadModelObj(modelPath, 1.0f);
+
+	private static String getFilename(String path) {
+		int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+		if (lastSlash != -1) {
+			return path.substring(lastSlash + 1);
+		}
+		return path;
 	}
 
 	public static Mesh loadModelObj(String modelPath, float scale) {
@@ -64,7 +69,8 @@ public class ModelLoader {
 						if (mat != null) {
 							activeColor = mat.Kd;
 							activeEmissive = mat.Ke;
-						} else {
+						}
+						else {
 							activeColor = new float[] { 1.0f, 1.0f, 1.0f };
 							activeEmissive = new float[] { 0.0f, 0.0f, 0.0f };
 						}
@@ -119,11 +125,11 @@ public class ModelLoader {
 			int[] indicesArray = ArrayUtils.convertToIntArray(finalIndices);
 
 			Mesh mesh = Mesh.create3D(vertexArray,
-								 indicesArray,
-								 normalArray,
-								 textureArray,
-								 colorArray,
-								 emissiveArray);
+									  indicesArray,
+									  normalArray,
+									  textureArray,
+									  colorArray,
+									  emissiveArray);
 
 			String diffuseTexFile = null;
 			String emissiveTexFile = null;
@@ -155,13 +161,6 @@ public class ModelLoader {
 		}
 	}
 
-	private static class MtlMaterial {
-		float[] Kd = new float[] { 1.0f, 1.0f, 1.0f };
-		float[] Ke = new float[] { 0.0f, 0.0f, 0.0f };
-		String map_Kd = null;
-		String map_Ke = null;
-	}
-
 	private static Map<String, MtlMaterial> loadMtl(String mtlPath) {
 		Map<String, MtlMaterial> materials = new HashMap<>();
 		try {
@@ -187,11 +186,13 @@ public class ModelLoader {
 					float b = Float.parseFloat(split[ 3 ]);
 					currentMaterial.Ke = new float[] { r, g, b };
 				}
-				else if (trimmed.startsWith("map_Kd ") && currentMaterial != null && split.length > 1) {
+				else if (trimmed.startsWith("map_Kd ") && currentMaterial != null &&
+						 split.length > 1) {
 					String fullPath = trimmed.substring("map_Kd ".length()).trim();
 					currentMaterial.map_Kd = getFilename(fullPath);
 				}
-				else if (trimmed.startsWith("map_Ke ") && currentMaterial != null && split.length > 1) {
+				else if (trimmed.startsWith("map_Ke ") && currentMaterial != null &&
+						 split.length > 1) {
 					String fullPath = trimmed.substring("map_Ke ".length()).trim();
 					currentMaterial.map_Ke = getFilename(fullPath);
 				}
@@ -202,12 +203,29 @@ public class ModelLoader {
 		return materials;
 	}
 
-	private static String getFilename(String path) {
-		int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-		if (lastSlash != -1) {
-			return path.substring(lastSlash + 1);
+	private static void parseLines(List<String> lines,
+			ArrayList<Float> vertices,
+			ArrayList<Float> normals,
+			ArrayList<Float> texture,
+			float scale) {
+		for (String line : lines) {
+			String trimmed = line.trim();
+			String[] split = trimmed.split("\\s+");
+			if (trimmed.startsWith("v ")) {
+				vertices.add(Float.parseFloat(split[ 1 ]) * scale);
+				vertices.add(Float.parseFloat(split[ 2 ]) * scale);
+				vertices.add(Float.parseFloat(split[ 3 ]) * scale);
+			}
+			else if (trimmed.startsWith("vn ")) {
+				normals.add(Float.parseFloat(split[ 1 ]));
+				normals.add(Float.parseFloat(split[ 2 ]));
+				normals.add(Float.parseFloat(split[ 3 ]));
+			}
+			else if (trimmed.startsWith("vt ")) {
+				texture.add(Float.parseFloat(split[ 1 ]));
+				texture.add(Float.parseFloat(split[ 2 ]));
+			}
 		}
-		return path;
 	}
 
 	private static String resolveTexturePath(String modelPath, String textureFilename) {
@@ -238,28 +256,10 @@ public class ModelLoader {
 		return null;
 	}
 
-	private static void parseLines(List<String> lines,
-			ArrayList<Float> vertices,
-			ArrayList<Float> normals,
-			ArrayList<Float> texture,
-			float scale) {
-		for (String line : lines) {
-			String trimmed = line.trim();
-			String[] split = trimmed.split("\\s+");
-			if (trimmed.startsWith("v ")) {
-				vertices.add(Float.parseFloat(split[ 1 ]) * scale);
-				vertices.add(Float.parseFloat(split[ 2 ]) * scale);
-				vertices.add(Float.parseFloat(split[ 3 ]) * scale);
-			}
-			else if (trimmed.startsWith("vn ")) {
-				normals.add(Float.parseFloat(split[ 1 ]));
-				normals.add(Float.parseFloat(split[ 2 ]));
-				normals.add(Float.parseFloat(split[ 3 ]));
-			}
-			else if (trimmed.startsWith("vt ")) {
-				texture.add(Float.parseFloat(split[ 1 ]));
-				texture.add(Float.parseFloat(split[ 2 ]));
-			}
-		}
+	private static class MtlMaterial {
+		float[] Kd = new float[] { 1.0f, 1.0f, 1.0f };
+		float[] Ke = new float[] { 0.0f, 0.0f, 0.0f };
+		String map_Kd = null;
+		String map_Ke = null;
 	}
 }

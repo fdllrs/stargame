@@ -1,12 +1,12 @@
 package engine.ui.panels;
 
-import engine.ui.Describable;
+import engine.graphics.Mesh;
+import engine.graphics.ShaderProgram;
 import engine.ui.UIElement;
-import engine.ui.UIRow;
-import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
 import game.objects.celestialBodies.SpaceBody;
+import game.ui.Describable;
 import org.joml.Vector4f;
 
 import java.util.function.Consumer;
@@ -28,10 +28,6 @@ public class InfoPanel extends UIPanel {
 			StorageComponent playerStorage) {
 		super(x, y, width, height, color, font);
 		this.playerStorage = playerStorage;
-	}
-
-	public void markDirty() {
-		this.dirty = true;
 	}
 
 	@Override
@@ -66,8 +62,21 @@ public class InfoPanel extends UIPanel {
 	}
 
 	@Override
+	public void render(ShaderProgram shader, Mesh uiQuad) {
+		if (dirty) {
+			rebuildElements();
+			dirty = false;
+		}
+		super.render(shader, uiQuad);
+	}
+
+	@Override
 	public boolean shouldRender() {
 		return currentTarget != null;
+	}
+
+	public void markDirty() {
+		this.dirty = true;
 	}
 
 	@Override
@@ -95,9 +104,6 @@ public class InfoPanel extends UIPanel {
 	}
 
 	public void tick() {
-		if (dirty) {
-			rebuildElements();
-			dirty = false;
-		}
+		markDirty();
 	}
 }

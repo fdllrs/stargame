@@ -1,6 +1,6 @@
 package engine.ui.panels;
 
-import engine.ui.Describable;
+import game.ui.Describable;
 import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;

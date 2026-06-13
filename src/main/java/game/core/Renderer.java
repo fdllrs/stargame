@@ -25,261 +25,252 @@ import static org.lwjgl.opengl.GL30C.*;
  * Call {@link #onResize(int, int)} when the framebuffer size changes.
  */
 public class Renderer {
-    private static final int PIXEL_ART_DOWNSCALE = 3;
-    private final ShaderProgram shader3D;
-    private final ShaderProgram shaderStar;
-    private final ShaderProgram shaderPixelArt;
-    private final ShaderProgram shaderOutline;
-    private final ShaderProgram shaderStarfield;
-    private final ShaderProgram shaderShadow;
-    private final ShaderProgram shaderRocky;
-    private final ShaderProgram shaderOrganic;
-    private final ShaderProgram shaderGasGiant;
-    private final ShaderProgram shaderIceGiant;
-    private final ShaderProgram shaderRing;
-    private final ShaderProgram[] planetShaders;
-    private final Mesh screenQuad;
-    private final int shadowFbo;
-    private final int shadowDepthTex;
-    private final Matrix4f currentLightSpaceMatrix = new Matrix4f();
-    private Framebuffer fbo;
+	private static final int PIXEL_ART_DOWNSCALE = 3;
+	private final ShaderProgram shader3D;
+	private final ShaderProgram shaderStar;
+	private final ShaderProgram shaderPixelArt;
+	private final ShaderProgram shaderOutline;
+	private final ShaderProgram shaderStarfield;
+	private final ShaderProgram shaderShadow;
+	private final ShaderProgram shaderRocky;
+	private final ShaderProgram shaderOrganic;
+	private final ShaderProgram shaderGasGiant;
+	private final ShaderProgram shaderIceGiant;
+	private final ShaderProgram shaderRing;
+	private final ShaderProgram[] planetShaders;
+	private final Mesh screenQuad;
+	private final int shadowFbo;
+	private final int shadowDepthTex;
+	private final Matrix4f currentLightSpaceMatrix = new Matrix4f();
+	private Framebuffer fbo;
 
-    public Renderer(long windowHandle) {
-        shader3D = ShaderProgram.initShader("/game/basic.vert", "/game/basic.frag");
-        shaderStar = ShaderProgram.initShader("/game/star.vert", "/game/star.frag");
-        shaderPixelArt = ShaderProgram.initShader("/game/screen.vert",
-                                                  "/game/screen.frag");
-        shaderOutline = ShaderProgram.initShader("/game/outline.vert",
-                                                 "/game/outline.frag");
-        shaderStarfield = ShaderProgram.initShader("/game/starfield.vert",
-                                                   "/game/starfield.frag");
-        shaderShadow = ShaderProgram.initShader("/game/shadow.vert", "/game/shadow.frag");
+	public Renderer(long windowHandle) {
+		shader3D = ShaderProgram.initShader("/game/basic.vert", "/game/basic.frag");
+		shaderStar = ShaderProgram.initShader("/game/star.vert", "/game/star.frag");
+		shaderPixelArt = ShaderProgram.initShader("/game/screen.vert", "/game/screen.frag");
+		shaderOutline = ShaderProgram.initShader("/game/outline.vert", "/game/outline.frag");
+		shaderStarfield = ShaderProgram.initShader("/game/starfield.vert", "/game/starfield.frag");
+		shaderShadow = ShaderProgram.initShader("/game/shadow.vert", "/game/shadow.frag");
 
-        shaderRocky = ShaderProgram.initShader("/game/basic.vert", "/game/rocky.frag");
-        shaderOrganic = ShaderProgram.initShader("/game/basic.vert",
-                                                 "/game/organic.frag");
-        shaderGasGiant = ShaderProgram.initShader("/game/basic.vert",
-                                                  "/game/gasgiant.frag");
-        shaderIceGiant = ShaderProgram.initShader("/game/basic.vert",
-                                                  "/game/icegiant.frag");
-        shaderRing = ShaderProgram.initShader("/game/basic.vert", "/game/ring.frag");
+		shaderRocky = ShaderProgram.initShader("/game/basic.vert", "/game/rocky.frag");
+		shaderOrganic = ShaderProgram.initShader("/game/basic.vert", "/game/organic.frag");
+		shaderGasGiant = ShaderProgram.initShader("/game/basic.vert", "/game/gasgiant.frag");
+		shaderIceGiant = ShaderProgram.initShader("/game/basic.vert", "/game/icegiant.frag");
+		shaderRing = ShaderProgram.initShader("/game/basic.vert", "/game/ring.frag");
 
-        planetShaders = new ShaderProgram[PlanetType.values().length];
-        planetShaders[PlanetType.ROCKY.ordinal()] = shaderRocky;
-        planetShaders[PlanetType.GAS_GIANT.ordinal()] = shaderGasGiant;
-        planetShaders[PlanetType.ICE_GIANT.ordinal()] = shaderIceGiant;
-        planetShaders[PlanetType.ORGANIC.ordinal()] = shaderOrganic;
+		planetShaders = new ShaderProgram[ PlanetType.values().length ];
+		planetShaders[ PlanetType.ROCKY.ordinal() ] = shaderRocky;
+		planetShaders[ PlanetType.GAS_GIANT.ordinal() ] = shaderGasGiant;
+		planetShaders[ PlanetType.ICE_GIANT.ordinal() ] = shaderIceGiant;
+		planetShaders[ PlanetType.ORGANIC.ordinal() ] = shaderOrganic;
 
-        Vector2i size = Window.getWindowSize(windowHandle);
-        fbo = new Framebuffer(size.x / PIXEL_ART_DOWNSCALE, size.y / PIXEL_ART_DOWNSCALE);
-        screenQuad = generateScreenQuad();
+		Vector2i size = Window.getWindowSize(windowHandle);
+		fbo = new Framebuffer(size.x / PIXEL_ART_DOWNSCALE, size.y / PIXEL_ART_DOWNSCALE);
+		screenQuad = generateScreenQuad();
 
-        // Setup Shadow Map Framebuffer (depth-only map)
-        shadowFbo = glGenFramebuffers();
-        shadowDepthTex = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_DEPTH_COMPONENT,
-                     2048,
-                     2048,
-                     0,
-                     GL_DEPTH_COMPONENT,
-                     GL_FLOAT,
-                     (java.nio.ByteBuffer) null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        float[] borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+		shadowFbo = glGenFramebuffers();
+		shadowDepthTex = glGenTextures();
+		setupShadowFramebuffer();
+	}
 
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER,
-                               GL_DEPTH_ATTACHMENT,
-                               GL_TEXTURE_2D,
-                               shadowDepthTex,
-                               0);
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
+	public void cleanup() {
+		shader3D.cleanup();
+		shaderStar.cleanup();
+		shaderPixelArt.cleanup();
+		shaderOutline.cleanup();
+		shaderStarfield.cleanup();
+		shaderShadow.cleanup();
+		shaderRocky.cleanup();
+		shaderOrganic.cleanup();
+		shaderGasGiant.cleanup();
+		shaderIceGiant.cleanup();
+		shaderRing.cleanup();
+		glDeleteFramebuffers(shadowFbo);
+		glDeleteTextures(shadowDepthTex);
+		fbo.cleanup();
+		screenQuad.cleanup();
+	}
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            throw new RuntimeException("Shadow Framebuffer is not complete!");
-        }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+	public Matrix4f getCurrentLightSpaceMatrix() {
+		return currentLightSpaceMatrix;
+	}
 
-    public void cleanup() {
-        shader3D.cleanup();
-        shaderStar.cleanup();
-        shaderPixelArt.cleanup();
-        shaderOutline.cleanup();
-        shaderStarfield.cleanup();
-        shaderShadow.cleanup();
-        shaderRocky.cleanup();
-        shaderOrganic.cleanup();
-        shaderGasGiant.cleanup();
-        shaderIceGiant.cleanup();
-        shaderRing.cleanup();
-        glDeleteFramebuffers(shadowFbo);
-        glDeleteTextures(shadowDepthTex);
-        fbo.cleanup();
-        screenQuad.cleanup();
-    }
+	public ShaderProgram getDefaultShader() {
+		return shader3D;
+	}
 
-    public Matrix4f getCurrentLightSpaceMatrix() {
-        return currentLightSpaceMatrix;
-    }
+	public ShaderProgram getShaderForType(PlanetType type) {
+		return planetShaders[ type.ordinal() ];
+	}
 
-    public ShaderProgram getDefaultShader() {
-        return shader3D;
-    }
+	public ShaderProgram getShaderRing() {
+		return shaderRing;
+	}
 
-    public ShaderProgram getShaderForType(PlanetType type) {
-        return planetShaders[type.ordinal()];
-    }
+	public int getShadowDepthTex() {
+		return shadowDepthTex;
+	}
 
-    public ShaderProgram getShaderRing() {
-        return shaderRing;
-    }
+	/**
+	 * Re-create the FBO at the new (downscaled) size after a window resize.
+	 */
+	public void onResize(int width, int height) {
+		fbo.cleanup();
+		fbo = new Framebuffer(width / PIXEL_ART_DOWNSCALE, height / PIXEL_ART_DOWNSCALE);
+	}
 
-    public int getShadowDepthTex() {
-        return shadowDepthTex;
-    }
+	/**
+	 * Executes render passes for a single frame, including shadow rendering.
+	 */
+	public void render(Scene scene, Camera camera, long windowHandle) {
+		renderShadowPass(scene, camera);
+		renderScenePass(scene, camera, windowHandle);
+		renderUpscalePass();
+	}
 
-    /**
-     * Re-create the FBO at the new (downscaled) size after a window resize.
-     */
-    public void onResize(int width, int height) {
-        fbo.cleanup();
-        fbo = new Framebuffer(width / PIXEL_ART_DOWNSCALE, height / PIXEL_ART_DOWNSCALE);
-    }
+	private void renderObjects(Scene scene, Camera camera) {
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_STENCIL_TEST);
 
-    /**
-     * Executes render passes for a single frame, including shadow rendering.
-     */
-    public void render(Scene scene, Camera camera, long windowHandle) {
-        renderShadowPass(scene, camera);
-        renderScenePass(scene, camera, windowHandle);
-        renderUpscalePass();
-    }
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
 
-    private void renderObjects(Scene scene, Camera camera) {
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
+		scene.render(this, shaderStar, camera);
+	}
 
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
+	private void renderOutline(Scene scene, Camera camera) {
+		SpaceBody selected = scene.getSelectedObject();
+		if (selected != null) {
+			shaderOutline.bind();
+			shaderOutline.setUniform("view", camera.getViewMatrix());
+			shaderOutline.setUniform("projection", camera.getProjectionMatrix());
 
-        scene.render(this, shaderStar, camera);
-    }
+			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+			glStencilMask(0x00);
+			glDisable(GL_DEPTH_TEST);
 
-    private void renderOutline(Scene scene, Camera camera) {
-        SpaceBody selected = scene.getSelectedObject();
-        if (selected != null) {
-            shaderOutline.bind();
-            shaderOutline.setUniform("view", camera.getViewMatrix());
-            shaderOutline.setUniform("projection", camera.getProjectionMatrix());
+			Matrix4f shellMatrix = new Matrix4f(selected.getModelMatrix());
+			shellMatrix.scale(1.02f);
 
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
+			shaderOutline.setUniform("model", shellMatrix);
+			shaderOutline.setUniform("outlineColor", new Vector3f(0.0f, 1.0f, 1.0f));
 
-            Matrix4f shellMatrix = new Matrix4f(selected.getModelMatrix());
-            shellMatrix.scale(1.05f);
+			selected.getMesh().render();
 
-            shaderOutline.setUniform("model", shellMatrix);
-            shaderOutline.setUniform("outlineColor", new Vector3f(0.0f, 1.0f, 1.0f));
+			// Cleanup Outline State
+			glEnable(GL_DEPTH_TEST);
+			shaderOutline.unbind();
+		}
+	}
 
-            selected.getMesh().render();
+	private void renderScenePass(Scene scene, Camera camera, long windowHandle) {
+		fbo.bind();
 
-            // Cleanup Outline State
-            glEnable(GL_DEPTH_TEST);
-            shaderOutline.unbind();
-        }
-    }
+		renderStarfield(scene, camera);
 
-    private void renderScenePass(Scene scene, Camera camera, long windowHandle) {
-        fbo.bind();
+		renderOutline(scene, camera);
 
-        renderStarfield(scene, camera);
+		renderObjects(scene, camera);
 
-        renderOutline(scene, camera);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glDisable(GL_STENCIL_TEST);
 
-        renderObjects(scene, camera);
+		Vector2i screenSize = Window.getWindowSize(windowHandle);
+		fbo.unbind(screenSize.x, screenSize.y);
+	}
 
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glDisable(GL_STENCIL_TEST);
+	private void renderShadowPass(Scene scene, Camera camera) {
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
+		glViewport(0, 0, 2048, 2048);
+		glClear(GL_DEPTH_BUFFER_BIT);
 
-        Vector2i screenSize = Window.getWindowSize(windowHandle);
-        fbo.unbind(screenSize.x, screenSize.y);
-    }
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
 
-    private void renderShadowPass(Scene scene, Camera camera) {
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
-        glViewport(0, 0, 2048, 2048);
-        glClear(GL_DEPTH_BUFFER_BIT);
+		shaderShadow.bind();
 
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE); // Disable culling to match the main rendering pass
+		// 1. Calculate direction vector from Star (0,0,0) to player/camera
+		Vector3f cameraPos = camera.getPosition();
+		Vector3f lightDir = new Vector3f(cameraPos).normalize();
 
-        shaderShadow.bind();
+		// 2. Position light camera at a distance behind player (closer to the star)
+		Vector3f lightPos = new Vector3f(cameraPos).sub(new Vector3f(lightDir).mul(350.0f));
 
-        // 1. Calculate direction vector from Star (0,0,0) to player/camera
-        Vector3f cameraPos = camera.getPosition();
-        Vector3f lightDir = new Vector3f(cameraPos).normalize();
+		Matrix4f lightView = new Matrix4f().lookAt(lightPos, cameraPos, new Vector3f(0, 1, 0));
+		Matrix4f lightProjection = new Matrix4f().ortho(-150.0f,
+														150.0f,
+														-150.0f,
+														150.0f,
+														150.0f,
+														550.0f);
 
-        // 2. Position light camera at a distance behind player (closer to the star)
-        Vector3f lightPos
-                = new Vector3f(cameraPos).sub(new Vector3f(lightDir).mul(350.0f));
+		currentLightSpaceMatrix.set(lightProjection).mul(lightView);
+		shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
 
-        Matrix4f lightView = new Matrix4f().lookAt(lightPos,
-                                                   cameraPos,
-                                                   new Vector3f(0, 1, 0));
-        Matrix4f lightProjection = new Matrix4f().ortho(-150.0f,
-                                                        150.0f,
-                                                        -150.0f,
-                                                        150.0f,
-                                                        150.0f,
-                                                        550.0f);
+		for (Planet planet : scene.getPlanets()) {
+			planet.render(shaderShadow);
+			planet.renderFacilities(shaderShadow);
+			for (SpaceBody orbiter : planet.satellites) {
+				orbiter.render(shaderShadow);
+			}
+		}
+		scene.getPlayer().render(shaderShadow);
 
-        currentLightSpaceMatrix.set(lightProjection).mul(lightView);
-        shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
+		shaderShadow.unbind();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
-        // 3. Render planets (and their facilities/orbiters) and player spacecraft to
-        // shadow map
-        for (Planet planet : scene.getPlanets()) {
-            planet.render(shaderShadow);
-            planet.renderFacilities(shaderShadow);
-            for (SpaceBody orbiter : planet.satellites) {
-                orbiter.render(shaderShadow);
-            }
-        }
-        scene.getPlayer().render(shaderShadow);
+	private void renderStarfield(Scene scene, Camera camera) {
+		glClearColor(0.05f, 0.05f, 0.05f, 1f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        shaderShadow.unbind();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+		glDepthMask(false);
+		scene.getStarfield().render(shaderStarfield,
+									camera.getViewMatrix(),
+									camera.getProjectionMatrix());
+		glDepthMask(true);
+	}
 
-    private void renderStarfield(Scene scene, Camera camera) {
-        glClearColor(0.05f, 0.05f, 0.05f, 1f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	private void renderUpscalePass() {
+		glDisable(GL_DEPTH_TEST);
 
-        glDepthMask(false);
-        scene.getStarfield()
-             .render(shaderStarfield,
-                     camera.getViewMatrix(),
-                     camera.getProjectionMatrix());
-        glDepthMask(true);
-    }
+		shaderPixelArt.bind();
+		glBindTexture(GL_TEXTURE_2D, fbo.textureId);
+		screenQuad.render();
+		shaderPixelArt.unbind();
+	}
 
-    private void renderUpscalePass() {
-        glDisable(GL_DEPTH_TEST);
+	private void setupShadowFramebuffer() {
+		glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
+		glTexImage2D(GL_TEXTURE_2D,
+					 0,
+					 GL_DEPTH_COMPONENT,
+					 2048,
+					 2048,
+					 0,
+					 GL_DEPTH_COMPONENT,
+					 GL_FLOAT,
+					 (java.nio.ByteBuffer) null);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		float[] borderColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-        shaderPixelArt.bind();
-        glBindTexture(GL_TEXTURE_2D, fbo.textureId);
-        screenQuad.render();
-        shaderPixelArt.unbind();
-    }
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,
+							   GL_DEPTH_ATTACHMENT,
+							   GL_TEXTURE_2D,
+							   shadowDepthTex,
+							   0);
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			throw new RuntimeException("Shadow Framebuffer is not complete!");
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 }

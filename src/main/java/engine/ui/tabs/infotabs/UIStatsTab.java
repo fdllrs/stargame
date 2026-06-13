@@ -1,6 +1,6 @@
 package engine.ui.tabs.infotabs;
 
-import engine.ui.Describable;
+import game.ui.Describable;
 import engine.ui.UIElement;
 import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;

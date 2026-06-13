@@ -1,7 +1,7 @@
 package game.objects.celestialBodies;
 
 import engine.graphics.Mesh;
-import engine.ui.Describable;
+import game.ui.Describable;
 import engine.ui.panels.HubPanelController;
 import engine.ui.panels.InfoPanelController;
 import engine.ui.text.FontAtlas;

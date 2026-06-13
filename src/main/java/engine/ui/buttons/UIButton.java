@@ -41,6 +41,11 @@ public class UIButton extends UIElement {
         }
     }
 
+    @Override
+    public LayoutAlignment getLayoutAlignment() {
+        return LayoutAlignment.CENTER;
+    }
+
     @Override public float getBoundingHeight() {
         return height + vPadding;
     }

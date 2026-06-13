@@ -3,7 +3,7 @@ package game.objects.celestialBodies;
 import engine.graphics.Camera;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.Describable;
+import game.ui.Describable;
 import game.core.Renderer;
 import game.objects.GameObject;
 import game.objects.entities.Light;

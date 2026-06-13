@@ -21,6 +21,11 @@ public class UIRow extends UIElement {
         elements.add(element);
     }
 
+    @Override
+    public LayoutAlignment getLayoutAlignment() {
+        return LayoutAlignment.CENTER;
+    }
+
     @Override public float getBoundingHeight() {
         float maxHeight = 0;
         for (UIElement element : elements) {

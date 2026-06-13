@@ -37,17 +37,12 @@ public class PlayerResourcesPanel extends UIPanel {
 		this.expandedHeight = height;
 		this.expandedY = y;
 
-		storageComponent.deposit(RawResource.METAL, 500);
-		storageComponent.deposit(ProcessedItem.ALLOY, 500);
-
+		testGiveAllResources();
 		setExpanded(false);
 	}
 
 	private void addResourceAmountsText() {
-		List<ItemType> rawResources = new ArrayList<>(List.of(RawResource.values()));
-		List<ItemType> processedItems = new ArrayList<>(List.of(ProcessedItem.values()));
-		List<ItemType> allItems = new ArrayList<>(rawResources);
-		allItems.addAll(processedItems);
+		List<ItemType> allItems = getAllItems();
 		for (ItemType type : allItems) {
 			String text = getNameAndAmountText(type);
 			UIText label = new UIText(text,
@@ -75,6 +70,14 @@ public class PlayerResourcesPanel extends UIPanel {
 											width);
 		this.storageFillText = storageFillText;
 		children.add(storageFillText);
+	}
+
+	private List<ItemType> getAllItems() {
+		List<ItemType> rawResources = new ArrayList<>(List.of(RawResource.values()));
+		List<ItemType> processedItems = new ArrayList<>(List.of(ProcessedItem.values()));
+		List<ItemType> allItems = new ArrayList<>(rawResources);
+		allItems.addAll(processedItems);
+		return allItems;
 	}
 
 	@NotNull
@@ -149,6 +152,14 @@ public class PlayerResourcesPanel extends UIPanel {
 			setSize(width, 80);
 			setPosition(x, expandedY + ( expandedHeight - 80 ));
 			rebuildElements();
+		}
+	}
+
+	public void testGiveAllResources() {
+		storageComponent.addCapacity(10000000);
+		List<ItemType> allItems = getAllItems();
+		for (ItemType type : allItems) {
+			storageComponent.deposit(type, 10000);
 		}
 	}
 }

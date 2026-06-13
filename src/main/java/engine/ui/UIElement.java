@@ -7,6 +7,12 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public abstract class UIElement {
+    public enum LayoutAlignment {
+        FILL,
+        CENTER,
+        LEFT
+    }
+
     protected float x, y;
     protected float width, height;
     protected float hPadding, vPadding;
@@ -21,6 +27,10 @@ public abstract class UIElement {
         this.color = color != null ? new Vector4f(color) : new Vector4f(1, 1, 1, 1);
         this.modelMatrix = new Matrix4f();
         updateMatrix();
+    }
+
+    public LayoutAlignment getLayoutAlignment() {
+        return LayoutAlignment.FILL;
     }
 
     public abstract float getBoundingHeight();

@@ -2,7 +2,7 @@ package engine.ui.panels;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.Describable;
+import game.ui.Describable;
 import engine.ui.text.FontAtlas;
 import game.core.Input;
 import game.core.Scene;

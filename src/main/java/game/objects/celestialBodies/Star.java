@@ -1,7 +1,7 @@
 package game.objects.celestialBodies;
 
 import engine.graphics.ShaderProgram;
-import engine.ui.Describable;
+import game.ui.Describable;
 import game.geometry.PlanetGeometry;
 import game.info.StarInfo;
 import game.objects.entities.Light;

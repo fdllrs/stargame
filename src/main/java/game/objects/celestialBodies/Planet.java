@@ -3,7 +3,7 @@ package game.objects.celestialBodies;
 import engine.graphics.Camera;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.Describable;
+import game.ui.Describable;
 import engine.ui.panels.InfoPanelController;
 import engine.ui.panels.PlanetPanelController;
 import engine.ui.text.FontAtlas;

@@ -1,4 +1,4 @@
-package engine.ui;
+package game.ui;
 
 import java.util.List;
 import java.util.Map;
