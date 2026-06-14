@@ -1,15 +1,15 @@
-package game.objects.celestialBodies;
+package game.objects.spaceBodies;
 
 import engine.graphics.Camera;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import game.ui.Describable;
 import engine.ui.panels.InfoPanelController;
 import engine.ui.panels.PlanetPanelController;
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
 import game.components.StorageComponent;
 import game.core.Renderer;
+import game.geometry.PlanetGeometry;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
 import game.items.ItemType;
@@ -18,6 +18,7 @@ import game.objects.facilities.Facility;
 import game.objects.facilities.StorageSilo;
 import game.objects.facilities.generators.PowerGenerator;
 import game.objects.facilities.producers.ProducerFacility;
+import game.ui.Describable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
 
 public abstract class Planet extends SpaceBody implements Describable {
 	public final List<SpaceBody> satellites = new ArrayList<>();
-	protected final List<ProducerFacility> producerFacilities = new ArrayList<>();
+	protected final List<Facility> producerFacilities = new ArrayList<>();
 	protected final List<PowerGenerator> generators = new ArrayList<>();
 	protected final Star homeStar;
 	protected final PlanetInfo planetInfo;
@@ -63,7 +64,7 @@ public abstract class Planet extends SpaceBody implements Describable {
 										planetInfo.orbitDistance(),
 										planetInfo.orbitSpeed(),
 										planetInfo.initialOrbitAngle());
-		this.orbit.update(this, 0f);
+		this.orbit.update(this.getPosition(), 0f);
 	}
 
 	public void addCapacity(int capacity) {
@@ -79,6 +80,8 @@ public abstract class Planet extends SpaceBody implements Describable {
 	}
 
 	public void addStorageSilo(StorageSilo storageSilo) {
+
+		producerFacilities.add(storageSilo);
 		addCapacity(storageSilo.getCapacity());
 	}
 
@@ -153,7 +156,7 @@ public abstract class Planet extends SpaceBody implements Describable {
 	}
 
 	public void update(float deltaTime) {
-		orbit.update(this, deltaTime);
+		orbit.update(this.getPosition(), deltaTime);
 
 		float spinSpeed = 0.5f;
 		this.rotation.y += spinSpeed * deltaTime;
@@ -163,6 +166,13 @@ public abstract class Planet extends SpaceBody implements Describable {
 
 		for (SpaceBody orbiter : satellites) {
 			orbiter.update(deltaTime);
+		}
+
+		for (Facility facility : producerFacilities) {
+			facility.update(deltaTime);
+		}
+		for (PowerGenerator generator : generators) {
+			generator.update(deltaTime);
 		}
 	}
 
@@ -232,8 +242,22 @@ public abstract class Planet extends SpaceBody implements Describable {
 		return planetStorage;
 	}
 
+	public float getTerrainHeight(Vector3f direction) {
+		return PlanetGeometry.getPlanetHeight(direction, radius, getType());
+	}
+
 	public boolean hasHub() {
 		return getHub() != null;
+	}
+
+	public boolean isWater(Vector3f direction) {
+		if (getType() == PlanetType.ORGANIC) {
+			float noiseVal = game.geometry.Noise3D.fbm(direction.x * 3.0f,
+													   direction.y * 3.0f,
+													   direction.z * 3.0f);
+			return noiseVal < 0.45f;
+		}
+		return false;
 	}
 
 	public void renderExtra(Renderer renderer, Camera camera) {

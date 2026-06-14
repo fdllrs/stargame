@@ -7,7 +7,7 @@ import engine.ui.panels.PlayerResourcesPanel;
 import engine.ui.panels.UIMapPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
-import game.objects.celestialBodies.SpaceBody;
+import game.objects.spaceBodies.SpaceBody;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -52,7 +52,6 @@ public class Game {
 			tickAccumulator += deltaTime;
 			if (tickAccumulator >= TICK_TIME) {
 				scene.tick();
-				infoPanel.tick();
 				tickAccumulator -= TICK_TIME;
 			}
 
@@ -81,6 +80,22 @@ public class Game {
 	private void handleCameraRotation() {
 		if (!input.isCursorEnabled()) {
 			camera.addRotation(input.getMouseDx(), input.getMouseDy());
+		}
+	}
+
+	private void handleEscapeKey() {
+		if (uiMapPanel.isVisible()) {
+			toggleMap();
+		}
+		else if (infoPanel.shouldRender()) {
+			scene.updateSelectedObject(null);
+			infoPanel.setTarget(null);
+		}
+		else if (playerResourcesPanel.isExpanded()) {
+			playerResourcesPanel.setExpanded(false);
+		}
+		else if (input.isCursorEnabled()) {
+			input.toggleCursor();
 		}
 	}
 
@@ -191,8 +206,12 @@ public class Game {
 	}
 
 	private void update(float deltaTime) {
+		float mouseX = input.getMouseX();
+		float mouseY = input.getMouseY();
 		input.update();
-
+		if (input.isCursorEnabled()) {
+			uiManager.update(mouseX, mouseY, deltaTime);
+		}
 		if (input.isKeyJustPressed(GLFW_KEY_M)) {
 			toggleMap();
 		}
@@ -205,9 +224,13 @@ public class Game {
 			handleLeftClick();
 		}
 
+		if (input.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
+			handleEscapeKey();
+		}
+
 		double scrollY = input.getScrollDeltaY();
 		if (scrollY != 0 && input.isCursorEnabled()) {
-			if (uiManager.handleScroll(input.getMouseX(), input.getMouseY(), scrollY)) {
+			if (uiManager.handleScroll(mouseX, mouseY, scrollY)) {
 				playerResourcesPanel.refreshAmounts();
 			}
 		}
@@ -217,6 +240,7 @@ public class Game {
 		}
 
 		if (input.isKeyJustPressed(GLFW_KEY_O)) {
+			infoPanel.setTarget(null);
 			scene.recreateStarSystem();
 			placePlayerAtFirstPlanet();
 		}

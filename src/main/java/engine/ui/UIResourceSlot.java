@@ -76,6 +76,10 @@ public class UIResourceSlot extends UIElement {
 	}
 
 	@Override
+	public void update(float mouseX, float mouseY, float deltaTime) {
+	}
+
+	@Override
 	public void handleScroll(float mouseX, float mouseY, double yOffset) {
 		int transferAmount = 10;
 		if (yOffset < 0) {

@@ -2,6 +2,7 @@ package game.geometry;
 
 import engine.graphics.Mesh;
 import engine.graphics.ModelLoader;
+import org.jetbrains.annotations.NotNull;
 
 public class BuildingGeometry {
 	private static Mesh extractorMesh;
@@ -66,60 +67,62 @@ public class BuildingGeometry {
 
 	public static Mesh getAlloySmelterMesh() {
 		if (alloySmelterMesh == null) {
-			alloySmelterMesh = ModelLoader.loadModelObj("src/main/resources/models/smelter.obj",
-														0.1f);
+			alloySmelterMesh = loadModel("smelter", 0.05f);
 		}
 		return alloySmelterMesh;
 	}
 
 	public static Mesh getChemicalPlantMesh() {
 		if (chemicalPlantMesh == null) {
-			chemicalPlantMesh = generateBox(2.0f, 3.0f, 2.0f);
+			chemicalPlantMesh = loadModel("chemical", 0.04f);
 		}
 		return chemicalPlantMesh;
 	}
 
 	public static Mesh getEngineFabricatorMesh() {
 		if (engineFabricatorMesh == null) {
-			engineFabricatorMesh = generateBox(4.0f, 3.0f, 4.0f);
+			engineFabricatorMesh = loadModel("engine_fabricator", 0.025f);
 		}
 		return engineFabricatorMesh;
 	}
 
 	public static Mesh getExtractorMesh() {
 		if (extractorMesh == null) {
-			extractorMesh = ModelLoader.loadModelObj("src/main/resources/models/extractor.obj",
-													 0.02f);
+			extractorMesh = loadModel("extractor", 0.01f);
 		}
 		return extractorMesh;
 	}
 
 	public static Mesh getNuclearReactorMesh() {
 		if (nuclearReactorMesh == null) {
-			nuclearReactorMesh = ModelLoader.loadModelObj("src/main/resources/models/reactor.obj",
-														  0.1f);
+			nuclearReactorMesh = loadModel("reactor", 0.05f);
 		}
 		return nuclearReactorMesh;
 	}
 
 	public static Mesh getResearchLabMesh() {
 		if (researchLabMesh == null) {
-			researchLabMesh = generateBox(3.0f, 3.0f, 3.0f);
+			researchLabMesh = loadModel("lab", 0.0025f);
 		}
 		return researchLabMesh;
 	}
 
 	public static Mesh getSiloMesh() {
 		if (siloMesh == null) {
-			siloMesh = generateBox(2.5f, 2.0f, 2.5f);
+			siloMesh = loadModel("silo", 0.05f);
 		}
 		return siloMesh;
 	}
 
-	public static Mesh getSolarArrayMesh() {
+	public static Mesh getSolarPanelMesh() {
 		if (solarArrayMesh == null) {
-			solarArrayMesh = generateBox(4.0f, 0.2f, 4.0f);
+			solarArrayMesh = loadModel("solarPanel", 0.05f);
 		}
 		return solarArrayMesh;
+	}
+
+	@NotNull
+	private static Mesh loadModel(String modelName, float scale) {
+		return ModelLoader.loadModelObj("src/main/resources/models/" + modelName + ".obj", scale);
 	}
 }

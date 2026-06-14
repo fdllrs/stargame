@@ -42,7 +42,7 @@ void main() {
     float brightness = max(dot(normal, lightDir), 0.0);
     vec3 ambient = AMBIENT_STRENGTH * objectColor;
 
-    float shadow = calculateShadow(fragPosLightSpace, 0.005, 0.0005);
+    float shadow = calculateShadow(fragPosLightSpace, 0.0015, 0.00015);
     vec3 diffuse = (1.0 - shadow) * lightColor * brightness * objectColor;
 
     // Specular Highlight

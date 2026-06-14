@@ -2,7 +2,7 @@ package game.objects.facilities.producers;
 
 import game.items.ItemType;
 import game.items.RawResource;
-import game.objects.celestialBodies.Planet;
+import game.objects.spaceBodies.Planet;
 
 import java.util.Map;
 

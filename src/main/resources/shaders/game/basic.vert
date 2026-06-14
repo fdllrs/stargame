@@ -26,6 +26,6 @@ void main() {
     VertexColor = color;
     VertexEmissive = aEmissive;
     TexCoords = texCoord;
-    fragPosLightSpace = lightSpaceMatrix * vec4(worldPosition, 1.0);
+    fragPosLightSpace = lightSpaceMatrix * model * vec4(position, 1.0);
     gl_Position = projection * view * vec4(worldPosition, 1.0);
 }

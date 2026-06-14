@@ -1,7 +1,7 @@
 package game.objects.facilities.generators;
 
-import game.objects.celestialBodies.Planet;
 import game.objects.facilities.Facility;
+import game.objects.spaceBodies.Planet;
 
 public class PowerGenerator extends Facility {
 	protected float powerOutput;

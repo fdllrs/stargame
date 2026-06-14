@@ -6,8 +6,8 @@ import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.window.Window;
 import game.info.PlanetType;
-import game.objects.celestialBodies.Planet;
-import game.objects.celestialBodies.SpaceBody;
+import game.objects.spaceBodies.Planet;
+import game.objects.spaceBodies.SpaceBody;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -198,12 +198,12 @@ public class Renderer {
 		Vector3f lightPos = new Vector3f(cameraPos).sub(new Vector3f(lightDir).mul(350.0f));
 
 		Matrix4f lightView = new Matrix4f().lookAt(lightPos, cameraPos, new Vector3f(0, 1, 0));
-		Matrix4f lightProjection = new Matrix4f().ortho(-150.0f,
-														150.0f,
-														-150.0f,
-														150.0f,
-														150.0f,
-														550.0f);
+		Matrix4f lightProjection = new Matrix4f().ortho(-120.0f,
+														120.0f,
+														-120.0f,
+														120.0f,
+														200.0f,
+														500.0f);
 
 		currentLightSpaceMatrix.set(lightProjection).mul(lightView);
 		shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
@@ -252,8 +252,8 @@ public class Renderer {
 					 GL_DEPTH_COMPONENT,
 					 GL_FLOAT,
 					 (java.nio.ByteBuffer) null);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		float[] borderColor = { 1.0f, 1.0f, 1.0f, 1.0f };

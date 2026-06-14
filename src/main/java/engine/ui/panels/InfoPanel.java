@@ -5,7 +5,7 @@ import engine.graphics.ShaderProgram;
 import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
-import game.objects.celestialBodies.SpaceBody;
+import game.objects.spaceBodies.SpaceBody;
 import game.ui.Describable;
 import org.joml.Vector4f;
 
@@ -100,10 +100,6 @@ public class InfoPanel extends UIPanel {
 		else {
 			this.currentController = null;
 		}
-		markDirty();
-	}
-
-	public void tick() {
 		markDirty();
 	}
 }

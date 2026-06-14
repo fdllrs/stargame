@@ -5,7 +5,7 @@ import engine.ui.tabs.infotabs.UIStatsTab;
 import engine.ui.tabs.infotabs.UIUpgradeTab;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
-import game.objects.celestialBodies.Hub;
+import game.objects.spaceBodies.Hub;
 
 public class HubPanelController extends TabBarPanelController {
 

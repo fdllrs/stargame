@@ -8,12 +8,12 @@ import engine.ui.text.UIText;
 import game.components.StorageComponent;
 import game.items.ItemType;
 import game.items.RawResource;
-import game.objects.celestialBodies.Hub;
-import game.objects.celestialBodies.Planet;
 import game.objects.facilities.StorageSilo;
 import game.objects.facilities.generators.NuclearReactor;
-import game.objects.facilities.generators.SolarArray;
+import game.objects.facilities.generators.SolarPanel;
 import game.objects.facilities.producers.*;
+import game.objects.spaceBodies.Hub;
+import game.objects.spaceBodies.Planet;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -132,16 +132,16 @@ public class UIBuildTab {
 		UIRow row2 = new UIRow(10);
 		float powerBtnWidth = ( width - 10f ) / 2f;
 
-		String solarLabel = "Solar Array\nCost: " + SolarArray.COST;
+		String solarLabel = "Solar Array\nCost: " + SolarPanel.COST;
 		UIButton solarBtn = new UIButton(powerBtnWidth, 80, buildBtnBg, textCol, solarLabel,
 										 () -> {
-			if (canAfford(playerStorage, SolarArray.COST)) {
-				deductCost(playerStorage, SolarArray.COST);
-				new SolarArray(planet);
+			if (canAfford(playerStorage, SolarPanel.COST)) {
+				deductCost(playerStorage, SolarPanel.COST);
+				new SolarPanel(planet);
 				onRebuild.run();
 			}
 		}, font);
-		solarBtn.setEnabled(canAfford(playerStorage, SolarArray.COST));
+		solarBtn.setEnabled(canAfford(playerStorage, SolarPanel.COST));
 		row2.addElement(solarBtn);
 
 		String reactorLabel = "Nuclear Reactor\nCost: " + NuclearReactor.COST;

@@ -1,19 +1,17 @@
 package game.objects.facilities;
 
-import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import game.objects.celestialBodies.Planet;
+import game.objects.GameObject;
+import game.objects.spaceBodies.Planet;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public abstract class Facility {
+public abstract class Facility extends GameObject {
 	protected Vector3f localPosition;
 	protected float efficiency = 1.0f;
 	protected float progressAccumulator = 0.0f;
-	protected Vector3f color;
-	protected Mesh mesh;
 	protected int level = 1;
 
 	public abstract int getPowerDemand();
@@ -23,17 +21,29 @@ public abstract class Facility {
 	public abstract void upgrade();
 
 	public Facility(Planet planet) {
+		super(null, null, planet.getPosition());
 		this.localPosition = new Vector3f(0, 0, 0);
 		this.color = new Vector3f(1.0f, 1.0f, 1.0f);
-		this.initPosition(planet.getRadius());
+		this.initPosition(planet);
 	}
 
-	public void initPosition(float planetRadius) {
-		Vector3f randomDir = new Vector3f((float) ( Math.random() - 0.5f ),
-										  (float) ( Math.random() - 0.5f ),
-										  (float) ( Math.random() - 0.5f )).normalize();
+	@Override
+	public void cleanup() {
+		// Do not clean up the shared static mesh
+	}
 
-		this.localPosition = randomDir.mul(planetRadius - 0.1f);
+	public void initPosition(Planet planet) {
+		Vector3f randomDir = new Vector3f();
+		int attempts = 0;
+		do {
+			randomDir.set((float) ( Math.random() - 0.5f ),
+						  (float) ( Math.random() - 0.5f ),
+						  (float) ( Math.random() - 0.5f )).normalize();
+			attempts++;
+		} while (planet.isWater(randomDir) && attempts < 500);
+
+		float height = planet.getTerrainHeight(randomDir);
+		this.localPosition = randomDir.mul(planet.getRadius() + height - 0.1f);
 	}
 
 	public void render(ShaderProgram shader, Matrix4f planetModelMatrix) {
@@ -63,5 +73,9 @@ public abstract class Facility {
 
 	protected void setLevel(int level) {
 		this.level = level;
+	}
+
+	public void update(float deltaTime) {
+		// Can be overridden by subclasses to update animations, orbits, or state every frame
 	}
 }

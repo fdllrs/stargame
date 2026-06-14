@@ -69,6 +69,13 @@ public class Mesh {
             glDeleteBuffers(vboId);
         }
         glDeleteVertexArrays(vaoId);
+
+        if (diffuseTexture != null) {
+            diffuseTexture.cleanup();
+        }
+        if (emissiveTexture != null) {
+            emissiveTexture.cleanup();
+        }
     }
 
     /**

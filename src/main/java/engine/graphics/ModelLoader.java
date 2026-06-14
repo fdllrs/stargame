@@ -35,7 +35,6 @@ public class ModelLoader {
 			for (String line : lines) {
 				String trimmed = line.trim();
 				if (trimmed.startsWith("mtllib ")) {
-					System.out.println(modelPath + " has materials!");
 					String[] split = trimmed.split("\\s+");
 					if (split.length > 1) {
 						String mtlFileName = split[ 1 ];

@@ -125,6 +125,13 @@ public class PlayerResourcesPanel extends UIPanel {
 	}
 
 	@Override
+	public void update(float mouseX, float mouseY, float deltaTime) {
+		for (UIElement element : children) {
+			element.update(mouseX, mouseY, deltaTime);
+		}
+	}
+
+	@Override
 	public void onResize(int screenWidth, int screenHeight) {
 		this.expandedY = screenHeight - this.expandedHeight - 20;
 		if (expanded) {
@@ -141,7 +148,11 @@ public class PlayerResourcesPanel extends UIPanel {
 		resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
 	}
 
-	private void setExpanded(boolean expanded) {
+	public boolean isExpanded() {
+		return expanded;
+	}
+
+	public void setExpanded(boolean expanded) {
 		this.expanded = expanded;
 		if (expanded) {
 			setSize(width, expandedHeight);

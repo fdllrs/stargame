@@ -7,8 +7,8 @@ import engine.ui.tabs.infotabs.UIStatsTab;
 import engine.ui.tabs.infotabs.UIStorageTab;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
-import game.objects.celestialBodies.Planet;
-import game.objects.celestialBodies.SpaceBody;
+import game.objects.spaceBodies.Planet;
+import game.objects.spaceBodies.SpaceBody;
 
 import java.util.List;
 import java.util.function.Consumer;

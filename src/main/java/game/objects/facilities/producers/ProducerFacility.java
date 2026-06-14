@@ -2,8 +2,8 @@ package game.objects.facilities.producers;
 
 import game.geometry.BuildingGeometry;
 import game.items.ItemType;
-import game.objects.celestialBodies.Planet;
 import game.objects.facilities.Facility;
+import game.objects.spaceBodies.Planet;
 
 import java.util.Map;
 

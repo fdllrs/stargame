@@ -6,10 +6,10 @@ import engine.window.Window;
 import game.objects.Player;
 import game.objects.StarSystem;
 import game.objects.Starfield;
-import game.objects.celestialBodies.Planet;
-import game.objects.celestialBodies.SpaceBody;
-import game.objects.celestialBodies.Star;
 import game.objects.entities.Light;
+import game.objects.spaceBodies.Planet;
+import game.objects.spaceBodies.SpaceBody;
+import game.objects.spaceBodies.Star;
 import org.joml.*;
 
 import java.util.List;
@@ -179,6 +179,8 @@ public class Scene {
 	public void recreateStarSystem() {
 		starSystem.cleanupAll();
 		starSystem = new StarSystem(10);
+		updateSelectedObject(null);
+		dockedBody = null;
 	}
 
 	public void render(Renderer renderer, ShaderProgram shaderStar, Camera camera) {

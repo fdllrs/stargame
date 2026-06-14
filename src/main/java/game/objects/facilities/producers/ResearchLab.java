@@ -4,7 +4,7 @@ import game.geometry.BuildingGeometry;
 import game.items.ItemType;
 import game.items.ProcessedItem;
 import game.items.RawResource;
-import game.objects.celestialBodies.Planet;
+import game.objects.spaceBodies.Planet;
 import org.joml.Vector3f;
 
 import java.util.Map;

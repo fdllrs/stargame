@@ -45,8 +45,8 @@ void main() {
     float ambientStrength = (useTexture != 0) ? 0.15 : (AMBIENT_STRENGTH + extraAmbient);
     vec3 ambient = ambientStrength * objectColor;
 
-    float biasScale = (useVertexColor != 0 || useTexture != 0) ? 0.0005 : 0.005;
-    float biasMin = (useVertexColor != 0 || useTexture != 0) ? 0.00005 : 0.0005;
+    float biasScale = (useVertexColor != 0 || useTexture != 0) ? 0.0015 : 0.0025;
+    float biasMin = (useVertexColor != 0 || useTexture != 0) ? 0.00015 : 0.00025;
     float shadow = calculateShadow(fragPosLightSpace, biasScale, biasMin);
 
     float diffuseCoeff = (useTexture != 0) ? 0.75 : 1.0;

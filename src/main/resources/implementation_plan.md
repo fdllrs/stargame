@@ -5,22 +5,7 @@ implemented. It aligns
 with [GDD.md](file:///c:/Users/della/Documents/programacion/stargame/stargame/src/main/resources/GDD.md) and
 incorporates design decisions regarding drone trajectory mechanics, warp physics, and manual harvesting.
 
----
-
-## 1. Current Codebase State
-
-* **Physics & Navigation:** 3D Keplerian orbits for planets and moons orbiting a host star. Camera-based flight
-  navigation with inertia. Left-click raycasting for celestial body selection.
-* **Storage Systems:** Independent planetary/ship storages using `StorageComponent` with custom caps. Manual
-  scroll-wheel transfer between ship and selected planet.
-* **Building System:** Construction of surface facilities (`ResourceExtractor`, `StorageSilo`) and orbital stations (
-  `Hub`).
-* **Manual Harvesting:** UI buttons on the planet panel allow the player to click and manually mine resources directly
-  into the planetary storage.
-
----
-
-## 2. Implementation Phases
+## Implementation Phases
 
 ```mermaid
 graph TD
