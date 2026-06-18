@@ -11,7 +11,12 @@ public class RockyPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public RockyPlanet build() {
+	public PlanetType getType() {
+		return PlanetType.ROCKY;
+	}
+
+	@Override
+	protected RockyPlanet buildPlanet() {
 
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 

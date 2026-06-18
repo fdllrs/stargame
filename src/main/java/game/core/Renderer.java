@@ -222,7 +222,7 @@ public class Renderer {
 	}
 
 	private void renderStarfield(Scene scene, Camera camera) {
-		glClearColor(0.05f, 0.05f, 0.05f, 1f);
+		glClearColor(0.01f, 0.01f, 0.01f, 1f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		glDepthMask(false);

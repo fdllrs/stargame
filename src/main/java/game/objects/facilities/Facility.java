@@ -21,7 +21,7 @@ public abstract class Facility extends GameObject {
 	public abstract void upgrade();
 
 	public Facility(Planet planet) {
-		super(null, null, planet.getPosition());
+		super(planet.getPosition());
 		this.localPosition = new Vector3f(0, 0, 0);
 		this.color = new Vector3f(1.0f, 1.0f, 1.0f);
 		this.initPosition(planet);

@@ -2,7 +2,6 @@ package game.ui.panel;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
 import game.objects.spaceBodies.SpaceBody;
@@ -31,17 +30,13 @@ public class InfoPanel extends UIPanel {
 		this.playerStorage = playerStorage;
 	}
 
+	public void markDirty() {
+		this.dirty = true;
+	}
+
 	@Override
-	public void layout() {
-		float currentY = this.y + vPadding;
-		for (UIElement element : children) {
-			float elementX = this.x;
-			if (element.getLayoutAlignment() == UIElement.LayoutAlignment.CENTER) {
-				elementX = this.x + ( this.width - element.getSize().x ) / 2.0f;
-			}
-			element.setPosition(elementX, currentY);
-			currentY += element.getBoundingHeight();
-		}
+	public void onResize(int screenWidth, int screenHeight) {
+		setSize(screenWidth * 0.4f, screenHeight - 50);
 	}
 
 	@Override
@@ -52,7 +47,12 @@ public class InfoPanel extends UIPanel {
 
 		setPanelTitle(currentTarget.getDisplayName());
 
-		currentController.populate(children, currentTarget, playerStorage, font, width);
+		currentController.populate(children,
+								   currentTarget,
+								   playerStorage,
+								   font,
+								   width,
+								   this.height);
 
 		layout();
 	}
@@ -74,15 +74,6 @@ public class InfoPanel extends UIPanel {
 	@Override
 	public boolean shouldRender() {
 		return currentTarget != null;
-	}
-
-	public void markDirty() {
-		this.dirty = true;
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		setSize(screenWidth * 0.4f, screenHeight - 50);
 	}
 
 	public void setOnSelectTarget(java.util.function.Consumer<SpaceBody> callback) {

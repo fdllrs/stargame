@@ -29,6 +29,20 @@ public class Moon extends Planet {
 		parentPlanet.satellites.add(this);
 	}
 
+	@Override
+	public String getName() {
+		if (parentPlanet != null) {
+			String parentName = parentPlanet.getName();
+			if (parentName != null && !parentName.equals("null") &&
+				( super.getName() == null || super.getName().startsWith("null-") )) {
+				int idx = parentPlanet.getMoons().indexOf(this);
+				char letter = (char) ( 'A' + ( Math.max(idx, 0) ) );
+				return parentName + "-" + letter;
+			}
+		}
+		return super.getName();
+	}
+
 	public Planet getParentPlanet() {
 		return parentPlanet;
 	}
@@ -36,6 +50,11 @@ public class Moon extends Planet {
 	@Override
 	public PlanetType getType() {
 		return planetInfo.type();
+	}
+
+	@Override
+	public String getDisplayName() {
+		return getName();
 	}
 
 	@Override

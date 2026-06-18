@@ -16,7 +16,8 @@ public class DefaultPanelController implements InfoPanelController {
 			Describable target,
 			StorageComponent playerStorage,
 			FontAtlas font,
-			float width) {
+			float width,
+			float height) {
 		Vector4f textCol = new Vector4f(1, 1, 1, 1);
 		for (Map.Entry<String, String> entry : target.getDisplayProperties()) {
 			String line = entry.getKey() + ": " + entry.getValue();

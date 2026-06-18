@@ -11,7 +11,12 @@ public class OrganicPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public OrganicPlanet build() {
+	public PlanetType getType() {
+		return PlanetType.ORGANIC;
+	}
+
+	@Override
+	protected OrganicPlanet buildPlanet() {
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 
 		float finalRadius = ( this.radius != null ) ? this.radius : 5f + RANDOM.nextFloat() * 7f;

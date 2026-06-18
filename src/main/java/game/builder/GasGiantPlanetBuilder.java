@@ -11,7 +11,12 @@ public class GasGiantPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public GasGiantPlanet build() {
+	public PlanetType getType() {
+		return PlanetType.GAS_GIANT;
+	}
+
+	@Override
+	protected GasGiantPlanet buildPlanet() {
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 		float finalRadius = ( this.radius != null ) ? this.radius : 25f + RANDOM.nextFloat() * 25f;
 		boolean finalHasRings = ( this.hasRings != null )

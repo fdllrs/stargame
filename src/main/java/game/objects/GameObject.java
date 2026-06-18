@@ -26,6 +26,14 @@ public class GameObject extends GameEntity {
 		updateModelMatrix();
 	}
 
+	public GameObject(Vector3f position) {
+		this(null, new Vector3f(1, 1, 1), position);
+	}
+
+	public GameObject(Mesh mesh, Vector3f position) {
+		this(mesh, new Vector3f(1, 1, 1), position);
+	}
+
 	@Override
 	public void cleanup() {
 		mesh.cleanup();

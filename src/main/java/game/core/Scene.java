@@ -32,7 +32,7 @@ public class Scene {
 
 	public Scene() {
 		player = new Player();
-		starSystem = new StarSystem(10);
+		starSystem = StarSystem.generateStartingSystem();
 		starfield = new Starfield(500, 10000);
 	}
 
@@ -178,7 +178,7 @@ public class Scene {
 
 	public void recreateStarSystem() {
 		starSystem.cleanupAll();
-		starSystem = new StarSystem(10);
+		starSystem = StarSystem.generateStartingSystem();
 		updateSelectedObject(null);
 		dockedBody = null;
 	}

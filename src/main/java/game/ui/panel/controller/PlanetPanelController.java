@@ -41,7 +41,8 @@ public class PlanetPanelController extends TabBarPanelController {
 													playerStorage,
 													font,
 													width,
-													onRebuild));
+													onRebuild,
+													this.lastHeight));
 		this.tabBar.addTab("Build",
 						   () -> UIBuildTab.build(planet, playerStorage, font, width, onRebuild));
 	}

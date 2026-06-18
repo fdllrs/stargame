@@ -12,5 +12,6 @@ public interface InfoPanelController {
 			Describable target,
 			StorageComponent playerStorage,
 			FontAtlas font,
-			float width);
+			float width,
+			float height);
 }

@@ -11,7 +11,12 @@ public class IceGiantPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public IceGiantPlanet build() {
+	public PlanetType getType() {
+		return PlanetType.ICE_GIANT;
+	}
+
+	@Override
+	protected IceGiantPlanet buildPlanet() {
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 		float finalRadius = ( this.radius != null ) ? this.radius : 15f + RANDOM.nextFloat() * 15f;
 

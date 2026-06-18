@@ -1,10 +1,14 @@
 package game.ui.panel;
 
 import engine.ui.UIElement;
+import engine.ui.UIImage;
+import engine.ui.UIRow;
+import engine.ui.UIScrollArea;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import engine.ui.text.UIText.Alignment;
 import game.components.StorageComponent;
+import game.items.ItemIconRegistry;
 import game.items.ItemType;
 import game.items.ProcessedItem;
 import game.items.RawResource;
@@ -43,20 +47,30 @@ public class PlayerResourcesPanel extends UIPanel {
 
 	private void addResourceAmountsText() {
 		List<ItemType> allItems = getAllItems();
+		float scrollAreaHeight = this.height - 75;
+		UIScrollArea scrollArea = new UIScrollArea(width, scrollAreaHeight, 0);
+
 		for (ItemType type : allItems) {
 			String text = getNameAndAmountText(type);
 			UIText label = new UIText(text,
 									  Alignment.LEFT,
 									  new Vector4f(1, 1, 1, 1),
-									  16,
-									  10,
-									  15,
+									  20,
+									  0,
+									  5,
 									  font,
-									  width);
+									  width - hPadding * 2 - 42);
 
 			resourceLabels.put(type, label);
-			children.add(label);
+
+			UIImage icon = new UIImage(32, 32, ItemIconRegistry.getIcon(type));
+			UIRow row = new UIRow(10);
+			row.addElement(icon);
+			row.addElement(label);
+
+			scrollArea.addElement(row);
 		}
+		children.add(scrollArea);
 	}
 
 	private void addStorageCapacityText() {
@@ -103,14 +117,6 @@ public class PlayerResourcesPanel extends UIPanel {
 		}
 	}
 
-	@Override
-	protected void layout() {
-		float currentY = this.y + vPadding;
-		for (UIElement element : children) {
-			element.setPosition(this.x, currentY);
-			currentY += element.getBoundingHeight();
-		}
-	}
 
 	@Override
 	protected void rebuildElements() {
