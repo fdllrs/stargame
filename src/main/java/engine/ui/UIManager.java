@@ -2,9 +2,9 @@ package engine.ui;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.panels.UIPanel;
 import engine.window.Window;
 import game.geometry.ScreenQuadGeometry;
+import game.ui.panel.UIPanel;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 

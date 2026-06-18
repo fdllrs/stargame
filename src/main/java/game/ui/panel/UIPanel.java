@@ -1,4 +1,4 @@
-package engine.ui.panels;
+package game.ui.panel;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;

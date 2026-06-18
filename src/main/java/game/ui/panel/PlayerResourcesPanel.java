@@ -1,4 +1,4 @@
-package engine.ui.panels;
+package game.ui.panel;
 
 import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
@@ -85,6 +85,24 @@ public class PlayerResourcesPanel extends UIPanel {
 		return type.name() + ": " + storageComponent.getAmount(type);
 	}
 
+	public boolean isExpanded() {
+		return expanded;
+	}
+
+	public void setExpanded(boolean expanded) {
+		this.expanded = expanded;
+		if (expanded) {
+			setSize(width, expandedHeight);
+			setPosition(x, expandedY);
+			rebuildElements();
+		}
+		else {
+			setSize(width, 80);
+			setPosition(x, expandedY + ( expandedHeight - 80 ));
+			rebuildElements();
+		}
+	}
+
 	@Override
 	protected void layout() {
 		float currentY = this.y + vPadding;
@@ -125,13 +143,6 @@ public class PlayerResourcesPanel extends UIPanel {
 	}
 
 	@Override
-	public void update(float mouseX, float mouseY, float deltaTime) {
-		for (UIElement element : children) {
-			element.update(mouseX, mouseY, deltaTime);
-		}
-	}
-
-	@Override
 	public void onResize(int screenWidth, int screenHeight) {
 		this.expandedY = screenHeight - this.expandedHeight - 20;
 		if (expanded) {
@@ -146,24 +157,6 @@ public class PlayerResourcesPanel extends UIPanel {
 		storageFillText.setText(storageComponent.getFillForDisplay() + " " + "items");
 
 		resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
-	}
-
-	public boolean isExpanded() {
-		return expanded;
-	}
-
-	public void setExpanded(boolean expanded) {
-		this.expanded = expanded;
-		if (expanded) {
-			setSize(width, expandedHeight);
-			setPosition(x, expandedY);
-			rebuildElements();
-		}
-		else {
-			setSize(width, 80);
-			setPosition(x, expandedY + ( expandedHeight - 80 ));
-			rebuildElements();
-		}
 	}
 
 	public void testGiveAllResources() {

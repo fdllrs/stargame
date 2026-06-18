@@ -1,7 +1,7 @@
-package engine.ui.tabs.infotabs;
+package game.ui.tabs.infotabs;
 
+import engine.ui.UIButton;
 import engine.ui.UIElement;
-import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.objects.spaceBodies.Planet;

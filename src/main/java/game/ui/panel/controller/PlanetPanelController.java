@@ -1,14 +1,14 @@
-package engine.ui.panels;
+package game.ui.panel.controller;
 
 import engine.ui.UIElement;
-import engine.ui.tabs.UITabBar;
-import engine.ui.tabs.infotabs.UIBuildTab;
-import engine.ui.tabs.infotabs.UIStatsTab;
-import engine.ui.tabs.infotabs.UIStorageTab;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
 import game.objects.spaceBodies.Planet;
 import game.objects.spaceBodies.SpaceBody;
+import game.ui.tabs.UITabBar;
+import game.ui.tabs.infotabs.UIBuildTab;
+import game.ui.tabs.infotabs.UIStatsTab;
+import game.ui.tabs.infotabs.UIStorageTab;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,14 +23,17 @@ public class PlanetPanelController extends TabBarPanelController {
 			Runnable onRebuild,
 			Consumer<SpaceBody> onSelectTarget) {
 		super(new UITabBar(5, font, onRebuild));
-		Supplier<List<UIElement>> statsSupplier = () -> {
-			Runnable selectHubAction = () -> {
-				if (planet.hasHub() && onSelectTarget != null) {
-					onSelectTarget.accept(planet.getHub());
-				}
-			};
-			return UIStatsTab.build(planet, font, width, selectHubAction);
+
+		Runnable selectHubAction = () -> {
+			if (planet.hasHub() && onSelectTarget != null) {
+				onSelectTarget.accept(planet.getHub());
+			}
 		};
+
+		Supplier<List<UIElement>> statsSupplier = () -> UIStatsTab.build(planet,
+																		 font,
+																		 width,
+																		 selectHubAction);
 
 		this.tabBar.addTab("Stats", statsSupplier);
 		this.tabBar.addTab("Storage",

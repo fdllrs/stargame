@@ -1,7 +1,7 @@
-package engine.ui.tabs;
+package game.ui.tabs;
 
+import engine.ui.UIButton;
 import engine.ui.UIElement;
-import engine.ui.buttons.UIButton;
 import engine.ui.text.FontAtlas;
 import org.joml.Vector4f;
 

@@ -1,13 +1,13 @@
 package game.objects.spaceBodies;
 
 import engine.graphics.Mesh;
-import engine.ui.panels.HubPanelController;
-import engine.ui.panels.InfoPanelController;
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
 import game.components.StorageComponent;
 import game.geometry.HubGeometry;
 import game.ui.Describable;
+import game.ui.panel.controller.HubPanelController;
+import game.ui.panel.controller.InfoPanelController;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -39,6 +39,11 @@ public class Hub extends SpaceBody implements Describable {
 	}
 
 	@Override
+	public void cleanup() {
+		// Do not clean up the shared static mesh
+	}
+
+	@Override
 	public String getDisplayName() {
 		return name;
 	}
@@ -66,10 +71,5 @@ public class Hub extends SpaceBody implements Describable {
 			Runnable onRebuild,
 			Consumer<SpaceBody> onSelectTarget) {
 		return new HubPanelController(this, playerStorage, font, width, onRebuild);
-	}
-
-	@Override
-	public void cleanup() {
-		// Do not clean up the shared static mesh
 	}
 }

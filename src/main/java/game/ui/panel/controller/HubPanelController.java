@@ -1,11 +1,11 @@
-package engine.ui.panels;
+package game.ui.panel.controller;
 
-import engine.ui.tabs.UITabBar;
-import engine.ui.tabs.infotabs.UIStatsTab;
-import engine.ui.tabs.infotabs.UIUpgradeTab;
 import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
 import game.objects.spaceBodies.Hub;
+import game.ui.tabs.UITabBar;
+import game.ui.tabs.infotabs.UIStatsTab;
+import game.ui.tabs.infotabs.UIUpgradeTab;
 
 public class HubPanelController extends TabBarPanelController {
 

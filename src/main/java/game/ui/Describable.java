@@ -1,5 +1,8 @@
 package game.ui;
 
+import game.ui.panel.controller.DefaultPanelController;
+import game.ui.panel.controller.InfoPanelController;
+
 import java.util.List;
 import java.util.Map;
 
@@ -19,11 +22,11 @@ public interface Describable {
 	/**
 	 * Returns the panel controller layout manager for this describable target.
 	 */
-	default engine.ui.panels.InfoPanelController getPanelController(game.components.StorageComponent playerStorage,
+	default InfoPanelController getPanelController(game.components.StorageComponent playerStorage,
 			engine.ui.text.FontAtlas font,
 			float width,
 			Runnable onRebuild,
 			java.util.function.Consumer<game.objects.spaceBodies.SpaceBody> onSelectTarget) {
-		return new engine.ui.panels.DefaultPanelController();
+		return new DefaultPanelController();
 	}
 }

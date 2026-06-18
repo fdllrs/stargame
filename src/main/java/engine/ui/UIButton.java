@@ -1,8 +1,7 @@
-package engine.ui.buttons;
+package engine.ui;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.UIAnimationComponent;

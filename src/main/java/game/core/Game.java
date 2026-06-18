@@ -2,12 +2,12 @@ package game.core;
 
 import engine.graphics.Camera;
 import engine.ui.UIManager;
-import engine.ui.panels.InfoPanel;
-import engine.ui.panels.PlayerResourcesPanel;
-import engine.ui.panels.UIMapPanel;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
 import game.objects.spaceBodies.SpaceBody;
+import game.ui.panel.InfoPanel;
+import game.ui.panel.PlayerResourcesPanel;
+import game.ui.panel.UIMapPanel;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 

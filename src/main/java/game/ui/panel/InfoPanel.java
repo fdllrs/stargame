@@ -1,4 +1,4 @@
-package engine.ui.panels;
+package game.ui.panel;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
@@ -7,6 +7,7 @@ import engine.ui.text.FontAtlas;
 import game.components.StorageComponent;
 import game.objects.spaceBodies.SpaceBody;
 import game.ui.Describable;
+import game.ui.panel.controller.InfoPanelController;
 import org.joml.Vector4f;
 
 import java.util.function.Consumer;

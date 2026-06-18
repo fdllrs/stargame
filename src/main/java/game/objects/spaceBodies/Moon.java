@@ -1,13 +1,13 @@
 package game.objects.spaceBodies;
 
-import engine.ui.panels.DefaultPanelController;
-import engine.ui.panels.InfoPanelController;
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
 import game.components.StorageComponent;
 import game.geometry.PlanetGeometry;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
+import game.ui.panel.controller.DefaultPanelController;
+import game.ui.panel.controller.InfoPanelController;
 
 import java.util.function.Consumer;
 

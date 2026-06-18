@@ -3,8 +3,6 @@ package game.objects.spaceBodies;
 import engine.graphics.Camera;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.panels.InfoPanelController;
-import engine.ui.panels.PlanetPanelController;
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
 import game.components.StorageComponent;
@@ -19,6 +17,8 @@ import game.objects.facilities.StorageSilo;
 import game.objects.facilities.generators.PowerGenerator;
 import game.objects.facilities.producers.ProducerFacility;
 import game.ui.Describable;
+import game.ui.panel.controller.InfoPanelController;
+import game.ui.panel.controller.PlanetPanelController;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

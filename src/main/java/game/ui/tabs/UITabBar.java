@@ -1,4 +1,4 @@
-package engine.ui.tabs;
+package game.ui.tabs;
 
 import engine.ui.UIElement;
 import engine.ui.UIRow;
