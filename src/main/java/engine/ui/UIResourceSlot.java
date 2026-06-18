@@ -5,6 +5,7 @@ import engine.graphics.ShaderProgram;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
+import game.items.ItemIconRegistry;
 import game.items.ItemType;
 import org.joml.Vector4f;
 
@@ -26,7 +27,7 @@ public class UIResourceSlot extends UIElement {
 			Vector4f color) {
 		super(0, 0, width, height, color);
 
-		this.vPadding = 20;
+		this.vPadding = 10;
 		this.itemType = itemType;
 		this.planetStorage = planetStorage;
 		this.playerStorage = playerStorage;
@@ -35,15 +36,15 @@ public class UIResourceSlot extends UIElement {
 		this.labelName = new UIText(itemType.name(),
 									UIText.Alignment.LEFT,
 									new Vector4f(1.0f, 1.0f, 1.0f, 1.0f),
-									16,
-									10,
+									20,
+									52,
 									5,
 									font,
 									width);
 		this.labelAmounts = new UIText(getAmountsText(),
 									   UIText.Alignment.RIGHT,
 									   new Vector4f(1f, 1f, 1f, 1.0f),
-									   18,
+									   22,
 									   10,
 									   5,
 									   font,
@@ -71,6 +72,25 @@ public class UIResourceSlot extends UIElement {
 		shader.setUniform("uiColor", this.color);
 		shader.setUniform("model", this.modelMatrix);
 		uiQuad.render();
+
+		engine.graphics.Texture iconTex = ItemIconRegistry.getIcon(itemType);
+		if (iconTex != null) {
+			shader.setUniform("useTexture", 1);
+			shader.setUniform("uiTexture", 0);
+			shader.setUniform("uvScale", new org.joml.Vector2f(1, 1));
+			shader.setUniform("uvOffset", new org.joml.Vector2f(0, 0));
+			shader.setUniform("uiColor", new Vector4f(1, 1, 1, 1));
+
+			org.joml.Matrix4f iconModel = new org.joml.Matrix4f();
+			iconModel.translate(this.x + 10, this.y + (this.height - 32) / 2, 0);
+			iconModel.scale(32, 32, 1);
+			shader.setUniform("model", iconModel);
+
+			iconTex.bind();
+			uiQuad.render();
+			iconTex.unbind();
+		}
+
 		labelName.render(shader, uiQuad);
 		labelAmounts.render(shader, uiQuad);
 	}
@@ -80,7 +100,8 @@ public class UIResourceSlot extends UIElement {
 	}
 
 	@Override
-	public void handleScroll(float mouseX, float mouseY, double yOffset) {
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
+		if (!shiftPressed) return;
 		int transferAmount = 10;
 		if (yOffset < 0) {
 			transferItemsFromTo(planetStorage, playerStorage, transferAmount);
@@ -94,8 +115,8 @@ public class UIResourceSlot extends UIElement {
 	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
-		labelName.setPosition(x, y);
-		labelAmounts.setPosition(x, y);
+		labelName.setPosition(x, y + (this.height - labelName.getBoundingHeight()) / 2);
+		labelAmounts.setPosition(x, y + (this.height - labelAmounts.getBoundingHeight()) / 2);
 	}
 
 	private void transferItemsFromTo(StorageComponent sourceStorage,

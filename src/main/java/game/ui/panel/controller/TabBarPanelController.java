@@ -12,6 +12,8 @@ import java.util.List;
 public abstract class TabBarPanelController implements InfoPanelController {
 	protected final UITabBar tabBar;
 
+	protected float lastHeight;
+
 	protected TabBarPanelController(UITabBar tabBar) {
 		this.tabBar = tabBar;
 	}
@@ -21,7 +23,9 @@ public abstract class TabBarPanelController implements InfoPanelController {
 			Describable target,
 			StorageComponent playerStorage,
 			FontAtlas font,
-			float width) {
+			float width,
+			float height) {
+		this.lastHeight = height;
 		children.add(tabBar);
 		UITab activeTab = tabBar.getActiveTab();
 		if (activeTab != null) {

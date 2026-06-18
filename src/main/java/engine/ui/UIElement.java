@@ -59,7 +59,7 @@ public abstract class UIElement {
 		return new Vector2f(width, height);
 	}
 
-	public void handleScroll(float mouseX, float mouseY, double yOffset) {
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 	}
 
 	public boolean isVisible() { return visible; }
@@ -67,10 +67,6 @@ public abstract class UIElement {
 	public void setVisible(boolean visible) { this.visible = visible; }
 
 	public void onResize(int screenWidth, int screenHeight) {
-	}
-
-	public void setColor(float r, float g, float b, float a) {
-		this.color.set(r, g, b, a);
 	}
 
 	public void setOpacity(float opacity) {

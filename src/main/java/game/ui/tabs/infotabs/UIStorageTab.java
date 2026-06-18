@@ -2,6 +2,7 @@ package game.ui.tabs.infotabs;
 
 import engine.ui.UIElement;
 import engine.ui.UIResourceSlot;
+import engine.ui.UIScrollArea;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
@@ -18,7 +19,8 @@ public class UIStorageTab {
 			StorageComponent playerStorage,
 			FontAtlas font,
 			float width,
-			Runnable onRebuild) {
+			Runnable onRebuild,
+			float availableHeight) {
 		List<UIElement> elements = new ArrayList<>();
 		Vector4f textCol = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -31,7 +33,7 @@ public class UIStorageTab {
 								font,
 								width));
 
-		elements.add(new UIText("Hover line & Scroll wheel to transfer:",
+		elements.add(new UIText("Hover line & Shift + Scroll to transfer:",
 								UIText.Alignment.LEFT,
 								new Vector4f(0.7f, 0.7f, 0.7f, 1.0f),
 								14,
@@ -54,20 +56,25 @@ public class UIStorageTab {
 		allItems.addAll(List.of(ProcessedItem.values()));
 		Vector4f bg = new Vector4f(0.1f, 0.5f, 0.1f, 0.5f);
 
+		float scrollAreaHeight = availableHeight - 170; // Pin title, tab bar, and capacity headers, leaving content scrollable
+		UIScrollArea scrollArea = new UIScrollArea(width, scrollAreaHeight, 0);
+
 		for (ItemType item : allItems) {
 			if (planetStorage.getAmount(item) > 0 || playerStorage.getAmount(item) > 0) {
 				bg.y += 0.1f;
 				bg.z += 0.1f;
-				elements.add(new UIResourceSlot(width,
-												20,
-												item,
-												planetStorage,
-												playerStorage,
-												font,
-												onRebuild,
-												new Vector4f(bg)));
+				scrollArea.addElement(new UIResourceSlot(width,
+														40,
+														item,
+														planetStorage,
+														playerStorage,
+														font,
+														onRebuild,
+														new Vector4f(bg)));
 			}
 		}
+
+		elements.add(scrollArea);
 		return elements;
 	}
 }

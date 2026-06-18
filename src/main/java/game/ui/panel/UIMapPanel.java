@@ -282,7 +282,7 @@ public class UIMapPanel extends UIPanel {
 	}
 
 	@Override
-	public void handleScroll(float mouseX, float mouseY, double yOffset) {
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 		if (!visible) return;
 		float oldZoom = zoom;
 		zoom = Math.clamp(zoom * ( yOffset > 0 ? ZOOM_FACTOR : 1.0f / ZOOM_FACTOR ),

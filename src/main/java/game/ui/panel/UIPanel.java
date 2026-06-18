@@ -3,6 +3,7 @@ package game.ui.panel;
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.UIElement;
+import engine.ui.UIRow;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import org.joml.Vector4f;
@@ -12,8 +13,6 @@ import java.util.List;
 public abstract class UIPanel extends UIElement {
 	protected final List<UIElement> children = new java.util.ArrayList<>();
 	protected final FontAtlas font;
-
-	protected abstract void layout();
 
 	protected abstract void rebuildElements();
 
@@ -62,11 +61,12 @@ public abstract class UIPanel extends UIElement {
 	}
 
 	@Override
-	public void handleScroll(float mouseX, float mouseY, double yOffset) {
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 		if (!shouldRender()) return;
+
 		for (UIElement child : children) {
 			if (child.contains(mouseX, mouseY)) {
-				child.handleScroll(mouseX, mouseY, yOffset);
+				child.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
 				return;
 			}
 		}
@@ -75,7 +75,6 @@ public abstract class UIPanel extends UIElement {
 	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
-
 		layout();
 	}
 
@@ -91,6 +90,21 @@ public abstract class UIPanel extends UIElement {
 			}
 		}
 		layout();
+	}
+
+	protected void layout() {
+		float currentY = this.y + vPadding;
+		for (UIElement element : children) {
+			float elementX = this.x;
+			if (element.getLayoutAlignment() == LayoutAlignment.CENTER) {
+				elementX = this.x + ( this.width - element.getSize().x ) / 2.0f;
+			}
+			else if (element instanceof UIRow) {
+				elementX = this.x + hPadding;
+			}
+			element.setPosition(elementX, currentY);
+			currentY += element.getBoundingHeight();
+		}
 	}
 
 	protected void setPanelTitle(String title) {

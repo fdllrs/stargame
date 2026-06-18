@@ -18,8 +18,4 @@ void main() {
     if (FragColor.a < 0.1) {
         discard;
     }
-
-    if (FragColor.r < 0.1 && FragColor.g < 0.1 && FragColor.b < 0.1) {
-        discard;
-    }
 }

@@ -39,10 +39,10 @@ public class UIManager {
 		}
 	}
 
-	public boolean handleScroll(float mouseX, float mouseY, double yOffset) {
+	public boolean handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 		for (UIElement element : uiPanels) {
 			if (element.contains(mouseX, mouseY)) {
-				element.handleScroll(mouseX, mouseY, yOffset);
+				element.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
 				return true;
 			}
 		}
