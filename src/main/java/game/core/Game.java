@@ -4,6 +4,7 @@ import engine.graphics.Camera;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.window.Window;
+import game.objects.Player;
 import game.objects.spaceBodies.SpaceBody;
 import game.ui.panel.InfoPanel;
 import game.ui.panel.PlayerResourcesPanel;
@@ -24,6 +25,7 @@ public class Game {
 	private Camera camera;
 	private Input input;
 	private Scene scene;
+	private Player player;
 	private Renderer renderer;
 	private UIManager uiManager;
 	private InfoPanel infoPanel;
@@ -62,19 +64,19 @@ public class Game {
 	}
 
 	public void handleCameraMovement(float deltaTime) {
+
+		float playerAcceleration = player.accelerate(deltaTime);
 		if (input.isKeyPressed(GLFW_KEY_W)) {
 			if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-				camera.accelerateWithTurbo(deltaTime);
+				playerAcceleration = player.accelerateWithTurbo(deltaTime);
 			}
-			else {
-				camera.accelerateForwards(deltaTime);
-			}
+			camera.updateVelocityForwards(playerAcceleration);
 		}
-		if (input.isKeyPressed(GLFW_KEY_A)) camera.accelerateLeft(deltaTime);
-		if (input.isKeyPressed(GLFW_KEY_S)) camera.accelerateBackwards(deltaTime);
-		if (input.isKeyPressed(GLFW_KEY_D)) camera.accelerateRight(deltaTime);
+		if (input.isKeyPressed(GLFW_KEY_A)) camera.updateVelocityLeft(playerAcceleration);
+		if (input.isKeyPressed(GLFW_KEY_S)) camera.updateVelocityBack(playerAcceleration);
+		if (input.isKeyPressed(GLFW_KEY_D)) camera.updateVelocityRight(playerAcceleration);
 
-		if (input.isKeyPressed(GLFW_KEY_SPACE)) camera.zeroAcceleration(false);
+		if (input.isKeyPressed(GLFW_KEY_SPACE)) camera.zeroAcceleration(player.getBrakeStrength());
 	}
 
 	private void handleCameraRotation() {
@@ -125,7 +127,7 @@ public class Game {
 		camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
 		scene = new Scene();
 		renderer = new Renderer(windowHandle);
-
+		player = scene.getPlayer();
 		FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
 		uiManager = new UIManager(windowHandle);
 		infoPanel = new InfoPanel(10,
@@ -136,9 +138,9 @@ public class Game {
 								  fontAtlas,
 								  scene.getPlayer().getStorage());
 
-		playerResourcesPanel = new PlayerResourcesPanel(INITIAL_WIDTH - 320,
+		playerResourcesPanel = new PlayerResourcesPanel(INITIAL_WIDTH - 400,
 														INITIAL_HEIGHT - 220,
-														300,
+														380,
 														200,
 														fontAtlas,
 														scene.getPlayer().getStorage(),
@@ -166,12 +168,15 @@ public class Game {
 		uiManager.addElement(uiMapPanel);
 
 		registerResizeCallback();
-		placePlayerAtFirstPlanet();
+		placePlayerAtPlanetNumber(2);
 	}
 
-	private void placePlayerAtFirstPlanet() {
+	private void placePlayerAtPlanetNumber(int planetNumber) {
 		scene.update(camera, false, 0f);
-		camera.moveTo(scene.getPlanets().getFirst().getPosition().add(35, 0, 0, new Vector3f()));
+		camera.moveTo(scene.getPlanets()
+						   .get(planetNumber)
+						   .getPosition()
+						   .add(0, 20, 0, new Vector3f()));
 	}
 
 	private void registerResizeCallback() {
@@ -230,7 +235,9 @@ public class Game {
 
 		double scrollY = input.getScrollDeltaY();
 		if (scrollY != 0 && input.isCursorEnabled()) {
-			if (uiManager.handleScroll(mouseX, mouseY, scrollY)) {
+			boolean shiftPressed = input.isKeyPressed(GLFW_KEY_LEFT_SHIFT) || input.isKeyPressed(
+					GLFW_KEY_RIGHT_SHIFT);
+			if (uiManager.handleScroll(mouseX, mouseY, scrollY, shiftPressed)) {
 				playerResourcesPanel.refreshAmounts();
 			}
 		}
@@ -242,10 +249,10 @@ public class Game {
 		if (input.isKeyJustPressed(GLFW_KEY_O)) {
 			infoPanel.setTarget(null);
 			scene.recreateStarSystem();
-			placePlayerAtFirstPlanet();
+			placePlayerAtPlanetNumber(2);
 		}
 
-		camera.applyMovement(deltaTime);
+		camera.applyMovement(deltaTime, player.getMaxSpeed());
 		scene.update(camera, input.isForwardMovementPressed(), deltaTime);
 		camera.updateViewMatrix();
 	}
