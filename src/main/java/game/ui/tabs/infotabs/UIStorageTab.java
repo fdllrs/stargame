@@ -6,9 +6,9 @@ import engine.ui.UIScrollArea;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
-import game.items.ItemType;
-import game.items.ProcessedItem;
-import game.items.RawResource;
+import game.objects.items.ItemType;
+import game.objects.items.ProcessedItem;
+import game.objects.items.RawResource;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -56,7 +56,9 @@ public class UIStorageTab {
 		allItems.addAll(List.of(ProcessedItem.values()));
 		Vector4f bg = new Vector4f(0.1f, 0.5f, 0.1f, 0.5f);
 
-		float scrollAreaHeight = availableHeight - 170; // Pin title, tab bar, and capacity headers, leaving content scrollable
+		float scrollAreaHeight = availableHeight -
+								 170; // Pin title, tab bar, and capacity headers, leaving content
+		// scrollable
 		UIScrollArea scrollArea = new UIScrollArea(width, scrollAreaHeight, 0);
 
 		for (ItemType item : allItems) {
@@ -64,13 +66,13 @@ public class UIStorageTab {
 				bg.y += 0.1f;
 				bg.z += 0.1f;
 				scrollArea.addElement(new UIResourceSlot(width,
-														40,
-														item,
-														planetStorage,
-														playerStorage,
-														font,
-														onRebuild,
-														new Vector4f(bg)));
+														 40,
+														 item,
+														 planetStorage,
+														 playerStorage,
+														 font,
+														 onRebuild,
+														 new Vector4f(bg)));
 			}
 		}
 

@@ -1,8 +1,8 @@
 package game.objects.facilities.generators;
 
 import game.components.OrbitComponent;
-import game.items.ItemType;
-import game.items.RawResource;
+import game.objects.items.ItemType;
+import game.objects.items.RawResource;
 import game.objects.spaceBodies.Planet;
 
 import java.util.Map;

@@ -5,8 +5,8 @@ import engine.graphics.ShaderProgram;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
-import game.items.ItemIconRegistry;
-import game.items.ItemType;
+import game.objects.items.ItemIconRegistry;
+import game.objects.items.ItemType;
 import org.joml.Vector4f;
 
 public class UIResourceSlot extends UIElement {
@@ -82,7 +82,7 @@ public class UIResourceSlot extends UIElement {
 			shader.setUniform("uiColor", new Vector4f(1, 1, 1, 1));
 
 			org.joml.Matrix4f iconModel = new org.joml.Matrix4f();
-			iconModel.translate(this.x + 10, this.y + (this.height - 32) / 2, 0);
+			iconModel.translate(this.x + 10, this.y + ( this.height - 32 ) / 2, 0);
 			iconModel.scale(32, 32, 1);
 			shader.setUniform("model", iconModel);
 
@@ -115,8 +115,8 @@ public class UIResourceSlot extends UIElement {
 	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
-		labelName.setPosition(x, y + (this.height - labelName.getBoundingHeight()) / 2);
-		labelAmounts.setPosition(x, y + (this.height - labelAmounts.getBoundingHeight()) / 2);
+		labelName.setPosition(x, y + ( this.height - labelName.getBoundingHeight() ) / 2);
+		labelAmounts.setPosition(x, y + ( this.height - labelAmounts.getBoundingHeight() ) / 2);
 	}
 
 	private void transferItemsFromTo(StorageComponent sourceStorage,

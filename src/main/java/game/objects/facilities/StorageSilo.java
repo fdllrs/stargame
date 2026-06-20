@@ -1,15 +1,15 @@
 package game.objects.facilities;
 
 import game.geometry.BuildingGeometry;
+import game.objects.items.ItemType;
+import game.objects.items.RawResource;
 import game.objects.spaceBodies.Planet;
 import org.joml.Vector3f;
 
 import java.util.Map;
 
 public class StorageSilo extends Facility {
-	public static final Map<game.items.ItemType, Integer> COST =
-			Map.of(game.items.RawResource.METAL,
-																		100);
+	public static final Map<ItemType, Integer> COST = Map.of(RawResource.METAL, 100);
 	public static final int INITIAL_CAPACITY = 1000;
 	int capacity = INITIAL_CAPACITY;
 

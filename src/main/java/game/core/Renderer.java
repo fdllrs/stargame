@@ -172,7 +172,7 @@ public class Renderer {
 		renderOutline(scene, camera);
 
 		renderObjects(scene, camera);
-
+		
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
 		glDisable(GL_STENCIL_TEST);
 

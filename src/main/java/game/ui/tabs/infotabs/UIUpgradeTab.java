@@ -5,7 +5,7 @@ import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import game.components.StorageComponent;
-import game.items.RawResource;
+import game.objects.items.RawResource;
 import game.objects.spaceBodies.Hub;
 import org.joml.Vector4f;
 

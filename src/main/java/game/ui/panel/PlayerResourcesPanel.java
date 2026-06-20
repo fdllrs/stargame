@@ -8,10 +8,10 @@ import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import engine.ui.text.UIText.Alignment;
 import game.components.StorageComponent;
-import game.items.ItemIconRegistry;
-import game.items.ItemType;
-import game.items.ProcessedItem;
-import game.items.RawResource;
+import game.objects.items.ItemIconRegistry;
+import game.objects.items.ItemType;
+import game.objects.items.ProcessedItem;
+import game.objects.items.RawResource;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector4f;
 
@@ -117,6 +117,16 @@ public class PlayerResourcesPanel extends UIPanel {
 		}
 	}
 
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		this.expandedY = screenHeight - this.expandedHeight - 20;
+		if (expanded) {
+			setPosition(screenWidth - this.width - 20, expandedY);
+		}
+		else {
+			setPosition(screenWidth - this.width - 20, expandedY + ( expandedHeight - 80 ));
+		}
+	}
 
 	@Override
 	protected void rebuildElements() {
@@ -146,17 +156,6 @@ public class PlayerResourcesPanel extends UIPanel {
 		setExpanded(!expanded);
 
 		super.handleClick(mouseX, mouseY);
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		this.expandedY = screenHeight - this.expandedHeight - 20;
-		if (expanded) {
-			setPosition(screenWidth - this.width - 20, expandedY);
-		}
-		else {
-			setPosition(screenWidth - this.width - 20, expandedY + ( expandedHeight - 80 ));
-		}
 	}
 
 	public void refreshAmounts() {

@@ -21,14 +21,13 @@ import static org.lwjgl.opengl.GL13C.*;
 public class Scene {
 	private static final float MAX_SELECTION_DISTANCE = 6000.0f;
 	private static final float DOCK_RANGE_MULTIPLIER = 4.0f;
-	private static final float DOCK_SPEED_THRESHOLD = 30.0f;
-	private static final float UNDOCK_SPEED_THRESHOLD = 80.0f;
+	private static final float DOCK_SPEED_THRESHOLD = 3.0f;
 	private final Player player;
 	private final Starfield starfield;
 	private final Vector3f dockedBodyLastPos = new Vector3f();
 	private StarSystem starSystem;
 	private SpaceBody selectedObject;
-	private Planet dockedBody;
+	private Planet dockedPlanet;
 
 	public Scene() {
 		player = new Player();
@@ -146,6 +145,10 @@ public class Scene {
 		return closest;
 	}
 
+	public Planet getDockedPlanet() {
+		return dockedPlanet;
+	}
+
 	public List<Planet> getPlanets() {
 		return starSystem.getPlanets();
 	}
@@ -166,6 +169,10 @@ public class Scene {
 		return starfield;
 	}
 
+	public boolean isPlayerDocked() {
+		return dockedPlanet != null;
+	}
+
 	public SpaceBody objectClicked(float mouseX, float mouseY, long windowHandle, Camera camera) {
 		return pickObject(mouseX, mouseY, windowHandle, camera);
 	}
@@ -180,7 +187,7 @@ public class Scene {
 		starSystem.cleanupAll();
 		starSystem = StarSystem.generateStartingSystem();
 		updateSelectedObject(null);
-		dockedBody = null;
+		dockedPlanet = null;
 	}
 
 	public void render(Renderer renderer, ShaderProgram shaderStar, Camera camera) {
@@ -243,28 +250,27 @@ public class Scene {
 	private void updateDocking(Camera camera) {
 		float speed = camera.getVelocity().length();
 
-		if (dockedBody != null) {
-			Vector3f currentPos = dockedBody.getPosition();
+		if (speed >= DOCK_SPEED_THRESHOLD) {
+			dockedPlanet = null;
+			return;
+		}
+
+		if (dockedPlanet != null) {
+			Vector3f currentPos = dockedPlanet.getPosition();
 			camera.translate(currentPos.x - dockedBodyLastPos.x,
 							 currentPos.y - dockedBodyLastPos.y,
 							 currentPos.z - dockedBodyLastPos.z);
 			dockedBodyLastPos.set(currentPos);
 
-			if (speed > UNDOCK_SPEED_THRESHOLD) {
-				dockedBody = null;
-			}
 			return;
 		}
 
-		if (speed >= DOCK_SPEED_THRESHOLD) return;
-
 		Vector3f camPos = camera.getPosition();
-		for (SpaceBody body : starSystem.getAllBodies()) {
-			if (!( body instanceof Planet )) continue;
-			float dockRange = body.getRadius() * DOCK_RANGE_MULTIPLIER;
-			if (camPos.distance(body.getPosition()) < dockRange) {
-				dockedBody = (Planet) body;
-				dockedBodyLastPos.set(dockedBody.getPosition());
+		for (Planet planet : starSystem.getPlanets()) {
+			float dockRange = planet.getRadius() * DOCK_RANGE_MULTIPLIER;
+			if (camPos.distance(planet.getPosition()) < dockRange) {
+				dockedPlanet = planet;
+				dockedBodyLastPos.set(dockedPlanet.getPosition());
 				return;
 			}
 		}

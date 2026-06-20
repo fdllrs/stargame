@@ -2,6 +2,7 @@ package engine.ui;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
+import engine.ui.text.UIText;
 import engine.window.Window;
 import game.geometry.ScreenQuadGeometry;
 import game.ui.panel.UIPanel;
@@ -17,6 +18,7 @@ public class UIManager {
 	private final ArrayList<UIPanel> uiPanels;
 	private final ShaderProgram uiShader;
 	private final Mesh uiQuad;
+	private UIText topText;
 
 	public UIManager(long windowHandle) {
 		uiPanels = new ArrayList<>();
@@ -29,6 +31,10 @@ public class UIManager {
 
 	public void addElement(UIPanel element) {
 		uiPanels.add(element);
+	}
+
+	public void addTopText(UIText text) {
+		topText = text;
 	}
 
 	public void cleanup() {
@@ -83,7 +89,7 @@ public class UIManager {
 		for (UIElement element : uiPanels) {
 			element.render(uiShader, uiQuad);
 		}
-
+		topText.render(uiShader, uiQuad);
 		uiShader.unbind();
 		glDisable(GL_BLEND);
 	}
@@ -91,6 +97,12 @@ public class UIManager {
 	public void update(float mouseX, float mouseY, float deltaTime) {
 		for (UIElement element : uiPanels) {
 			element.update(mouseX, mouseY, deltaTime);
+		}
+	}
+
+	public void updateDockingLabel(boolean playerDocked) {
+		if (topText != null) {
+			topText.setText(playerDocked ? "Player Docked" : "Player Undocked");
 		}
 	}
 }

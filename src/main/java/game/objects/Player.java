@@ -10,9 +10,9 @@ public class Player extends GameObject {
 	private static final Mesh playerMesh = PlayerGeometry.getPlayerMesh();
 	private static final float PLAYER_RADIUS = 0.18f;
 	private final StorageComponent storage = new StorageComponent(1000);
-	private float accelerationFactor = 2f;
-	private float turboMultiplier = 1f;
-	private float maxSpeed = 4f;
+	private float accelerationFactor = 10f;
+	private float turboMultiplier = 5f;
+	private float maxSpeed = 500f;
 
 	public Player() {
 		super(playerMesh, new Vector3f(0, 0, 0));

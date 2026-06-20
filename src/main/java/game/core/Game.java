@@ -3,6 +3,8 @@ package game.core;
 import engine.graphics.Camera;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
+import engine.ui.text.UIText;
+import engine.ui.text.UIText.Alignment;
 import engine.window.Window;
 import game.objects.Player;
 import game.objects.spaceBodies.SpaceBody;
@@ -166,7 +168,15 @@ public class Game {
 									input,
 									windowHandle);
 		uiManager.addElement(uiMapPanel);
-
+		UIText dockedLabel = new UIText("Not currently Docked",
+										Alignment.CENTER,
+										new Vector4f(1f, 1f, 1f, 1f),
+										32,
+										10,
+										15,
+										fontAtlas,
+										INITIAL_WIDTH);
+		uiManager.addTopText(dockedLabel);
 		registerResizeCallback();
 		placePlayerAtPlanetNumber(2);
 	}
@@ -254,6 +264,7 @@ public class Game {
 
 		camera.applyMovement(deltaTime, player.getMaxSpeed());
 		scene.update(camera, input.isForwardMovementPressed(), deltaTime);
+		uiManager.updateDockingLabel(scene.isPlayerDocked());
 		camera.updateViewMatrix();
 	}
 

@@ -1,4 +1,4 @@
-package game.items;
+package game.objects.items;
 
 public enum ProcessedItem implements ItemType {
 	ALLOY,

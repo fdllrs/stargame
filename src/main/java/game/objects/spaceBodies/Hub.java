@@ -5,6 +5,8 @@ import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
 import game.components.StorageComponent;
 import game.geometry.HubGeometry;
+import game.objects.items.ItemType;
+import game.objects.items.RawResource;
 import game.ui.Describable;
 import game.ui.panel.controller.HubPanelController;
 import game.ui.panel.controller.InfoPanelController;
@@ -15,9 +17,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class Hub extends SpaceBody implements Describable {
-	public static final Map<game.items.ItemType, Integer> COST =
-			Map.of(game.items.RawResource.METAL,
-																		50);
+	public static final Map<ItemType, Integer> COST = Map.of(RawResource.METAL, 50);
 	private final Planet parentPlanet;
 	private final OrbitComponent orbit;
 	public int level = 1;

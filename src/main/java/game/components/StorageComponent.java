@@ -1,6 +1,6 @@
 package game.components;
 
-import game.items.ItemType;
+import game.objects.items.ItemType;
 
 import java.util.HashMap;
 import java.util.Map;

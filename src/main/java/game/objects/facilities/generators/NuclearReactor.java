@@ -1,9 +1,9 @@
 package game.objects.facilities.generators;
 
 import game.geometry.BuildingGeometry;
-import game.items.ItemType;
-import game.items.ProcessedItem;
-import game.items.RawResource;
+import game.objects.items.ItemType;
+import game.objects.items.ProcessedItem;
+import game.objects.items.RawResource;
 import game.objects.spaceBodies.Planet;
 
 import java.util.Map;
