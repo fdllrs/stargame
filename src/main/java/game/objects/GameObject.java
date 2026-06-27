@@ -17,6 +17,10 @@ public class GameObject extends GameEntity {
 	protected Mesh mesh;
 	protected boolean isSelected = false;
 
+	public GameObject(Vector3f position) {
+		this(null, new Vector3f(1, 1, 1), position);
+	}
+
 	public GameObject(Mesh mesh, Vector3f color, Vector3f position) {
 		super(position, color);
 		this.mesh = mesh;
@@ -28,8 +32,15 @@ public class GameObject extends GameEntity {
 		updateModelMatrix();
 	}
 
-	public GameObject(Vector3f position) {
-		this(null, new Vector3f(1, 1, 1), position);
+	public void updateModelMatrix() {
+		modelMatrix.identity();
+		modelMatrix.translate(position);
+
+		modelMatrix.rotateY((float) Math.toRadians(rotation.y));
+		modelMatrix.rotateX((float) Math.toRadians(rotation.x));
+		modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
+
+		modelMatrix.scale(scale);
 	}
 
 	public GameObject(Mesh mesh, Vector3f position) {
@@ -58,6 +69,17 @@ public class GameObject extends GameEntity {
 		return normalMatrix.set(modelMatrix).invert().transpose();
 	}
 
+	protected void setupStencilForSelection() {
+		if (isSelected) {
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		}
+		else {
+			glStencilFunc(GL_ALWAYS, 0, 0xFF);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		}
+	}
+
 	public Mesh getMesh() {
 		return mesh;
 	}
@@ -72,27 +94,5 @@ public class GameObject extends GameEntity {
 
 	public void setSelected(boolean selected) {
 		this.isSelected = selected;
-	}
-
-	protected void setupStencilForSelection() {
-		if (isSelected) {
-			glStencilFunc(GL_ALWAYS, 1, 0xFF);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-		}
-		else {
-			glStencilFunc(GL_ALWAYS, 0, 0xFF);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		}
-	}
-
-	public void updateModelMatrix() {
-		modelMatrix.identity();
-		modelMatrix.translate(position);
-
-		modelMatrix.rotateY((float) Math.toRadians(rotation.y));
-		modelMatrix.rotateX((float) Math.toRadians(rotation.x));
-		modelMatrix.rotateZ((float) Math.toRadians(rotation.z));
-
-		modelMatrix.scale(scale);
 	}
 }

@@ -68,22 +68,39 @@ public class PlanetDockPanel extends UIPanel {
 		});
 	}
 
+	private void setupLayout(float totalHeight) {
+		float spacing = 15.0f;
+		float storageHeight = totalHeight * 0.35f;
+		float buildHeight = totalHeight * 0.65f - spacing;
+
+		buildPanel.setSize(this.width, buildHeight);
+		storagePanel.setSize(this.width, storageHeight);
+
+		// Setup animation ranges for children based on current x position
+		float currentAnchorX = this.x;
+		float currentHiddenX = currentAnchorX + this.width + 50;
+
+		buildPanel.configSlideX(currentAnchorX, currentHiddenX);
+		storagePanel.configSlideX(currentAnchorX, currentHiddenX);
+
+		if (isDocked) {
+			buildPanel.forceX(currentAnchorX);
+			storagePanel.forceX(currentAnchorX);
+		}
+		else {
+			buildPanel.forceX(currentHiddenX);
+			storagePanel.forceX(currentHiddenX);
+		}
+
+		buildPanel.setPosition(buildPanel.getPosition().x, this.y);
+		storagePanel.setPosition(storagePanel.getPosition().x, this.y + buildHeight + spacing);
+	}
+
 	@Override
 	public boolean contains(float mouseX, float mouseY) {
 		return shouldRender() && ( buildPanel.contains(mouseX, mouseY) || storagePanel.contains(
 				mouseX,
 				mouseY) );
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		this.x = screenWidth - this.width - 20;
-		setSize(this.width, screenHeight - 50);
-
-		setupLayout(this.height);
-
-		buildPanel.onResize(screenWidth, screenHeight);
-		storagePanel.onResize(screenWidth, screenHeight);
 	}
 
 	@Override
@@ -127,6 +144,28 @@ public class PlanetDockPanel extends UIPanel {
 	}
 
 	@Override
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
+		if (!shouldRender()) return;
+		if (buildPanel.contains(mouseX, mouseY)) {
+			buildPanel.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
+		}
+		else if (storagePanel.contains(mouseX, mouseY)) {
+			storagePanel.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
+		}
+	}
+
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		this.x = screenWidth - this.width - 20;
+		setSize(this.width, screenHeight - 50);
+
+		setupLayout(this.height);
+
+		buildPanel.onResize(screenWidth, screenHeight);
+		storagePanel.onResize(screenWidth, screenHeight);
+	}
+
+	@Override
 	public void rebuildElements() {
 		children.clear();
 
@@ -145,50 +184,11 @@ public class PlanetDockPanel extends UIPanel {
 	}
 
 	@Override
-	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
-		if (!shouldRender()) return;
-		if (buildPanel.contains(mouseX, mouseY)) {
-			buildPanel.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
-		}
-		else if (storagePanel.contains(mouseX, mouseY)) {
-			storagePanel.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
-		}
-	}
-
-	@Override
 	public boolean shouldRender() {
 		return currentPlanet != null;
 	}
 
 	public void markDirty() {
 		this.dirty = true;
-	}
-
-	private void setupLayout(float totalHeight) {
-		float spacing = 15.0f;
-		float storageHeight = totalHeight * 0.35f;
-		float buildHeight = totalHeight * 0.65f - spacing;
-
-		buildPanel.setSize(this.width, buildHeight);
-		storagePanel.setSize(this.width, storageHeight);
-
-		// Setup animation ranges for children based on current x position
-		float currentAnchorX = this.x;
-		float currentHiddenX = currentAnchorX + this.width + 50;
-
-		buildPanel.configSlideX(currentAnchorX, currentHiddenX);
-		storagePanel.configSlideX(currentAnchorX, currentHiddenX);
-
-		if (isDocked) {
-			buildPanel.forceX(currentAnchorX);
-			storagePanel.forceX(currentAnchorX);
-		}
-		else {
-			buildPanel.forceX(currentHiddenX);
-			storagePanel.forceX(currentHiddenX);
-		}
-
-		buildPanel.setPosition(buildPanel.getPosition().x, this.y);
-		storagePanel.setPosition(storagePanel.getPosition().x, this.y + buildHeight + spacing);
 	}
 }

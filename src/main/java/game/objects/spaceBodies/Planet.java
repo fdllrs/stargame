@@ -24,7 +24,6 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public abstract class Planet extends SpaceBody implements Describable {
@@ -36,8 +35,6 @@ public abstract class Planet extends SpaceBody implements Describable {
 	protected final StorageComponent planetStorage;
 	private final OrbitComponent orbit;
 	private boolean wasInBrownout = false;
-
-	public abstract PlanetType getType();
 
 	public Planet(Mesh mesh, PlanetInfo planetInfo) {
 		this(mesh, planetInfo, new StorageComponent(1000));
@@ -68,10 +65,6 @@ public abstract class Planet extends SpaceBody implements Describable {
 		this.orbit.update(this.getPosition(), 0f);
 	}
 
-	public void addCapacity(int capacity) {
-		planetStorage.addCapacity(capacity);
-	}
-
 	public void addPowerGenerator(PowerGenerator powerGenerator) {
 		generators.add(powerGenerator);
 	}
@@ -84,6 +77,10 @@ public abstract class Planet extends SpaceBody implements Describable {
 
 		producerFacilities.add(storageSilo);
 		addCapacity(storageSilo.getCapacity());
+	}
+
+	public void addCapacity(int capacity) {
+		planetStorage.addCapacity(capacity);
 	}
 
 	@Override
@@ -139,6 +136,29 @@ public abstract class Planet extends SpaceBody implements Describable {
 		return props;
 	}
 
+	public abstract PlanetType getType();
+
+	public float getPowerDemand() {
+		float producersDemand = producerFacilities.stream()
+												  .mapToInt(Facility::getPowerDemand)
+												  .sum();
+		float generatorsDemand =
+				generators.stream().mapToInt(PowerGenerator::getPowerDemand).sum();
+		return producersDemand + generatorsDemand;
+	}
+
+	public float getPowerCapacity() {
+		return (float) generators.stream().mapToDouble(PowerGenerator::getPowerOutput).sum();
+	}
+
+	public float getEnergyEfficiency() {
+		float demand = getPowerDemand();
+		if (demand <= 0) {
+			return 1.0f;
+		}
+		return Math.min(1.0f, getPowerCapacity() / demand);
+	}
+
 	@Override
 	public void renderBody(Renderer renderer, Camera camera, Light starLight) {
 		ShaderProgram planetShader = renderer.getShaderForType(getType());
@@ -177,25 +197,42 @@ public abstract class Planet extends SpaceBody implements Describable {
 		}
 	}
 
-	public float getEnergyEfficiency() {
-		float demand = getPowerDemand();
-		if (demand <= 0) {
-			return 1.0f;
+	static void setupPlanetShader(Renderer renderer,
+			Camera camera,
+			Light starLight,
+			ShaderProgram planetShader) {
+		planetShader.bind();
+		planetShader.setUniform("view", camera.getViewMatrix());
+		planetShader.setUniform("projection", camera.getProjectionMatrix());
+		planetShader.setUniform("viewPos", camera.getPosition());
+		planetShader.setUniform("lightSpaceMatrix", renderer.getCurrentLightSpaceMatrix());
+		if (starLight != null) {
+			planetShader.setUniform("lightPosition", starLight.getPosition());
+			planetShader.setUniform("lightColor", starLight.getColor());
 		}
-		return Math.min(1.0f, getPowerCapacity() / demand);
+
+		org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE1);
+		org.lwjgl.opengl.GL11C.glBindTexture(org.lwjgl.opengl.GL11C.GL_TEXTURE_2D,
+											 renderer.getShadowDepthTex());
+		planetShader.setUniform("shadowMap", 1);
+		org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE0);
+	}
+
+	public void renderFacilities(ShaderProgram shader) {
+		for (Facility facility : producerFacilities) {
+			facility.render(shader, this.modelMatrix);
+		}
+		for (PowerGenerator generator : generators) {
+			generator.render(shader, this.modelMatrix);
+		}
+	}
+
+	public void renderExtra(Renderer renderer, Camera camera) {
+		// Default implementation does nothing
 	}
 
 	public Star getHomeStar() {
 		return homeStar;
-	}
-
-	public Hub getHub() {
-		for (SpaceBody orbiter : satellites) {
-			if (orbiter instanceof Hub hub) {
-				return hub;
-			}
-		}
-		return null;
 	}
 
 	public List<Moon> getMoons() {
@@ -219,19 +256,6 @@ public abstract class Planet extends SpaceBody implements Describable {
 		return planetInfo;
 	}
 
-	public float getPowerCapacity() {
-		return (float) generators.stream().mapToDouble(PowerGenerator::getPowerOutput).sum();
-	}
-
-	public float getPowerDemand() {
-		float producersDemand = producerFacilities.stream()
-												  .mapToInt(Facility::getPowerDemand)
-												  .sum();
-		float generatorsDemand =
-				generators.stream().mapToInt(PowerGenerator::getPowerDemand).sum();
-		return producersDemand + generatorsDemand;
-	}
-
 	public StorageComponent getStorage() {
 		return planetStorage;
 	}
@@ -244,6 +268,15 @@ public abstract class Planet extends SpaceBody implements Describable {
 		return getHub() != null;
 	}
 
+	public Hub getHub() {
+		for (SpaceBody orbiter : satellites) {
+			if (orbiter instanceof Hub hub) {
+				return hub;
+			}
+		}
+		return null;
+	}
+
 	public boolean isWater(Vector3f direction) {
 		if (getType() == PlanetType.ORGANIC) {
 			float noiseVal = game.geometry.Noise3D.fbm(direction.x * 3.0f,
@@ -254,42 +287,8 @@ public abstract class Planet extends SpaceBody implements Describable {
 		return false;
 	}
 
-	public void renderExtra(Renderer renderer, Camera camera) {
-		// Default implementation does nothing
-	}
-
-	public void renderFacilities(ShaderProgram shader) {
-		for (Facility facility : producerFacilities) {
-			facility.render(shader, this.modelMatrix);
-		}
-		for (PowerGenerator generator : generators) {
-			generator.render(shader, this.modelMatrix);
-		}
-	}
-
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	static void setupPlanetShader(Renderer renderer,
-			Camera camera,
-			Light starLight,
-			ShaderProgram planetShader) {
-		planetShader.bind();
-		planetShader.setUniform("view", camera.getViewMatrix());
-		planetShader.setUniform("projection", camera.getProjectionMatrix());
-		planetShader.setUniform("viewPos", camera.getPosition());
-		planetShader.setUniform("lightSpaceMatrix", renderer.getCurrentLightSpaceMatrix());
-		if (starLight != null) {
-			planetShader.setUniform("lightPosition", starLight.getPosition());
-			planetShader.setUniform("lightColor", starLight.getColor());
-		}
-
-		org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE1);
-		org.lwjgl.opengl.GL11C.glBindTexture(org.lwjgl.opengl.GL11C.GL_TEXTURE_2D,
-											 renderer.getShadowDepthTex());
-		planetShader.setUniform("shadowMap", 1);
-		org.lwjgl.opengl.GL13C.glActiveTexture(org.lwjgl.opengl.GL13C.GL_TEXTURE0);
 	}
 
 	public void tickFacilities() {

@@ -39,13 +39,13 @@ public enum ShipUpgrade {
 	private final String description;
 	private final Map<ItemType, Integer> cost;
 
-	public abstract void applyTo(Player player);
-
 	ShipUpgrade(String displayName, String description, Map<ItemType, Integer> cost) {
 		this.displayName = displayName;
 		this.description = description;
 		this.cost = cost;
 	}
+
+	public abstract void applyTo(Player player);
 
 	public Map<ItemType, Integer> getCost() { return cost; }
 

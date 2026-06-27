@@ -24,27 +24,6 @@ public abstract class ProducerFacility extends Facility {
 		planet.addProducer(this);
 	}
 
-	protected boolean canProcess(Planet planet) {
-		// 1. Check space in storage for outputs
-		if (outputs != null) {
-			for (Map.Entry<ItemType, Integer> entry : outputs.entrySet()) {
-				if (!planet.getStorage().canDeposit(entry.getValue())) {
-					return false;
-				}
-			}
-		}
-
-		// 2. Check input resources availability
-		if (inputs != null) {
-			for (Map.Entry<ItemType, Integer> entry : inputs.entrySet()) {
-				if (!planet.getStorage().canWithdraw(entry.getKey(), entry.getValue())) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
 	@Override
 	public int getPowerDemand() {
 		return (int) powerDemand;
@@ -72,8 +51,25 @@ public abstract class ProducerFacility extends Facility {
 		}
 	}
 
-	@Override
-	public void upgrade() {
+	protected boolean canProcess(Planet planet) {
+		// 1. Check space in storage for outputs
+		if (outputs != null) {
+			for (Map.Entry<ItemType, Integer> entry : outputs.entrySet()) {
+				if (!planet.getStorage().canDeposit(entry.getValue())) {
+					return false;
+				}
+			}
+		}
+
+		// 2. Check input resources availability
+		if (inputs != null) {
+			for (Map.Entry<ItemType, Integer> entry : inputs.entrySet()) {
+				if (!planet.getStorage().canWithdraw(entry.getKey(), entry.getValue())) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	protected void process(Planet planet) {
@@ -90,5 +86,9 @@ public abstract class ProducerFacility extends Facility {
 				planet.getStorage().deposit(entry.getKey(), entry.getValue());
 			}
 		}
+	}
+
+	@Override
+	public void upgrade() {
 	}
 }

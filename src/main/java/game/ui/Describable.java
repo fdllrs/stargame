@@ -5,7 +5,6 @@ import game.ui.panel.controller.InfoPanelController;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 
 /**
  * Implemented by any game object that can display its properties in a UI info panel.

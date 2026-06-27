@@ -51,11 +51,6 @@ public class SpaceBody extends GameObject implements Describable {
 		shader.unbind();
 	}
 
-	public void rotate(float deltaTime) {
-		float spinSpeedMultiplier = 0.1f;
-		this.rotation.y += (float) Math.toDegrees(deltaTime * spinSpeedMultiplier);
-	}
-
 	@NotNull
 	protected static ShaderProgram setupDefaultShader(Renderer renderer,
 			Camera camera,
@@ -63,6 +58,11 @@ public class SpaceBody extends GameObject implements Describable {
 		ShaderProgram shader = renderer.getDefaultShader();
 		Planet.setupPlanetShader(renderer, camera, starLight, shader);
 		return shader;
+	}
+
+	public void rotate(float deltaTime) {
+		float spinSpeedMultiplier = 0.1f;
+		this.rotation.y += (float) Math.toDegrees(deltaTime * spinSpeedMultiplier);
 	}
 
 	public void update(float deltaTime) {

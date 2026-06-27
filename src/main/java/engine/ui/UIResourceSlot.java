@@ -12,12 +12,16 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class UIResourceSlot extends UIElement {
+	private static final Vector2f CONST_UV_SCALE = new Vector2f(1, 1);
+	private static final Vector2f CONST_UV_OFFSET = new Vector2f(0, 0);
+	private static final Vector4f CONST_COLOR_WHITE = new Vector4f(1, 1, 1, 1);
 	private final ItemType itemType;
 	private final StorageComponent planetStorage;
 	private final StorageComponent playerStorage;
 	private final UIText labelName;
 	private final UIText labelAmounts;
 	private final Runnable onTransfer;
+	private final Matrix4f iconModel = new Matrix4f();
 
 	public UIResourceSlot(float width,
 			float height,
@@ -67,11 +71,6 @@ public class UIResourceSlot extends UIElement {
 	@Override
 	public void handleClick(float mouseX, float mouseY) {
 	}
-
-	private static final Vector2f CONST_UV_SCALE = new Vector2f(1, 1);
-	private static final Vector2f CONST_UV_OFFSET = new Vector2f(0, 0);
-	private static final Vector4f CONST_COLOR_WHITE = new Vector4f(1, 1, 1, 1);
-	private final Matrix4f iconModel = new Matrix4f();
 
 	@Override
 	public void render(ShaderProgram shader, Mesh uiQuad) {

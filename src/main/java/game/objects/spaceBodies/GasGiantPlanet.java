@@ -30,16 +30,16 @@ public class GasGiantPlanet extends Planet {
 	}
 
 	@Override
-	public PlanetType getType() {
-		return PlanetType.GAS_GIANT;
-	}
-
-	@Override
 	public void cleanup() {
 		super.cleanup();
 		if (ringMesh != null) {
 			ringMesh.cleanup();
 		}
+	}
+
+	@Override
+	public PlanetType getType() {
+		return PlanetType.GAS_GIANT;
 	}
 
 	@Override

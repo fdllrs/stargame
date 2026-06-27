@@ -41,6 +41,16 @@ public class UIButton extends UIElement {
 		alignContent();
 	}
 
+	private void alignContent() {
+		if (textLabel != null) {
+			textLabel.setPosition(x, y + ( height - textLabel.getBoundingHeight() ) / 2);
+		}
+		if (content != null) {
+			content.setPosition(x + ( width - content.getSize().x ) / 2,
+								y + ( height - content.getBoundingHeight() ) / 2);
+		}
+	}
+
 	public UIButton(float width,
 			float height,
 			Vector4f backgroundColor,
@@ -55,15 +65,6 @@ public class UIButton extends UIElement {
 		alignContent();
 	}
 
-	private void alignContent() {
-		if (textLabel != null) {
-			textLabel.setPosition(x, y + ( height - textLabel.getBoundingHeight() ) / 2);
-		}
-		if (content != null) {
-			content.setPosition(x + ( width - content.getSize().x ) / 2, y + ( height - content.getBoundingHeight() ) / 2);
-		}
-	}
-
 	@Override
 	public float getBoundingHeight() {
 		return height + vPadding;
@@ -74,11 +75,6 @@ public class UIButton extends UIElement {
 		if (isEnabled && onClick != null) {
 			onClick.run();
 		}
-	}
-
-	@Override
-	public void rebuildElements() {
-		if (content != null) content.rebuildElements();
 	}
 
 	@Override
@@ -107,6 +103,11 @@ public class UIButton extends UIElement {
 	@Override
 	public LayoutAlignment getLayoutAlignment() {
 		return LayoutAlignment.CENTER;
+	}
+
+	@Override
+	public void rebuildElements() {
+		if (content != null) content.rebuildElements();
 	}
 
 	@Override

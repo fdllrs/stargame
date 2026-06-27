@@ -8,7 +8,7 @@ import game.ui.tabs.infotabs.UIStatsTab;
 public class HubPanelController extends TabBarPanelController {
 
 	public HubPanelController(Hub hub, FontAtlas font, float width) {
-		super(new UITabBar(5, font, () -> {}));
+		super(new UITabBar(5, font, () -> { }));
 		this.tabBar.addTab("Stats", () -> UIStatsTab.build(hub, font, width, null));
 	}
 }

@@ -13,23 +13,6 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class DockedState implements GameState<Game> {
 
-	static void checkEscapeKey(Game gameContext, Input input) {
-		if (input.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
-			if (gameContext.getPlayerResourcesPanel().isExpanded()) {
-				gameContext.getPlayerResourcesPanel().setExpanded(false);
-			}
-			else if (input.isCursorEnabled()) {
-				input.toggleCursor();
-			}
-		}
-	}
-
-	static void checkTabKey(Input input) {
-		if (input.isKeyJustPressed(GLFW_KEY_TAB)) {
-			input.toggleCursor();
-		}
-	}
-
 	@Override
 	public void enter(Game gameContext) {
 		Planet dockedPlanet = gameContext.getScene().getDockedPlanet();
@@ -69,6 +52,23 @@ public class DockedState implements GameState<Game> {
 
 		checkEscapeKey(gameContext, input);
 		checkTabKey(input);
+	}
+
+	static void checkEscapeKey(Game gameContext, Input input) {
+		if (input.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
+			if (gameContext.getPlayerResourcesPanel().isExpanded()) {
+				gameContext.getPlayerResourcesPanel().setExpanded(false);
+			}
+			else if (input.isCursorEnabled()) {
+				input.toggleCursor();
+			}
+		}
+	}
+
+	static void checkTabKey(Input input) {
+		if (input.isKeyJustPressed(GLFW_KEY_TAB)) {
+			input.toggleCursor();
+		}
 	}
 
 	@Override

@@ -19,12 +19,12 @@ public class Player extends GameObject {
 		updateModelMatrix();
 	}
 
-	public float accelerate(float deltaTime) {
-		return accelerationFactor * deltaTime;
-	}
-
 	public float accelerateWithTurbo(float deltaTime) {
 		return accelerate(deltaTime) * turboMultiplier;
+	}
+
+	public float accelerate(float deltaTime) {
+		return accelerationFactor * deltaTime;
 	}
 
 	public float getBrakeStrength() {
@@ -45,15 +45,6 @@ public class Player extends GameObject {
 		return storage;
 	}
 
-	private float lerpAngle(float current, float target, float speed) {
-		float difference = target - current;
-
-		while (difference < -180.0f) difference += 360.0f;
-		while (difference > 180.0f) difference -= 360.0f;
-
-		return current + ( difference * speed );
-	}
-
 	public void setAccelerationFactor(float accelerationFactor) {
 		this.accelerationFactor = accelerationFactor;
 	}
@@ -72,5 +63,14 @@ public class Player extends GameObject {
 			this.rotation.y = lerpAngle(this.rotation.y, -camera.rotation.y, turnSpeed);
 		}
 		updateModelMatrix();
+	}
+
+	private float lerpAngle(float current, float target, float speed) {
+		float difference = target - current;
+
+		while (difference < -180.0f) difference += 360.0f;
+		while (difference > 180.0f) difference -= 360.0f;
+
+		return current + ( difference * speed );
 	}
 }

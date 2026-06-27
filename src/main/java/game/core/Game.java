@@ -38,11 +38,48 @@ public class Game {
 	private UIMapPanel uiMapPanel;
 	private GameStateMachine<Game> stateMachine;
 
-	private void cleanup() {
-		scene.cleanup();
-		renderer.cleanup();
-		uiManager.cleanup();
-		window.cleanup();
+	public Camera getCamera() { return camera; }
+
+	public InfoPanel getInfoPanel() { return infoPanel; }
+
+	public Input getInput() { return input; }
+
+	public InventoryPanel getPlayerResourcesPanel() { return playerResourcesPanel; }
+
+	public Scene getScene() { return scene; }
+
+	public GameStateMachine<Game> getStateMachine() { return stateMachine; }
+
+	public UIManager getUIManager() { return uiManager; }
+
+	public UIMapPanel getUiMapPanel() { return uiMapPanel; }
+
+	public long getWindowHandle() { return windowHandle; }
+
+	public void run() {
+		init();
+		gameLoop();
+		cleanup();
+	}
+
+	private void init() {
+		initWindow();
+
+		camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
+		scene = new Scene();
+		renderer = new Renderer(windowHandle);
+		player = scene.getPlayer();
+		FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
+
+		input = new Input(windowHandle);
+
+		initUIPanels(fontAtlas);
+		initUIManager(fontAtlas);
+
+		setupStateMachine();
+
+		registerResizeCallback();
+		placePlayerAtSecondPlanet();
 	}
 
 	private void gameLoop() {
@@ -68,81 +105,17 @@ public class Game {
 		}
 	}
 
-	public Camera getCamera() { return camera; }
-
-	public InfoPanel getInfoPanel() { return infoPanel; }
-
-	public Input getInput() { return input; }
-
-	public InventoryPanel getPlayerResourcesPanel() { return playerResourcesPanel; }
-
-	public Scene getScene() { return scene; }
-
-	public GameStateMachine<Game> getStateMachine() { return stateMachine; }
-
-	public UIManager getUIManager() { return uiManager; }
-
-	public UIMapPanel getUiMapPanel() { return uiMapPanel; }
-
-	public long getWindowHandle() { return windowHandle; }
-
-	public void handleCameraMovement(float deltaTime) {
-
-		float playerAcceleration = player.accelerate(deltaTime);
-		if (input.isKeyPressed(GLFW_KEY_W)) {
-			if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-				playerAcceleration = player.accelerateWithTurbo(deltaTime);
-			}
-			camera.updateVelocityForwards(playerAcceleration);
-		}
-		if (input.isKeyPressed(GLFW_KEY_A)) camera.updateVelocityLeft(playerAcceleration);
-		if (input.isKeyPressed(GLFW_KEY_S)) camera.updateVelocityBack(playerAcceleration);
-		if (input.isKeyPressed(GLFW_KEY_D)) camera.updateVelocityRight(playerAcceleration);
-
-		if (input.isKeyPressed(GLFW_KEY_SPACE)) camera.zeroAcceleration(player.getBrakeStrength());
+	private void cleanup() {
+		scene.cleanup();
+		renderer.cleanup();
+		uiManager.cleanup();
+		window.cleanup();
 	}
 
-	private void handleCameraRotation() {
-		if (!input.isCursorEnabled()) {
-			camera.addRotation(input.getMouseDx(), input.getMouseDy());
-		}
-	}
-
-	private void init() {
-		initWindow();
-
-		camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
-		scene = new Scene();
-		renderer = new Renderer(windowHandle);
-		player = scene.getPlayer();
-		FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
-
-		input = new Input(windowHandle);
-
-		initUIPanels(fontAtlas);
-		initUIManager(fontAtlas);
-
-		setupStateMachine();
-
-		registerResizeCallback();
-		placePlayerAtSecondPlanet();
-	}
-
-	private void initUIManager(FontAtlas fontAtlas) {
-		uiManager = new UIManager(windowHandle);
-		uiManager.addElement(infoPanel);
-		uiManager.addElement(planetDockPanel);
-		uiManager.addElement(playerResourcesPanel);
-		uiManager.addElement(uiMapPanel);
-		UIText dockedLabel = new UIText("",
-										Alignment.CENTER,
-										new Vector4f(1f, 1f, 1f, 1f),
-										32,
-										10,
-										15,
-										fontAtlas,
-										INITIAL_WIDTH);
-		uiManager.addTopText(dockedLabel);
+	private void initWindow() {
+		window = new Window();
+		window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
+		windowHandle = window.windowHandle;
 	}
 
 	private void initUIPanels(FontAtlas fontAtlas) {
@@ -187,15 +160,26 @@ public class Game {
 									windowHandle);
 	}
 
-	private void initWindow() {
-		window = new Window();
-		window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
-		windowHandle = window.windowHandle;
+	private void initUIManager(FontAtlas fontAtlas) {
+		uiManager = new UIManager(windowHandle);
+		uiManager.addElement(infoPanel);
+		uiManager.addElement(planetDockPanel);
+		uiManager.addElement(playerResourcesPanel);
+		uiManager.addElement(uiMapPanel);
+		UIText dockedLabel = new UIText("",
+										Alignment.CENTER,
+										new Vector4f(1f, 1f, 1f, 1f),
+										32,
+										10,
+										15,
+										fontAtlas,
+										INITIAL_WIDTH);
+		uiManager.addTopText(dockedLabel);
 	}
 
-	private void placePlayerAtSecondPlanet() {
-		scene.update(camera, false, 0f);
-		camera.moveTo(scene.getPlanets().get(2).getPosition().add(0, 100, 0, new Vector3f()));
+	private void setupStateMachine() {
+		stateMachine = new GameStateMachine<>(this);
+		stateMachine.changeState(new FlightState());
 	}
 
 	private void registerResizeCallback() {
@@ -206,15 +190,9 @@ public class Game {
 		});
 	}
 
-	public void run() {
-		init();
-		gameLoop();
-		cleanup();
-	}
-
-	private void setupStateMachine() {
-		stateMachine = new GameStateMachine<>(this);
-		stateMachine.changeState(new FlightState());
+	private void placePlayerAtSecondPlanet() {
+		scene.update(camera, false, 0f);
+		camera.moveTo(scene.getPlanets().get(2).getPosition().add(0, 100, 0, new Vector3f()));
 	}
 
 	private void update(float deltaTime) {
@@ -255,5 +233,27 @@ public class Game {
 	public void updateCameraFromInput(float deltaTime) {
 		handleCameraRotation();
 		handleCameraMovement(deltaTime);
+	}
+
+	private void handleCameraRotation() {
+		if (!input.isCursorEnabled()) {
+			camera.addRotation(input.getMouseDx(), input.getMouseDy());
+		}
+	}
+
+	public void handleCameraMovement(float deltaTime) {
+
+		float playerAcceleration = player.accelerate(deltaTime);
+		if (input.isKeyPressed(GLFW_KEY_W)) {
+			if (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+				playerAcceleration = player.accelerateWithTurbo(deltaTime);
+			}
+			camera.updateVelocityForwards(playerAcceleration);
+		}
+		if (input.isKeyPressed(GLFW_KEY_A)) camera.updateVelocityLeft(playerAcceleration);
+		if (input.isKeyPressed(GLFW_KEY_S)) camera.updateVelocityBack(playerAcceleration);
+		if (input.isKeyPressed(GLFW_KEY_D)) camera.updateVelocityRight(playerAcceleration);
+
+		if (input.isKeyPressed(GLFW_KEY_SPACE)) camera.zeroAcceleration(player.getBrakeStrength());
 	}
 }

@@ -58,13 +58,6 @@ public abstract class UIPanel extends UIElement {
 	}
 
 	@Override
-	public void rebuildElements() {
-		for (UIElement child : children) {
-			child.rebuildElements();
-		}
-	}
-
-	@Override
 	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 		if (!shouldRender()) return;
 
@@ -73,6 +66,20 @@ public abstract class UIPanel extends UIElement {
 				child.handleScroll(mouseX, mouseY, yOffset, shiftPressed);
 				return;
 			}
+		}
+	}
+
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		for (UIElement child : children) {
+			child.onResize(screenWidth, screenHeight);
+		}
+	}
+
+	@Override
+	public void rebuildElements() {
+		for (UIElement child : children) {
+			child.rebuildElements();
 		}
 	}
 
@@ -111,6 +118,10 @@ public abstract class UIPanel extends UIElement {
 		}
 	}
 
+	protected boolean shouldRender() {
+		return true;
+	}
+
 	protected void setPanelTitle(String title) {
 		children.addFirst(new UIText(title,
 									 UIText.Alignment.CENTER,
@@ -120,16 +131,5 @@ public abstract class UIPanel extends UIElement {
 									 10,
 									 font,
 									 width));
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		for (UIElement child : children) {
-			child.onResize(screenWidth, screenHeight);
-		}
-	}
-
-	protected boolean shouldRender() {
-		return true;
 	}
 }

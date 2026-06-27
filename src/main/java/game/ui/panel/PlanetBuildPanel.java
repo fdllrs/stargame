@@ -54,6 +54,14 @@ public class PlanetBuildPanel extends UIPanel {
 	}
 
 	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		if (scrollArea != null) {
+			scrollArea.setSize(this.width, this.height - 60);
+		}
+		super.onResize(screenWidth, screenHeight);
+	}
+
+	@Override
 	public void rebuildElements() {
 		children.clear();
 
@@ -90,14 +98,6 @@ public class PlanetBuildPanel extends UIPanel {
 
 	public boolean isAnimating() {
 		return animation.isAnimatingX();
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		if (scrollArea != null) {
-			scrollArea.setSize(this.width, this.height - 60);
-		}
-		super.onResize(screenWidth, screenHeight);
 	}
 
 	public void setCurrentPlanet(Planet planet) {

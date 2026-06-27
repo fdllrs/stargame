@@ -2,7 +2,6 @@ package game.ui.panel;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
-import engine.ui.UIElement;
 import engine.ui.text.FontAtlas;
 import game.components.UISlideAnimation;
 import game.objects.spaceBodies.SpaceBody;
@@ -14,11 +13,10 @@ import java.util.function.Consumer;
 
 public class InfoPanel extends UIPanel {
 	private final UISlideAnimation animation;
+	private final float layoutX;
 	private Describable currentTarget;
 	private InfoPanelController currentController;
 	private Consumer<SpaceBody> onSelectTarget;
-
-	private final float layoutX;
 	private boolean dirty = true;
 
 	public InfoPanel(float x, float y, float width, float height, Vector4f color, FontAtlas font) {
@@ -39,6 +37,21 @@ public class InfoPanel extends UIPanel {
 			this.setTarget(null);
 			this.animation.slideOut(false);
 		});
+	}
+
+	public void setTarget(Describable target) {
+		this.currentTarget = target;
+		if (target != null) {
+			this.currentController = target.getPanelController(font, width, onSelectTarget);
+		}
+		else {
+			this.currentController = null;
+		}
+		markDirty();
+	}
+
+	public void markDirty() {
+		this.dirty = true;
 	}
 
 	@Override
@@ -66,6 +79,23 @@ public class InfoPanel extends UIPanel {
 	}
 
 	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		setSize(this.width, screenHeight - 100);
+		float anchorX = layoutX;
+		float hiddenX = layoutX - this.width - 50;
+		this.animation.configSlideX(anchorX, hiddenX);
+
+		if (currentTarget != null) {
+			animation.forceX(anchorX);
+		}
+		else {
+			animation.forceX(hiddenX);
+		}
+
+		super.onResize(screenWidth, screenHeight);
+	}
+
+	@Override
 	public void rebuildElements() {
 		children.clear();
 
@@ -84,38 +114,7 @@ public class InfoPanel extends UIPanel {
 		return currentTarget != null || animation.isAnimatingX();
 	}
 
-	public void markDirty() {
-		this.dirty = true;
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		setSize(this.width, screenHeight - 100);
-		float anchorX = layoutX;
-		float hiddenX = layoutX - this.width - 50;
-		this.animation.configSlideX(anchorX, hiddenX);
-
-		if (currentTarget != null) {
-			animation.forceX(anchorX);
-		} else {
-			animation.forceX(hiddenX);
-		}
-
-		super.onResize(screenWidth, screenHeight);
-	}
-
 	public void setOnSelectTarget(Consumer<SpaceBody> callback) {
 		this.onSelectTarget = callback;
-	}
-
-	public void setTarget(Describable target) {
-		this.currentTarget = target;
-		if (target != null) {
-			this.currentController = target.getPanelController(font, width, onSelectTarget);
-		}
-		else {
-			this.currentController = null;
-		}
-		markDirty();
 	}
 }

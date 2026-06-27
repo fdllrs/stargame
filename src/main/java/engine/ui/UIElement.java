@@ -16,14 +16,6 @@ public abstract class UIElement {
 	protected float scale;
 	protected boolean visible = false;
 
-	public abstract float getBoundingHeight();
-
-	public abstract void handleClick(float mouseX, float mouseY);
-
-	public abstract void render(ShaderProgram shader, Mesh uiQuad);
-
-	public abstract void update(float mouseX, float mouseY, float deltaTime);
-
 	public UIElement(float x, float y, float width, float height, Vector4f color) {
 		this.x = x;
 		this.y = y;
@@ -33,6 +25,20 @@ public abstract class UIElement {
 		this.modelMatrix = new Matrix4f();
 		updateMatrix();
 	}
+
+	protected void updateMatrix() {
+		modelMatrix.identity();
+		modelMatrix.translate(x, y, 0);
+		modelMatrix.scale(width, height, 1);
+	}
+
+	public abstract float getBoundingHeight();
+
+	public abstract void handleClick(float mouseX, float mouseY);
+
+	public abstract void render(ShaderProgram shader, Mesh uiQuad);
+
+	public abstract void update(float mouseX, float mouseY, float deltaTime);
 
 	public void cleanup() {
 	}
@@ -61,8 +67,6 @@ public abstract class UIElement {
 
 	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
 	}
-
-	public boolean isVisible() { return visible; }
 
 	public void setVisible(boolean visible) { this.visible = visible; }
 
@@ -99,12 +103,6 @@ public abstract class UIElement {
 		this.width = width;
 		this.height = height;
 		updateMatrix();
-	}
-
-	protected void updateMatrix() {
-		modelMatrix.identity();
-		modelMatrix.translate(x, y, 0);
-		modelMatrix.scale(width, height, 1);
 	}
 
 	public enum LayoutAlignment {

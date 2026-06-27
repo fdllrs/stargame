@@ -26,6 +26,30 @@ public class StarSystem {
 		nameAllPlanets();
 	}
 
+	private void generateRandomPlanets(int planetAmount) {
+		java.util.Random RANDOM = new java.util.Random();
+		float currentDistance = star.getRadius() + 400f;
+
+		for (int i = 0; i < planetAmount; i++) {
+			currentDistance += 800f + RANDOM.nextFloat() * 1000f;
+			Planet planet = PlanetBuilder.createRandom(star, currentDistance)
+										 .withRandomMoons()
+										 .build();
+			this.planets.add(planet);
+		}
+	}
+
+	private void nameAllPlanets() {
+		int nameSufix = 1;
+		for (Planet planet : planets) {
+			String starName = planet.getHomeStar().getName();
+			String[] parts = starName.split(" ");
+			String baseName = parts.length > 1 ? parts[ 1 ] : starName;
+			planet.setName(baseName + " " + nameSufix);
+			nameSufix++;
+		}
+	}
+
 	public StarSystem(Star star, ArrayList<Planet> planets) {
 		this.star = star;
 		this.stars = new ArrayList<>(List.of(star));
@@ -38,29 +62,6 @@ public class StarSystem {
 		this.stars = new ArrayList<>(stars);
 		this.planets = planets;
 		nameAllPlanets();
-	}
-
-	public void cleanupAll() {
-		for (Planet planet : planets) {
-			planet.cleanup();
-		}
-
-		for (Star s : stars) {
-			s.cleanup();
-		}
-	}
-
-	private void generateRandomPlanets(int planetAmount) {
-		java.util.Random RANDOM = new java.util.Random();
-		float currentDistance = star.getRadius() + 400f;
-
-		for (int i = 0; i < planetAmount; i++) {
-			currentDistance += 800f + RANDOM.nextFloat() * 1000f;
-			Planet planet = PlanetBuilder.createRandom(star, currentDistance)
-										 .withRandomMoons()
-										 .build();
-			this.planets.add(planet);
-		}
 	}
 
 	public static StarSystem generateStartingSystem() {
@@ -98,6 +99,16 @@ public class StarSystem {
 		return new StarSystem(star, planets);
 	}
 
+	public void cleanupAll() {
+		for (Planet planet : planets) {
+			planet.cleanup();
+		}
+
+		for (Star s : stars) {
+			s.cleanup();
+		}
+	}
+
 	public ArrayList<SpaceBody> getAllBodies() {
 		ArrayList<SpaceBody> celestialBodies = new ArrayList<>(planets);
 		for (Planet planet : planets) {
@@ -130,17 +141,6 @@ public class StarSystem {
 								 .orbitDistance())
 					  .max(Float::compare)
 					  .orElse(star.getRadius() + 1000.0f);
-	}
-
-	private void nameAllPlanets() {
-		int nameSufix = 1;
-		for (Planet planet : planets) {
-			String starName = planet.getHomeStar().getName();
-			String[] parts = starName.split(" ");
-			String baseName = parts.length > 1 ? parts[ 1 ] : starName;
-			planet.setName(baseName + " " + nameSufix);
-			nameSufix++;
-		}
 	}
 
 	public void tickAllFacilities() {

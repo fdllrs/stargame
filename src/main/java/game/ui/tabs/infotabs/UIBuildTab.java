@@ -27,6 +27,116 @@ public class UIBuildTab {
 	private static final float MIN_BUTTON_HEIGHT = 50.0f;
 	private static final int MANUAL_MINING_AMOUNT = 10;
 
+	public static List<UIElement> build(Planet planet,
+			StorageComponent playerStorage,
+			FontAtlas font,
+			float width,
+			Runnable onRebuild) {
+
+		List<UIElement> elements = new ArrayList<>();
+		Vector4f textCol = new Vector4f(1, 1, 1, 1);
+		Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
+		addMiningCategory(planet, font, width, onRebuild, textCol, elements);
+
+		addBuildingButtons(planet,
+						   playerStorage,
+						   font,
+						   width,
+						   onRebuild,
+						   buildBtnBg,
+						   textCol,
+						   elements);
+
+		return elements;
+	}
+
+	private static void addMiningCategory(Planet planet,
+			FontAtlas font,
+			float width,
+			Runnable onRebuild,
+			Vector4f textCol,
+			List<UIElement> elements) {
+		List<RawResource> harvestable = planet.getType().getHarvestableResources();
+		Vector4f btnBg = new Vector4f(0.2f, 0.4f, 0.8f, 1.0f);
+
+		elements.add(new UIText("Manual Harvesting:",
+								UIText.Alignment.LEFT,
+								textCol,
+								15,
+								10,
+								5,
+								font,
+								width));
+
+		UIRow row = new UIRow(BUTTON_GAP);
+
+		int numResources = harvestable.size();
+		float btnWidth = numResources > 0
+						 ? ( ROW_WIDTH - BUTTON_GAP * ( numResources - 1 ) ) / numResources
+						 : ROW_WIDTH;
+
+		for (RawResource resource : harvestable) {
+			row.addElement(new UIButton(btnWidth,
+										MIN_BUTTON_HEIGHT,
+										btnBg,
+										textCol,
+										"Mine " + resource.name(),
+										() -> {
+											planet.deposit(resource, MANUAL_MINING_AMOUNT);
+											onRebuild.run();
+										},
+										font));
+		}
+
+		elements.add(row);
+	}
+
+	private static void addBuildingButtons(Planet planet,
+			StorageComponent playerStorage,
+			FontAtlas font,
+			float width,
+			Runnable onRebuild,
+			Vector4f buildBtnBg,
+			Vector4f textCol,
+			List<UIElement> elements) {
+
+		addBasicCategory(planet,
+						 playerStorage,
+						 font,
+						 width,
+						 onRebuild,
+						 buildBtnBg,
+						 textCol,
+						 elements);
+
+		addEnergyGenerationCategory(planet,
+									playerStorage,
+									font,
+									width,
+									onRebuild,
+									buildBtnBg,
+									textCol,
+									elements);
+
+		addResourceProcessingCategory(planet,
+									  playerStorage,
+									  font,
+									  width,
+									  onRebuild,
+									  buildBtnBg,
+									  textCol,
+									  elements);
+
+		addResearchCategory(planet,
+							playerStorage,
+							font,
+							width,
+							onRebuild,
+							buildBtnBg,
+							textCol,
+							elements);
+	}
+
 	private static void addBasicCategory(Planet planet,
 			StorageComponent playerStorage,
 			FontAtlas font,
@@ -101,52 +211,6 @@ public class UIBuildTab {
 									textCol));
 	}
 
-	private static void addBuildingButtons(Planet planet,
-			StorageComponent playerStorage,
-			FontAtlas font,
-			float width,
-			Runnable onRebuild,
-			Vector4f buildBtnBg,
-			Vector4f textCol,
-			List<UIElement> elements) {
-
-		addBasicCategory(planet,
-						 playerStorage,
-						 font,
-						 width,
-						 onRebuild,
-						 buildBtnBg,
-						 textCol,
-						 elements);
-
-		addEnergyGenerationCategory(planet,
-									playerStorage,
-									font,
-									width,
-									onRebuild,
-									buildBtnBg,
-									textCol,
-									elements);
-
-		addResourceProcessingCategory(planet,
-									  playerStorage,
-									  font,
-									  width,
-									  onRebuild,
-									  buildBtnBg,
-									  textCol,
-									  elements);
-
-		addResearchCategory(planet,
-							playerStorage,
-							font,
-							width,
-							onRebuild,
-							buildBtnBg,
-							textCol,
-							elements);
-	}
-
 	private static void addEnergyGenerationCategory(Planet planet,
 			StorageComponent playerStorage,
 			FontAtlas font,
@@ -181,79 +245,6 @@ public class UIBuildTab {
 				onRebuild.run();
 			}
 		}, canAffordReactor, font, buildBtnBg, textCol));
-	}
-
-	private static void addMiningCategory(Planet planet,
-			FontAtlas font,
-			float width,
-			Runnable onRebuild,
-			Vector4f textCol,
-			List<UIElement> elements) {
-		List<RawResource> harvestable = planet.getType().getHarvestableResources();
-		Vector4f btnBg = new Vector4f(0.2f, 0.4f, 0.8f, 1.0f);
-
-		elements.add(new UIText("Manual Harvesting:",
-								UIText.Alignment.LEFT,
-								textCol,
-								15,
-								10,
-								5,
-								font,
-								width));
-
-		UIRow row = new UIRow(BUTTON_GAP);
-
-		int numResources = harvestable.size();
-		float btnWidth = numResources > 0 ? (ROW_WIDTH - BUTTON_GAP * (numResources - 1)) / numResources : ROW_WIDTH;
-
-		for (RawResource resource : harvestable) {
-			row.addElement(new UIButton(btnWidth,
-										MIN_BUTTON_HEIGHT,
-										btnBg,
-										textCol,
-										"Mine " + resource.name(),
-										() -> {
-											planet.deposit(resource, MANUAL_MINING_AMOUNT);
-											onRebuild.run();
-										},
-										font));
-		}
-
-		elements.add(row);
-	}
-
-	private static void addResearchCategory(Planet planet,
-			StorageComponent playerStorage,
-			FontAtlas font,
-			float width,
-			Runnable onRebuild,
-			Vector4f buildBtnBg,
-			Vector4f textCol,
-			List<UIElement> elements) {
-		elements.add(new UIText("Scientific Research:",
-								UIText.Alignment.LEFT,
-								textCol,
-								15,
-								10,
-								5,
-								font,
-								width));
-
-		String labType = "Geological";
-		switch (planet.getType()) {
-			case ORGANIC -> labType = "Biological";
-			case GAS_GIANT -> labType = "Gas";
-			case ICE_GIANT -> labType = "Cryo-Physics";
-		}
-
-		boolean canAffordLab = canAfford(playerStorage, ResearchLab.COST);
-		elements.add(createBuildRow(labType + " Lab", ResearchLab.COST, () -> {
-			if (canAfford(playerStorage, ResearchLab.COST)) {
-				deductCost(playerStorage, ResearchLab.COST);
-				new ResearchLab(planet);
-				onRebuild.run();
-			}
-		}, canAffordLab, font, buildBtnBg, textCol));
 	}
 
 	private static void addResourceProcessingCategory(Planet planet,
@@ -301,27 +292,38 @@ public class UIBuildTab {
 		}, canAffordEngine, font, buildBtnBg, textCol));
 	}
 
-	public static List<UIElement> build(Planet planet,
+	private static void addResearchCategory(Planet planet,
 			StorageComponent playerStorage,
 			FontAtlas font,
 			float width,
-			Runnable onRebuild) {
+			Runnable onRebuild,
+			Vector4f buildBtnBg,
+			Vector4f textCol,
+			List<UIElement> elements) {
+		elements.add(new UIText("Scientific Research:",
+								UIText.Alignment.LEFT,
+								textCol,
+								15,
+								10,
+								5,
+								font,
+								width));
 
-		List<UIElement> elements = new ArrayList<>();
-		Vector4f textCol = new Vector4f(1, 1, 1, 1);
-		Vector4f buildBtnBg = new Vector4f(0.8f, 0.5f, 0.2f, 1.0f);
-		addMiningCategory(planet, font, width, onRebuild, textCol, elements);
+		String labType = "Geological";
+		switch (planet.getType()) {
+			case ORGANIC -> labType = "Biological";
+			case GAS_GIANT -> labType = "Gas";
+			case ICE_GIANT -> labType = "Cryo-Physics";
+		}
 
-		addBuildingButtons(planet,
-						   playerStorage,
-						   font,
-						   width,
-						   onRebuild,
-						   buildBtnBg,
-						   textCol,
-						   elements);
-
-		return elements;
+		boolean canAffordLab = canAfford(playerStorage, ResearchLab.COST);
+		elements.add(createBuildRow(labType + " Lab", ResearchLab.COST, () -> {
+			if (canAfford(playerStorage, ResearchLab.COST)) {
+				deductCost(playerStorage, ResearchLab.COST);
+				new ResearchLab(planet);
+				onRebuild.run();
+			}
+		}, canAffordLab, font, buildBtnBg, textCol));
 	}
 
 	private static boolean canAfford(StorageComponent playerStorage, Map<ItemType, Integer> cost) {
@@ -332,6 +334,13 @@ public class UIBuildTab {
 			}
 		}
 		return true;
+	}
+
+	private static void deductCost(StorageComponent playerStorage, Map<ItemType, Integer> cost) {
+		if (cost == null) return;
+		for (Map.Entry<ItemType, Integer> entry : cost.entrySet()) {
+			playerStorage.attemptWithdraw(entry.getKey(), entry.getValue());
+		}
 	}
 
 	private static UIElement createBuildRow(String name,
@@ -369,12 +378,5 @@ public class UIBuildTab {
 		buildBtn.setHoverScaleEnabled(false);
 
 		return buildBtn;
-	}
-
-	private static void deductCost(StorageComponent playerStorage, Map<ItemType, Integer> cost) {
-		if (cost == null) return;
-		for (Map.Entry<ItemType, Integer> entry : cost.entrySet()) {
-			playerStorage.attemptWithdraw(entry.getKey(), entry.getValue());
-		}
 	}
 }

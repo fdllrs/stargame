@@ -7,8 +7,5 @@ import game.ui.Describable;
 import java.util.List;
 
 public interface InfoPanelController {
-	void populate(List<UIElement> children,
-			Describable target,
-			FontAtlas font,
-			float width);
+	void populate(List<UIElement> children, Describable target, FontAtlas font, float width);
 }

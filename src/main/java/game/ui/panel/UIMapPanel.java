@@ -35,21 +35,6 @@ public class UIMapPanel extends UIPanel {
 	private static final float ZOOM_MAX = 8.0f;
 	private static final float MOON_TEXT_ZOOM_THRESHOLD = 1.5f;
 	public static final float PLANET_TEXT_ZOOM_THRESHOLD = MOON_TEXT_ZOOM_THRESHOLD * 2f;
-	private final Scene scene;
-	private final InfoPanel infoPanel;
-	private final long windowHandle;
-	private final ShaderProgram mapShader;
-	// Pre-allocated to avoid GC allocation stutter each frame
-	private final Matrix4f elementMatrix = new Matrix4f();
-	private final Vector2f panOffset = new Vector2f();
-	private final int[] fw = new int[1];
-	private final int[] fh = new int[1];
-	private final Matrix4f projMatrix = new Matrix4f();
-	private final Vector2f tempPos1 = new Vector2f();
-	private final Vector2f tempPos2 = new Vector2f();
-	private final Vector4f tempColor1 = new Vector4f();
-	private final Vector2f tempElementSize = new Vector2f();
-
 	private static final Vector4f COLOR_WHITE_TRANSPARENT = new Vector4f(1.0f, 1.0f, 1.0f, 0.9f);
 	private static final Vector4f COLOR_WHITE_MUTED = new Vector4f(0.9f, 0.9f, 0.9f, 0.85f);
 	private static final Vector4f COLOR_WHITE_DARK = new Vector4f(0.7f, 0.75f, 0.8f, 0.7f);
@@ -59,6 +44,19 @@ public class UIMapPanel extends UIPanel {
 	private static final Vector4f COLOR_CYAN_OPAQUE = new Vector4f(0.0f, 0.8f, 1.0f, 1.0f);
 	private static final Vector4f COLOR_MUTED_TEXT = new Vector4f(0.6f, 0.7f, 0.8f, 0.8f);
 	private static final Vector4f COLOR_PLAYER = new Vector4f(0.1f, 1.0f, 0.4f, 1.0f);
+	private final Scene scene;
+	private final InfoPanel infoPanel;
+	private final long windowHandle;
+	private final ShaderProgram mapShader;
+	// Pre-allocated to avoid GC allocation stutter each frame
+	private final Matrix4f elementMatrix = new Matrix4f();
+	private final Vector2f panOffset = new Vector2f();
+	private final int[] fw = new int[ 1 ];
+	private final int[] fh = new int[ 1 ];
+	private final Matrix4f projMatrix = new Matrix4f();
+	private final Vector2f tempPos1 = new Vector2f();
+	private final Vector2f tempPos2 = new Vector2f();
+	private final Vector4f tempColor1 = new Vector4f();
 	private final Input input;
 	private float zoom = 1.0f;
 	private boolean isDragging = false;
@@ -82,72 +80,25 @@ public class UIMapPanel extends UIPanel {
 		this.input = input;
 		this.mapShader = ShaderProgram.initShader("/UI/map_element.vert", "/UI/map_element.frag");
 
-		engine.events.EventBus.subscribe(game.events.MapToggledEvent.class, event -> {
-			this.setVisible(event.open());
-		});
+		engine.events.EventBus.subscribe(game.events.MapToggledEvent.class,
+										 event -> this.setVisible(event.open()));
 	}
 
-	private MapViewport buildViewport(Star star) {
-		StarSystem system = scene.getStarSystem();
-		float mapRadius = Math.min(width, height) / 2.0f * MAP_RADIUS_FACTOR;
-		float maxOrbit = system.maxOrbitDistance(star);
-		float scale = ( mapRadius / maxOrbit ) * zoom;
-		return new MapViewport(x + width / 2.0f + panOffset.x,
-							   y + height / 2.0f + panOffset.y,
-							   scale,
-							   this);
+	@Override
+	public void cleanup() {
+		super.cleanup();
+		mapShader.cleanup();
 	}
 
-	private static float calculateAdjustedDistance(float physDist,
-			List<Planet> sortedPlanets,
-			float[] adjustedWorldRadii) {
-		float d0 = sortedPlanets.getFirst().getPlanetInfo().orbitDistance();
-		float adjustedWorldDist;
-		if (physDist < d0) {
-			adjustedWorldDist = ( physDist / d0 ) * adjustedWorldRadii[ 0 ];
-		}
-		else {
-			int matchIdx = -1;
-			for (int i = 0; i < sortedPlanets.size() - 1; i++) {
-				float di = sortedPlanets.get(i).getPlanetInfo().orbitDistance();
-				float dip1 = sortedPlanets.get(i + 1).getPlanetInfo().orbitDistance();
-				if (physDist >= di && physDist < dip1) {
-					matchIdx = i;
-					break;
-				}
-			}
-			if (matchIdx != -1) {
-				float di = sortedPlanets.get(matchIdx).getPlanetInfo().orbitDistance();
-				float dip1 = sortedPlanets.get(matchIdx + 1).getPlanetInfo().orbitDistance();
-				float t = ( physDist - di ) / ( dip1 - di );
-				adjustedWorldDist = adjustedWorldRadii[ matchIdx ] + t * ( adjustedWorldRadii[
-																				   matchIdx + 1 ] -
-																		   adjustedWorldRadii[ matchIdx ] );
-			}
-			else {
-				// Extrapolate beyond the last planet
-				int lastIdx = sortedPlanets.size() - 1;
-				float dLast = sortedPlanets.get(lastIdx).getPlanetInfo().orbitDistance();
-				float extra = physDist - dLast;
-				adjustedWorldDist = adjustedWorldRadii[ lastIdx ] + extra;
-			}
-		}
-		return adjustedWorldDist;
+	@Override
+	public boolean contains(float mouseX, float mouseY) {
+		return visible && super.contains(mouseX, mouseY);
 	}
 
-	private void clampPanOffset(Star star) {
-		if (star == null) return;
-		StarSystem system = scene.getStarSystem();
-		float maxOrbit = system.maxOrbitDistance(star);
-		float mapRadius = Math.min(width, height) / 2.0f * MAP_RADIUS_FACTOR;
-		float scale = ( mapRadius / maxOrbit ) * zoom;
-		float systemRadius = getAdjustedDistance(maxOrbit, star, scale);
-
-		float maxPanX = Math.max(systemRadius, width / 2.0f);
-		float maxPanY = Math.max(systemRadius, height / 2.0f);
-
-		panOffset.x = Math.clamp(panOffset.x, -maxPanX, maxPanX);
-		panOffset.y = Math.clamp(panOffset.y, -maxPanY, maxPanY);
+	@Override
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+		if (!visible) isDragging = false;
 	}
 
 	/**
@@ -170,6 +121,145 @@ public class UIMapPanel extends UIPanel {
 		mapShader.setUniform("elementSize", new Vector2f(w, h));
 		mapShader.setUniform("time", (float) glfwGetTime());
 		quad.render();
+	}
+
+	@Override
+	public float getBoundingHeight() { return height; }
+
+	@Override
+	public void handleClick(float mouseX, float mouseY) {
+		if (!visible) return;
+
+		Star star = scene.closestStarToPlayer();
+		if (star == null) return;
+
+		MapViewport vp = buildViewport(star);
+		if (!trySelectBodyAt(mouseX, mouseY, star, vp)) {
+			isDragging = true;
+			lastMouseX = mouseX;
+			lastMouseY = mouseY;
+		}
+	}
+
+	private MapViewport buildViewport(Star star) {
+		StarSystem system = scene.getStarSystem();
+		float mapRadius = Math.min(width, height) / 2.0f * MAP_RADIUS_FACTOR;
+		float maxOrbit = system.maxOrbitDistance(star);
+		float scale = ( mapRadius / maxOrbit ) * zoom;
+		return new MapViewport(x + width / 2.0f + panOffset.x,
+							   y + height / 2.0f + panOffset.y,
+							   scale,
+							   this);
+	}
+
+	/**
+	 * Returns true if a map body was found near (mouseX, mouseY) and selected.
+	 * Priority: Moons > Planets > Star (closest first).
+	 */
+	private boolean trySelectBodyAt(float mouseX, float mouseY, Star star, MapViewport vp) {
+		List<Planet> planets = scene.getStarSystem().getPlanetsOrbitingStar(star);
+
+		for (Planet planet : planets) {
+			for (Moon moon : planet.getMoons()) {
+				float size = moonDisplaySize(moon, vp.scale());
+				float radius = Math.max(size / 2.0f + 6.0f, 10.0f);
+				vp.toScreen(moon, star, tempPos1);
+				if (hitTest(mouseX, mouseY, tempPos1.x, tempPos1.y, radius)) {
+					return selectAndReturn(moon);
+				}
+			}
+		}
+		for (Planet planet : planets) {
+			float size = planetDisplaySize(planet, vp.scale());
+			float radius = Math.max(size / 2.0f + 6.0f, 12.0f);
+			vp.toScreen(planet, star, tempPos1);
+			if (hitTest(mouseX, mouseY, tempPos1.x, tempPos1.y, radius)) {
+				return selectAndReturn(planet);
+			}
+		}
+		float starSize = starDisplaySize(star, vp.scale());
+		float starRadius = Math.max(starSize / 2.0f + 6.0f, 16.0f);
+		if (hitTest(mouseX, mouseY, vp.centerX(), vp.centerY(), starRadius)) {
+			return selectAndReturn(star);
+		}
+		scene.updateSelectedObject(null);
+		infoPanel.setTarget(null);
+		return false;
+	}
+
+	private float moonDisplaySize(Moon moon, float scale) {
+		return Math.clamp(moon.getRadius() * scale, 8.0f, 16.0f);
+	}
+
+	private boolean hitTest(float mouseX, float mouseY, float posX, float posY, float radius) {
+		float dx = mouseX - posX;
+		float dy = mouseY - posY;
+		return dx * dx + dy * dy <= radius * radius;
+	}
+
+	private boolean selectAndReturn(SpaceBody body) {
+		scene.updateSelectedObject(body);
+		infoPanel.setTarget(body instanceof Describable d ? d : null);
+		return true;
+	}
+
+	private float planetDisplaySize(Planet planet, float scale) {
+		return Math.clamp(planet.getRadius() * scale, 12.0f, 32.0f);
+	}
+
+	private float starDisplaySize(Star star, float scale) {
+		return Math.clamp(star.getRadius() * scale, 30.0f, 75.0f);
+	}
+
+	@Override
+	public void render(ShaderProgram uiShader, Mesh uiQuad) {
+		if (!visible) return;
+
+		updatePanDrag();
+
+		glfwGetFramebufferSize(windowHandle, fw, fh);
+		projMatrix.identity().setOrtho(0, fw[ 0 ], fh[ 0 ], 0, -1, 1);
+
+		renderMapBackground(uiQuad, projMatrix);
+
+		Star star = scene.closestStarToPlayer();
+		if (star != null) {
+			withScissor(fh[ 0 ], () -> renderEntities(uiQuad, star));
+		}
+
+		renderOverlayText(uiShader, uiQuad, projMatrix, star, fh[ 0 ]);
+	}
+
+	@Override
+	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
+		if (!visible) return;
+		float oldZoom = zoom;
+		zoom = Math.clamp(zoom * ( yOffset > 0 ? ZOOM_FACTOR : 1.0f / ZOOM_FACTOR ),
+						  ZOOM_MIN,
+						  ZOOM_MAX);
+		float ratio = zoom / oldZoom;
+		float dx = mouseX - ( x + width / 2.0f + panOffset.x );
+		float dy = mouseY - ( y + height / 2.0f + panOffset.y );
+		panOffset.x += dx * ( 1.0f - ratio );
+		panOffset.y += dy * ( 1.0f - ratio );
+
+		Star star = scene.closestStarToPlayer();
+		clampPanOffset(star);
+	}
+
+	private void clampPanOffset(Star star) {
+		if (star == null) return;
+		StarSystem system = scene.getStarSystem();
+		float maxOrbit = system.maxOrbitDistance(star);
+		float mapRadius = Math.min(width, height) / 2.0f * MAP_RADIUS_FACTOR;
+		float scale = ( mapRadius / maxOrbit ) * zoom;
+		float systemRadius = getAdjustedDistance(maxOrbit, star, scale);
+
+		float maxPanX = Math.max(systemRadius, width / 2.0f);
+		float maxPanY = Math.max(systemRadius, height / 2.0f);
+
+		panOffset.x = Math.clamp(panOffset.x, -maxPanX, maxPanX);
+		panOffset.y = Math.clamp(panOffset.y, -maxPanY, maxPanY);
 	}
 
 	/**
@@ -219,59 +309,52 @@ public class UIMapPanel extends UIPanel {
 		return adjustedWorldDist * scale;
 	}
 
-	@Override
-	public float getBoundingHeight() { return height; }
-
-	@Override
-	public void handleClick(float mouseX, float mouseY) {
-		if (!visible) return;
-
-		Star star = scene.closestStarToPlayer();
-		if (star == null) return;
-
-		MapViewport vp = buildViewport(star);
-		if (!trySelectBodyAt(mouseX, mouseY, star, vp)) {
-			isDragging = true;
-			lastMouseX = mouseX;
-			lastMouseY = mouseY;
+	private static float calculateAdjustedDistance(float physDist,
+			List<Planet> sortedPlanets,
+			float[] adjustedWorldRadii) {
+		float d0 = sortedPlanets.getFirst().getPlanetInfo().orbitDistance();
+		float adjustedWorldDist;
+		if (physDist < d0) {
+			adjustedWorldDist = ( physDist / d0 ) * adjustedWorldRadii[ 0 ];
 		}
-	}
-
-	@Override
-	public void render(ShaderProgram uiShader, Mesh uiQuad) {
-		if (!visible) return;
-
-		updatePanDrag();
-
-		glfwGetFramebufferSize(windowHandle, fw, fh);
-		projMatrix.identity().setOrtho(0, fw[ 0 ], fh[ 0 ], 0, -1, 1);
-
-		renderMapBackground(uiQuad, projMatrix);
-
-		Star star = scene.closestStarToPlayer();
-		if (star != null) {
-			withScissor(fh[ 0 ], () -> renderEntities(uiQuad, star));
+		else {
+			int matchIdx = -1;
+			for (int i = 0; i < sortedPlanets.size() - 1; i++) {
+				float di = sortedPlanets.get(i).getPlanetInfo().orbitDistance();
+				float dip1 = sortedPlanets.get(i + 1).getPlanetInfo().orbitDistance();
+				if (physDist >= di && physDist < dip1) {
+					matchIdx = i;
+					break;
+				}
+			}
+			if (matchIdx != -1) {
+				float di = sortedPlanets.get(matchIdx).getPlanetInfo().orbitDistance();
+				float dip1 = sortedPlanets.get(matchIdx + 1).getPlanetInfo().orbitDistance();
+				float t = ( physDist - di ) / ( dip1 - di );
+				adjustedWorldDist = adjustedWorldRadii[ matchIdx ] + t * ( adjustedWorldRadii[
+																				   matchIdx + 1 ] -
+																		   adjustedWorldRadii[ matchIdx ] );
+			}
+			else {
+				// Extrapolate beyond the last planet
+				int lastIdx = sortedPlanets.size() - 1;
+				float dLast = sortedPlanets.get(lastIdx).getPlanetInfo().orbitDistance();
+				float extra = physDist - dLast;
+				adjustedWorldDist = adjustedWorldRadii[ lastIdx ] + extra;
+			}
 		}
-
-		renderOverlayText(uiShader, uiQuad, projMatrix, star, fh[ 0 ]);
+		return adjustedWorldDist;
 	}
 
 	@Override
-	public void handleScroll(float mouseX, float mouseY, double yOffset, boolean shiftPressed) {
-		if (!visible) return;
-		float oldZoom = zoom;
-		zoom = Math.clamp(zoom * ( yOffset > 0 ? ZOOM_FACTOR : 1.0f / ZOOM_FACTOR ),
-						  ZOOM_MIN,
-						  ZOOM_MAX);
-		float ratio = zoom / oldZoom;
-		float dx = mouseX - ( x + width / 2.0f + panOffset.x );
-		float dy = mouseY - ( y + height / 2.0f + panOffset.y );
-		panOffset.x += dx * ( 1.0f - ratio );
-		panOffset.y += dy * ( 1.0f - ratio );
-
-		Star star = scene.closestStarToPlayer();
-		clampPanOffset(star);
+	public void onResize(int screenWidth, int screenHeight) {
+		setSize(screenWidth * 0.8f, screenHeight * 0.8f);
+		setPosition(screenWidth * 0.1f, screenHeight * 0.1f);
+		super.onResize(screenWidth, screenHeight);
 	}
+
+	@Override
+	public void rebuildElements() { /* procedural */ }
 
 	@Override
 	protected void layout() { /* procedural */ }
@@ -289,51 +372,6 @@ public class UIMapPanel extends UIPanel {
 		// zooming in
 		float baseRadius = moon.getPlanetInfo().orbitDistance() * scale * 4.0f;
 		return Math.max(baseRadius, minRadius);
-	}
-
-	private boolean hitTest(float mouseX, float mouseY, float posX, float posY, float radius) {
-		float dx = mouseX - posX;
-		float dy = mouseY - posY;
-		return dx * dx + dy * dy <= radius * radius;
-	}
-
-	private boolean hitTest(float mouseX, float mouseY, Vector2f pos, float radius) {
-		return hitTest(mouseX, mouseY, pos.x, pos.y, radius);
-	}
-
-	private float moonDisplaySize(Moon moon, float scale) {
-		return Math.clamp(moon.getRadius() * scale, 8.0f, 16.0f);
-	}
-
-	private float planetDisplaySize(Planet planet, float scale) {
-		return Math.clamp(planet.getRadius() * scale, 12.0f, 32.0f);
-	}
-
-	@Override
-	public void rebuildElements() { /* procedural */ }
-
-	@Override
-	public void cleanup() {
-		super.cleanup();
-		mapShader.cleanup();
-	}
-
-	@Override
-	public boolean contains(float mouseX, float mouseY) {
-		return visible && super.contains(mouseX, mouseY);
-	}
-
-	@Override
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-		if (!visible) isDragging = false;
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		setSize(screenWidth * 0.8f, screenHeight * 0.8f);
-		setPosition(screenWidth * 0.1f, screenHeight * 0.1f);
-		super.onResize(screenWidth, screenHeight);
 	}
 
 	private void renderBodies(Mesh uiQuad, Star star, List<Planet> planets, MapViewport vp) {
@@ -455,6 +493,8 @@ public class UIMapPanel extends UIPanel {
 		}
 	}
 
+	// -- Selection highlight --
+
 	private void renderOverlayText(ShaderProgram uiShader,
 			Mesh uiQuad,
 			Matrix4f proj,
@@ -485,6 +525,8 @@ public class UIMapPanel extends UIPanel {
 		}
 	}
 
+	// -- Text overlay --
+
 	private void renderPlanetDot(Mesh uiQuad, Planet planet, Star star, MapViewport vp) {
 		Vector2f pos = vp.toScreen(planet, star, tempPos1);
 		float size = planetDisplaySize(planet, vp.scale());
@@ -508,17 +550,11 @@ public class UIMapPanel extends UIPanel {
 							   vp.centerY() + ( dz / dist ) * adjustedDist);
 		}
 		float yawRad = (float) Math.toRadians(scene.getPlayer().getRotation().y);
-		drawElement(uiQuad,
-					pos.x,
-					pos.y,
-					24.0f,
-					24.0f,
-					COLOR_PLAYER,
-					ELEMENT_PLAYER_TYPE,
+		drawElement(uiQuad, pos.x, pos.y, 24.0f, 24.0f, COLOR_PLAYER, ELEMENT_PLAYER_TYPE,
 					-yawRad);
 	}
 
-	// -- Selection highlight --
+	// -- Click targeting --
 
 	private void renderSelection(Mesh uiQuad, Star star, List<Planet> planets, MapViewport vp) {
 		SpaceBody selected = scene.getSelectedObject();
@@ -541,21 +577,33 @@ public class UIMapPanel extends UIPanel {
 			if (selected == planet) {
 				Vector2f pos = vp.toScreen(planet, star, tempPos1);
 				float size = planetDisplaySize(planet, vp.scale()) * 1.8f;
-				drawElement(uiQuad, pos.x, pos.y, size, size, COLOR_CYAN, ELEMENT_TARGET_TYPE, 0.0f);
+				drawElement(uiQuad,
+							pos.x,
+							pos.y,
+							size,
+							size,
+							COLOR_CYAN,
+							ELEMENT_TARGET_TYPE,
+							0.0f);
 				return;
 			}
 			for (Moon moon : planet.getMoons()) {
 				if (selected == moon) {
 					Vector2f pos = vp.toScreen(moon, star, tempPos1);
 					float size = moonDisplaySize(moon, vp.scale()) * 1.8f;
-					drawElement(uiQuad, pos.x, pos.y, size, size, COLOR_CYAN, ELEMENT_TARGET_TYPE, 0.0f);
+					drawElement(uiQuad,
+								pos.x,
+								pos.y,
+								size,
+								size,
+								COLOR_CYAN,
+								ELEMENT_TARGET_TYPE,
+								0.0f);
 					return;
 				}
 			}
 		}
 	}
-
-	// -- Text overlay --
 
 	private void renderStar(Mesh uiQuad, Star star, MapViewport vp) {
 		float starSize = starDisplaySize(star, vp.scale());
@@ -568,53 +616,6 @@ public class UIMapPanel extends UIPanel {
 					tempColor1,
 					ELEMENT_STAR_TYPE,
 					0.0f);
-	}
-
-	private boolean selectAndReturn(SpaceBody body) {
-		scene.updateSelectedObject(body);
-		infoPanel.setTarget(body instanceof Describable d ? d : null);
-		return true;
-	}
-
-	// -- Click targeting --
-
-	private float starDisplaySize(Star star, float scale) {
-		return Math.clamp(star.getRadius() * scale, 30.0f, 75.0f);
-	}
-
-	/**
-	 * Returns true if a map body was found near (mouseX, mouseY) and selected.
-	 * Priority: Moons > Planets > Star (closest first).
-	 */
-	private boolean trySelectBodyAt(float mouseX, float mouseY, Star star, MapViewport vp) {
-		List<Planet> planets = scene.getStarSystem().getPlanetsOrbitingStar(star);
-
-		for (Planet planet : planets) {
-			for (Moon moon : planet.getMoons()) {
-				float size = moonDisplaySize(moon, vp.scale());
-				float radius = Math.max(size / 2.0f + 6.0f, 10.0f);
-				vp.toScreen(moon, star, tempPos1);
-				if (hitTest(mouseX, mouseY, tempPos1.x, tempPos1.y, radius)) {
-					return selectAndReturn(moon);
-				}
-			}
-		}
-		for (Planet planet : planets) {
-			float size = planetDisplaySize(planet, vp.scale());
-			float radius = Math.max(size / 2.0f + 6.0f, 12.0f);
-			vp.toScreen(planet, star, tempPos1);
-			if (hitTest(mouseX, mouseY, tempPos1.x, tempPos1.y, radius)) {
-				return selectAndReturn(planet);
-			}
-		}
-		float starSize = starDisplaySize(star, vp.scale());
-		float starRadius = Math.max(starSize / 2.0f + 6.0f, 16.0f);
-		if (hitTest(mouseX, mouseY, vp.centerX(), vp.centerY(), starRadius)) {
-			return selectAndReturn(star);
-		}
-		scene.updateSelectedObject(null);
-		infoPanel.setTarget(null);
-		return false;
 	}
 
 	private void updatePanDrag() {

@@ -37,98 +37,18 @@ public class Scene {
 		starSystem = StarSystem.generateStartingSystem();
 		starfield = new Starfield(500, 10000);
 
-		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class, _ -> {
-			this.updateSelectedObject(null);
-		});
+		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class,
+										 _ -> this.updateSelectedObject(null));
 	}
 
-	private SpaceBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
-		float closestDistance = Float.MAX_VALUE;
-		SpaceBody closestObject = null;
-		for (SpaceBody body : starSystem.getAllBodies()) {
-			Vector3f center = body.getPosition();
-			float radius = body.getRadius();
+	public void updateSelectedObject(SpaceBody clicked) {
 
-			Vector2f result = new Vector2f();
-			boolean hit = Intersectionf.intersectRaySphere(rayOrigin,
-														   rayDirection,
-														   center,
-														   radius * radius,
-														   result);
-
-			if (hit && result.x >= 0 && result.x < closestDistance) {
-				closestDistance = result.x;
-				closestObject = body;
-			}
+		if (selectedObject != null) {
+			selectedObject.setSelected(false);
 		}
-		if (closestDistance >= MAX_SELECTION_DISTANCE) {
-			return null;
-		}
-
-		return closestObject;
-	}
-
-	private Vector3f calculateMouseRay(float mouseX,
-			float mouseY,
-			long windowHandle,
-			Camera camera) {
-		Vector2i screenSize = Window.getWindowSize(windowHandle);
-
-		float ndcX = ( 2.0f * mouseX ) / screenSize.x - 1.0f;
-		float ndcY = 1.0f - ( 2.0f * mouseY ) / screenSize.y;
-
-		Matrix4f inverseViewProjection =
-				new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix())
-																				   .invert();
-
-		Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
-		Vector4f farPoint = new Vector4f(ndcX, ndcY, 1.0f, 1.0f);
-
-		inverseViewProjection.transform(nearPoint);
-		inverseViewProjection.transform(farPoint);
-
-		nearPoint.div(nearPoint.w);
-		farPoint.div(farPoint.w);
-
-		return new Vector3f(farPoint.x - nearPoint.x,
-							farPoint.y - nearPoint.y,
-							farPoint.z - nearPoint.z).normalize();
-	}
-
-	private Vector3f calculateRayOrigin(Camera camera) {
-		return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
-	}
-
-	private void checkCollisions(Camera camera) {
-		Vector3f playerPos = camera.getPosition();
-		Vector3f velocity = camera.getVelocity();
-		float playerRadius = player.getRadius();
-
-		for (SpaceBody body : starSystem.getAllBodies()) {
-			Vector3f bodyPos = body.getPosition();
-			float bodyRadius = body.getRadius();
-			float minDistance = bodyRadius + playerRadius;
-			float distance = playerPos.distance(bodyPos);
-
-			if (distance >= minDistance) continue;
-
-			if (distance > 0.001f) {
-				playerPos.sub(bodyPos, collisionNormal).normalize();
-			}
-			else {
-				collisionNormal.set(0.0f, 0.0f, 1.0f);
-			}
-
-			tempCorrectedPos.set(collisionNormal).mul(minDistance).add(bodyPos);
-			camera.position.set(tempCorrectedPos);
-
-			float velocityDotNormal = velocity.dot(collisionNormal);
-			if (velocityDotNormal < 0.0f) {
-				float restitution = 0.3f;
-				tempNormalMul.set(collisionNormal).mul(( 1.0f + restitution ) * velocityDotNormal);
-				velocity.sub(tempNormalMul)
-						.mul(0.7f);
-			}
+		selectedObject = clicked;
+		if (selectedObject != null) {
+			selectedObject.setSelected(true);
 		}
 	}
 
@@ -187,6 +107,63 @@ public class Scene {
 		Vector3f rayOrigin = calculateRayOrigin(camera);
 		Vector3f rayDirection = calculateMouseRay(mouseX, mouseY, windowHandle, camera);
 		return calculateClosestObject(rayOrigin, rayDirection);
+	}
+
+	private Vector3f calculateRayOrigin(Camera camera) {
+		return new Matrix4f(camera.getViewMatrix()).invert().transformPosition(new Vector3f());
+	}
+
+	private Vector3f calculateMouseRay(float mouseX,
+			float mouseY,
+			long windowHandle,
+			Camera camera) {
+		Vector2i screenSize = Window.getWindowSize(windowHandle);
+
+		float ndcX = ( 2.0f * mouseX ) / screenSize.x - 1.0f;
+		float ndcY = 1.0f - ( 2.0f * mouseY ) / screenSize.y;
+
+		Matrix4f inverseViewProjection =
+				new Matrix4f(camera.getProjectionMatrix()).mul(camera.getViewMatrix())
+																				   .invert();
+
+		Vector4f nearPoint = new Vector4f(ndcX, ndcY, -1.0f, 1.0f);
+		Vector4f farPoint = new Vector4f(ndcX, ndcY, 1.0f, 1.0f);
+
+		inverseViewProjection.transform(nearPoint);
+		inverseViewProjection.transform(farPoint);
+
+		nearPoint.div(nearPoint.w);
+		farPoint.div(farPoint.w);
+
+		return new Vector3f(farPoint.x - nearPoint.x,
+							farPoint.y - nearPoint.y,
+							farPoint.z - nearPoint.z).normalize();
+	}
+
+	private SpaceBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
+		float closestDistance = Float.MAX_VALUE;
+		SpaceBody closestObject = null;
+		for (SpaceBody body : starSystem.getAllBodies()) {
+			Vector3f center = body.getPosition();
+			float radius = body.getRadius();
+
+			Vector2f result = new Vector2f();
+			boolean hit = Intersectionf.intersectRaySphere(rayOrigin,
+														   rayDirection,
+														   center,
+														   radius * radius,
+														   result);
+
+			if (hit && result.x >= 0 && result.x < closestDistance) {
+				closestDistance = result.x;
+				closestObject = body;
+			}
+		}
+		if (closestDistance >= MAX_SELECTION_DISTANCE) {
+			return null;
+		}
+
+		return closestObject;
 	}
 
 	public void recreateStarSystem() {
@@ -279,14 +256,35 @@ public class Scene {
 		}
 	}
 
-	public void updateSelectedObject(SpaceBody clicked) {
+	private void checkCollisions(Camera camera) {
+		Vector3f playerPos = camera.getPosition();
+		Vector3f velocity = camera.getVelocity();
+		float playerRadius = player.getRadius();
 
-		if (selectedObject != null) {
-			selectedObject.setSelected(false);
-		}
-		selectedObject = clicked;
-		if (selectedObject != null) {
-			selectedObject.setSelected(true);
+		for (SpaceBody body : starSystem.getAllBodies()) {
+			Vector3f bodyPos = body.getPosition();
+			float bodyRadius = body.getRadius();
+			float minDistance = bodyRadius + playerRadius;
+			float distance = playerPos.distance(bodyPos);
+
+			if (distance >= minDistance) continue;
+
+			if (distance > 0.001f) {
+				playerPos.sub(bodyPos, collisionNormal).normalize();
+			}
+			else {
+				collisionNormal.set(0.0f, 0.0f, 1.0f);
+			}
+
+			tempCorrectedPos.set(collisionNormal).mul(minDistance).add(bodyPos);
+			camera.position.set(tempCorrectedPos);
+
+			float velocityDotNormal = velocity.dot(collisionNormal);
+			if (velocityDotNormal < 0.0f) {
+				float restitution = 0.3f;
+				tempNormalMul.set(collisionNormal).mul(( 1.0f + restitution ) * velocityDotNormal);
+				velocity.sub(tempNormalMul).mul(0.7f);
+			}
 		}
 	}
 }

@@ -11,11 +11,6 @@ public class GasGiantPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public PlanetType getType() {
-		return PlanetType.GAS_GIANT;
-	}
-
-	@Override
 	protected GasGiantPlanet buildPlanet() {
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 		float finalRadius = ( this.radius != null ) ? this.radius : 25f + RANDOM.nextFloat() * 25f;
@@ -52,5 +47,10 @@ public class GasGiantPlanetBuilder extends PlanetBuilder {
 
 		colorA = hslToRgb(h1, s1, l1);
 		colorB = hslToRgb(h2, s2, l2);
+	}
+
+	@Override
+	public PlanetType getType() {
+		return PlanetType.GAS_GIANT;
 	}
 }

@@ -45,18 +45,47 @@ public class InventoryPanel extends UIPanel {
 		this.expandedY = y;
 		this.slideAnimation = new game.components.UISlideAnimation(this, 10.0f);
 
-		engine.events.EventBus.subscribe(game.events.PlayerDockedEvent.class, event -> {
+		engine.events.EventBus.subscribe(game.events.PlayerDockedEvent.class, _ -> {
 			isDocked = true;
 			slideAnimation.slideOut(false);
 		});
 
-		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class, event -> {
+		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class, _ -> {
 			isDocked = false;
 			slideAnimation.slideIn(false);
 		});
 
 		testGiveAllResources();
 		setExpanded(false);
+	}
+
+	public void testGiveAllResources() {
+		storageComponent.addCapacity(10000000);
+		List<ItemType> allItems = getAllItems();
+		for (ItemType type : allItems) {
+			storageComponent.deposit(type, 10000);
+		}
+	}
+
+	private List<ItemType> getAllItems() {
+		List<ItemType> rawResources = new ArrayList<>(List.of(RawResource.values()));
+		List<ItemType> processedItems = new ArrayList<>(List.of(ProcessedItem.values()));
+		List<ItemType> allItems = new ArrayList<>(rawResources);
+		allItems.addAll(processedItems);
+		return allItems;
+	}
+
+	private void addStorageCapacityText() {
+		UIText storageFillText = new UIText(storageComponent.getFillForDisplay() + " " + "items",
+											Alignment.CENTER,
+											new Vector4f(1, 1, 1, 1),
+											16,
+											10,
+											5,
+											font,
+											width);
+		this.storageFillText = storageFillText;
+		children.add(storageFillText);
 	}
 
 	private void addResourceAmountsText() {
@@ -93,25 +122,9 @@ public class InventoryPanel extends UIPanel {
 		children.add(scrollArea);
 	}
 
-	private void addStorageCapacityText() {
-		UIText storageFillText = new UIText(storageComponent.getFillForDisplay() + " " + "items",
-											Alignment.CENTER,
-											new Vector4f(1, 1, 1, 1),
-											16,
-											10,
-											5,
-											font,
-											width);
-		this.storageFillText = storageFillText;
-		children.add(storageFillText);
-	}
-
-	private List<ItemType> getAllItems() {
-		List<ItemType> rawResources = new ArrayList<>(List.of(RawResource.values()));
-		List<ItemType> processedItems = new ArrayList<>(List.of(ProcessedItem.values()));
-		List<ItemType> allItems = new ArrayList<>(rawResources);
-		allItems.addAll(processedItems);
-		return allItems;
+	@NotNull
+	private String getNameAndAmountText(ItemType type) {
+		return type.name() + ": " + storageComponent.getAmount(type);
 	}
 
 	@Override
@@ -139,22 +152,6 @@ public class InventoryPanel extends UIPanel {
 	}
 
 	@Override
-	public void rebuildElements() {
-		children.clear();
-		resourceLabels.clear();
-
-		setPanelTitle("Inventory");
-		addStorageCapacityText();
-
-		if (expanded) {
-			addResourceAmountsText();
-		}
-
-		super.rebuildElements();
-		layout();
-	}
-
-	@Override
 	public void onResize(int screenWidth, int screenHeight) {
 		this.expandedY = screenHeight - this.expandedHeight - 20;
 		float newX = screenWidth - this.width - 20;
@@ -179,13 +176,24 @@ public class InventoryPanel extends UIPanel {
 	}
 
 	@Override
-	public boolean shouldRender() {
-		return !isDocked || slideAnimation.isAnimatingY();
+	public void rebuildElements() {
+		children.clear();
+		resourceLabels.clear();
+
+		setPanelTitle("Inventory");
+		addStorageCapacityText();
+
+		if (expanded) {
+			addResourceAmountsText();
+		}
+
+		super.rebuildElements();
+		layout();
 	}
 
-	@NotNull
-	private String getNameAndAmountText(ItemType type) {
-		return type.name() + ": " + storageComponent.getAmount(type);
+	@Override
+	public boolean shouldRender() {
+		return !isDocked || slideAnimation.isAnimatingY();
 	}
 
 	public boolean isExpanded() {
@@ -213,13 +221,5 @@ public class InventoryPanel extends UIPanel {
 		storageFillText.setText(storageComponent.getFillForDisplay() + " " + "items");
 
 		resourceLabels.forEach((type, label) -> label.setText(getNameAndAmountText(type)));
-	}
-
-	public void testGiveAllResources() {
-		storageComponent.addCapacity(10000000);
-		List<ItemType> allItems = getAllItems();
-		for (ItemType type : allItems) {
-			storageComponent.deposit(type, 10000);
-		}
 	}
 }

@@ -11,7 +11,6 @@ import java.util.List;
 public abstract class TabBarPanelController implements InfoPanelController {
 	protected final UITabBar tabBar;
 
-
 	protected TabBarPanelController(UITabBar tabBar) {
 		this.tabBar = tabBar;
 	}

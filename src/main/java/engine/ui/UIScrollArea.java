@@ -50,13 +50,6 @@ public class UIScrollArea extends UIElement {
 	}
 
 	@Override
-	public void rebuildElements() {
-		for (UIElement element : elements) {
-			element.rebuildElements();
-		}
-	}
-
-	@Override
 	public void render(ShaderProgram shader, Mesh uiQuad) {
 		if (!visible) return;
 
@@ -121,18 +114,15 @@ public class UIScrollArea extends UIElement {
 	}
 
 	@Override
+	public void rebuildElements() {
+		for (UIElement element : elements) {
+			element.rebuildElements();
+		}
+	}
+
+	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
-		layout();
-	}
-
-	public float getScrollY() {
-		return scrollY;
-	}
-
-	public void setScrollY(float scrollY) {
-		this.scrollY = scrollY;
-		clampScrollY();
 		layout();
 	}
 

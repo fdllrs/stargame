@@ -9,34 +9,23 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public abstract class Facility extends GameObject {
-	protected Vector3f localPosition;
+	private static final Vector3f UP_VECTOR = new Vector3f(0.0f, 1.0f, 0.0f);
 	protected final Vector3f surfaceNormal = new Vector3f();
 	protected final Quaternionf alignmentRotation = new Quaternionf();
 	private final Matrix4f buildingModelMatrix = new Matrix4f();
 	private final Matrix3f normalMatrix = new Matrix3f();
 	private final Vector3f colorA = new Vector3f();
 	private final Vector3f colorB = new Vector3f();
-	private static final Vector3f UP_VECTOR = new Vector3f(0.0f, 1.0f, 0.0f);
+	protected Vector3f localPosition;
 	protected float efficiency = 1.0f;
 	protected float progressAccumulator = 0.0f;
 	protected int level = 1;
-
-	public abstract int getPowerDemand();
-
-	public abstract void tick(Planet planet, float resourceMultiplier);
-
-	public abstract void upgrade();
 
 	public Facility(Planet planet) {
 		super(planet.getPosition());
 		this.localPosition = new Vector3f(0, 0, 0);
 		this.color = new Vector3f(1.0f, 1.0f, 1.0f);
 		this.initPosition(planet);
-	}
-
-	@Override
-	public void cleanup() {
-		// Do not clean up the shared static mesh
 	}
 
 	public void initPosition(Planet planet) {
@@ -56,11 +45,23 @@ public abstract class Facility extends GameObject {
 		alignmentRotation.identity().rotateTo(UP_VECTOR, surfaceNormal);
 	}
 
+	public abstract int getPowerDemand();
+
+	public abstract void tick(Planet planet, float resourceMultiplier);
+
+	public abstract void upgrade();
+
+	@Override
+	public void cleanup() {
+		// Do not clean up the shared static mesh
+	}
+
 	public void render(ShaderProgram shader, Matrix4f planetModelMatrix) {
 		if (mesh == null) return;
 
-		buildingModelMatrix.set(planetModelMatrix).translate(localPosition)
-												  .rotate(alignmentRotation);
+		buildingModelMatrix.set(planetModelMatrix)
+						   .translate(localPosition)
+						   .rotate(alignmentRotation);
 
 		shader.setUniform("isLightSource", 0);
 		shader.setUniform("model", buildingModelMatrix);

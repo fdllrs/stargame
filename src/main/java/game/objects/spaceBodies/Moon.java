@@ -2,11 +2,9 @@ package game.objects.spaceBodies;
 
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
-import game.components.StorageComponent;
 import game.geometry.PlanetGeometry;
 import game.info.PlanetInfo;
 import game.info.PlanetType;
-import game.ui.panel.controller.DefaultPanelController;
 import game.ui.panel.controller.InfoPanelController;
 
 import java.util.function.Consumer;
@@ -30,31 +28,13 @@ public class Moon extends Planet {
 	}
 
 	@Override
-	public String getName() {
-		if (parentPlanet != null) {
-			String parentName = parentPlanet.getName();
-			if (parentName != null && !parentName.equals("null") &&
-				( super.getName() == null || super.getName().startsWith("null-") )) {
-				int idx = parentPlanet.getMoons().indexOf(this);
-				char letter = (char) ( 'A' + ( Math.max(idx, 0) ) );
-				return parentName + "-" + letter;
-			}
-		}
-		return super.getName();
-	}
-
-	public Planet getParentPlanet() {
-		return parentPlanet;
+	public String getDisplayName() {
+		return getName();
 	}
 
 	@Override
 	public PlanetType getType() {
 		return planetInfo.type();
-	}
-
-	@Override
-	public String getDisplayName() {
-		return getName();
 	}
 
 	@Override
@@ -72,5 +52,23 @@ public class Moon extends Planet {
 			float width,
 			Consumer<SpaceBody> onSelectTarget) {
 		return super.getPanelController(font, width, onSelectTarget);
+	}
+
+	@Override
+	public String getName() {
+		if (parentPlanet != null) {
+			String parentName = parentPlanet.getName();
+			if (parentName != null && !parentName.equals("null") &&
+				( super.getName() == null || super.getName().startsWith("null-") )) {
+				int idx = parentPlanet.getMoons().indexOf(this);
+				char letter = (char) ( 'A' + ( Math.max(idx, 0) ) );
+				return parentName + "-" + letter;
+			}
+		}
+		return super.getName();
+	}
+
+	public Planet getParentPlanet() {
+		return parentPlanet;
 	}
 }

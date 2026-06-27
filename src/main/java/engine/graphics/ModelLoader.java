@@ -12,14 +12,6 @@ import java.util.Map;
 
 public class ModelLoader {
 
-	private static String getFilename(String path) {
-		int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-		if (lastSlash != -1) {
-			return path.substring(lastSlash + 1);
-		}
-		return path;
-	}
-
 	public static Mesh loadModelObj(String modelPath, float scale) {
 		try {
 			Path modelFilePath = Paths.get(modelPath);
@@ -160,6 +152,31 @@ public class ModelLoader {
 		}
 	}
 
+	private static void parseLines(List<String> lines,
+			ArrayList<Float> vertices,
+			ArrayList<Float> normals,
+			ArrayList<Float> texture,
+			float scale) {
+		for (String line : lines) {
+			String trimmed = line.trim();
+			String[] split = trimmed.split("\\s+");
+			if (trimmed.startsWith("v ")) {
+				vertices.add(Float.parseFloat(split[ 1 ]) * scale);
+				vertices.add(Float.parseFloat(split[ 2 ]) * scale);
+				vertices.add(Float.parseFloat(split[ 3 ]) * scale);
+			}
+			else if (trimmed.startsWith("vn ")) {
+				normals.add(Float.parseFloat(split[ 1 ]));
+				normals.add(Float.parseFloat(split[ 2 ]));
+				normals.add(Float.parseFloat(split[ 3 ]));
+			}
+			else if (trimmed.startsWith("vt ")) {
+				texture.add(Float.parseFloat(split[ 1 ]));
+				texture.add(Float.parseFloat(split[ 2 ]));
+			}
+		}
+	}
+
 	private static Map<String, MtlMaterial> loadMtl(String mtlPath) {
 		Map<String, MtlMaterial> materials = new HashMap<>();
 		try {
@@ -202,31 +219,6 @@ public class ModelLoader {
 		return materials;
 	}
 
-	private static void parseLines(List<String> lines,
-			ArrayList<Float> vertices,
-			ArrayList<Float> normals,
-			ArrayList<Float> texture,
-			float scale) {
-		for (String line : lines) {
-			String trimmed = line.trim();
-			String[] split = trimmed.split("\\s+");
-			if (trimmed.startsWith("v ")) {
-				vertices.add(Float.parseFloat(split[ 1 ]) * scale);
-				vertices.add(Float.parseFloat(split[ 2 ]) * scale);
-				vertices.add(Float.parseFloat(split[ 3 ]) * scale);
-			}
-			else if (trimmed.startsWith("vn ")) {
-				normals.add(Float.parseFloat(split[ 1 ]));
-				normals.add(Float.parseFloat(split[ 2 ]));
-				normals.add(Float.parseFloat(split[ 3 ]));
-			}
-			else if (trimmed.startsWith("vt ")) {
-				texture.add(Float.parseFloat(split[ 1 ]));
-				texture.add(Float.parseFloat(split[ 2 ]));
-			}
-		}
-	}
-
 	private static String resolveTexturePath(String modelPath, String textureFilename) {
 		Path modelFilePath = Paths.get(modelPath);
 		Path parent = modelFilePath.getParent();
@@ -253,6 +245,14 @@ public class ModelLoader {
 		}
 
 		return null;
+	}
+
+	private static String getFilename(String path) {
+		int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+		if (lastSlash != -1) {
+			return path.substring(lastSlash + 1);
+		}
+		return path;
 	}
 
 	private static class MtlMaterial {

@@ -11,11 +11,6 @@ public class OrganicPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public PlanetType getType() {
-		return PlanetType.ORGANIC;
-	}
-
-	@Override
 	protected OrganicPlanet buildPlanet() {
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
 
@@ -78,5 +73,10 @@ public class OrganicPlanetBuilder extends PlanetBuilder {
 			float l2 = 0.2f + RANDOM.nextFloat() * 0.3f;
 			colorB = hslToRgb(h2, s2, l2);
 		}
+	}
+
+	@Override
+	public PlanetType getType() {
+		return PlanetType.ORGANIC;
 	}
 }

@@ -23,24 +23,6 @@ public class FontAtlas {
 		parseFontFile(fontFilePath);
 	}
 
-	// Helper method to parse "key=value" from a string line
-	private int extractValue(String line, String key) {
-		int startIndex = line.indexOf(key) + key.length();
-		int endIndex = line.indexOf(" ", startIndex);
-		if (endIndex == -1) endIndex = line.length();
-		return Integer.parseInt(line.substring(startIndex, endIndex).trim());
-	}
-
-	public CharacterInfo getCharacter(int ascii) {
-		return characterMap.get(ascii);
-	}
-
-	public float getScaleH() { return scaleH; }
-
-	public float getScaleW() { return scaleW; }
-
-	public Texture getTexture() { return texture; }
-
 	private void parseFontFile(String path) {
 		try {
 			List<String> lines = Files.readAllLines(Paths.get(path));
@@ -77,6 +59,24 @@ public class FontAtlas {
 			throw new RuntimeException("Failed to load font file: " + path, e);
 		}
 	}
+
+	// Helper method to parse "key=value" from a string line
+	private int extractValue(String line, String key) {
+		int startIndex = line.indexOf(key) + key.length();
+		int endIndex = line.indexOf(" ", startIndex);
+		if (endIndex == -1) endIndex = line.length();
+		return Integer.parseInt(line.substring(startIndex, endIndex).trim());
+	}
+
+	public CharacterInfo getCharacter(int ascii) {
+		return characterMap.get(ascii);
+	}
+
+	public float getScaleH() { return scaleH; }
+
+	public float getScaleW() { return scaleW; }
+
+	public Texture getTexture() { return texture; }
 
 	/**
 	 * Renders a string at (startX, startY) using the given UI shader and quad.

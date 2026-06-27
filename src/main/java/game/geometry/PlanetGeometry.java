@@ -9,99 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlanetGeometry {
-	private static Vector3f calculateDisplacedNormal(Vector3f dir,
-			float radius,
-			PlanetType type,
-			float height) {
-		if (type != PlanetType.ROCKY && type != PlanetType.ORGANIC) {
-			return new Vector3f(dir).normalize();
-		}
-
-		Vector3f T = new Vector3f();
-		if (Math.abs(dir.x) < 0.9f) {
-			new Vector3f(1.0f, 0.0f, 0.0f).cross(dir, T).normalize();
-		}
-		else {
-			new Vector3f(0.0f, 1.0f, 0.0f).cross(dir, T).normalize();
-		}
-		Vector3f B = new Vector3f(dir).cross(T, new Vector3f()).normalize();
-
-		float epsilon = 0.005f;
-		Vector3f dirT = new Vector3f(dir).add(new Vector3f(T).mul(epsilon)).normalize();
-		Vector3f dirB = new Vector3f(dir).add(new Vector3f(B).mul(epsilon)).normalize();
-
-		float heightT = getPlanetHeight(dirT, radius, type);
-		float heightB = getPlanetHeight(dirB, radius, type);
-
-		float dh_T = ( heightT - height ) / epsilon;
-		float dh_B = ( heightB - height ) / epsilon;
-
-		Vector3f vT = new Vector3f(T).mul(radius + height).add(new Vector3f(dir).mul(dh_T));
-		Vector3f vB = new Vector3f(B).mul(radius + height).add(new Vector3f(dir).mul(dh_B));
-
-		Vector3f normal = vT.cross(vB, new Vector3f()).normalize();
-		if (normal.dot(dir) < 0.0f) {
-			normal.negate();
-		}
-		return normal;
-	}
-
-	private static void constructIndices(int resolution,
-			int x,
-			int y,
-			int vertexOffset,
-			List<Integer> indices) {
-		int i = x + y * ( resolution + 1 ) + vertexOffset;
-
-		indices.add(i);
-		indices.add(i + resolution + 1);
-		indices.add(i + resolution + 2);
-
-		indices.add(i);
-		indices.add(i + resolution + 2);
-		indices.add(i + 1);
-	}
-
-	private static void constructVertex(int resolution,
-			float radius,
-			PlanetType type,
-			Vector3f localUp,
-			int x,
-			int y,
-			Vector3f axisA,
-			Vector3f axisB,
-			List<Float> vertices,
-			List<Float> normals,
-			List<Float> colors) {
-		float percentX = (float) x / resolution;
-		float percentY = (float) y / resolution;
-
-		Vector3f scaledA = axisA.mul(( percentX - 0.5f ) * 2, new Vector3f());
-		Vector3f scaledB = axisB.mul(( percentY - 0.5f ) * 2, new Vector3f());
-		Vector3f displacement = scaledA.add(scaledB, new Vector3f());
-		Vector3f dir = new Vector3f(localUp.add(displacement, new Vector3f()).normalize());
-
-		float height = getPlanetHeight(dir, radius, type);
-		Vector3f spherePoint = dir.mul(radius + height, new Vector3f());
-
-		vertices.add(spherePoint.x);
-		vertices.add(spherePoint.y);
-		vertices.add(spherePoint.z);
-
-		Vector3f normal = calculateDisplacedNormal(dir, radius, type, height);
-		normals.add(normal.x);
-		normals.add(normal.y);
-		normals.add(normal.z);
-
-		float noiseVal = 0.0f;
-		if (type == PlanetType.ROCKY || type == PlanetType.ORGANIC) {
-			noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
-		}
-		colors.add(noiseVal);
-		colors.add(noiseVal);
-		colors.add(noiseVal);
-	}
-
 	@SuppressWarnings("SuspiciousNameCombination")
 	public static Mesh generate(int resolution, float radius, PlanetType type) {
 		List<Float> vertices = new ArrayList<>();
@@ -153,6 +60,113 @@ public class PlanetGeometry {
 		return Mesh.create3D(vertArray, indArray, normArray, new float[ 0 ], colorArray);
 	}
 
+	private static void constructVertex(int resolution,
+			float radius,
+			PlanetType type,
+			Vector3f localUp,
+			int x,
+			int y,
+			Vector3f axisA,
+			Vector3f axisB,
+			List<Float> vertices,
+			List<Float> normals,
+			List<Float> colors) {
+		float percentX = (float) x / resolution;
+		float percentY = (float) y / resolution;
+
+		Vector3f scaledA = axisA.mul(( percentX - 0.5f ) * 2, new Vector3f());
+		Vector3f scaledB = axisB.mul(( percentY - 0.5f ) * 2, new Vector3f());
+		Vector3f displacement = scaledA.add(scaledB, new Vector3f());
+		Vector3f dir = new Vector3f(localUp.add(displacement, new Vector3f()).normalize());
+
+		float height = getPlanetHeight(dir, radius, type);
+		Vector3f spherePoint = dir.mul(radius + height, new Vector3f());
+
+		vertices.add(spherePoint.x);
+		vertices.add(spherePoint.y);
+		vertices.add(spherePoint.z);
+
+		Vector3f normal = calculateDisplacedNormal(dir, radius, type, height);
+		normals.add(normal.x);
+		normals.add(normal.y);
+		normals.add(normal.z);
+
+		float noiseVal = 0.0f;
+		if (type == PlanetType.ROCKY || type == PlanetType.ORGANIC) {
+			noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
+		}
+		colors.add(noiseVal);
+		colors.add(noiseVal);
+		colors.add(noiseVal);
+	}
+
+	private static void constructIndices(int resolution,
+			int x,
+			int y,
+			int vertexOffset,
+			List<Integer> indices) {
+		int i = x + y * ( resolution + 1 ) + vertexOffset;
+
+		indices.add(i);
+		indices.add(i + resolution + 1);
+		indices.add(i + resolution + 2);
+
+		indices.add(i);
+		indices.add(i + resolution + 2);
+		indices.add(i + 1);
+	}
+
+	public static float getPlanetHeight(Vector3f dir, float radius, PlanetType type) {
+		if (type == PlanetType.ROCKY) {
+			float noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
+			float heightAmplitude = radius * 0.16f;
+			return ( noiseVal - 0.45f ) * heightAmplitude;
+		}
+		else if (type == PlanetType.ORGANIC) {
+			float noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
+			float heightAmplitude = radius * 0.16f;
+			return ( Math.max(noiseVal, 0.45f) - 0.45f ) * heightAmplitude;
+		}
+		return 0.0f;
+	}
+
+	private static Vector3f calculateDisplacedNormal(Vector3f dir,
+			float radius,
+			PlanetType type,
+			float height) {
+		if (type != PlanetType.ROCKY && type != PlanetType.ORGANIC) {
+			return new Vector3f(dir).normalize();
+		}
+
+		Vector3f T = new Vector3f();
+		if (Math.abs(dir.x) < 0.9f) {
+			new Vector3f(1.0f, 0.0f, 0.0f).cross(dir, T).normalize();
+		}
+		else {
+			new Vector3f(0.0f, 1.0f, 0.0f).cross(dir, T).normalize();
+		}
+		Vector3f B = new Vector3f(dir).cross(T, new Vector3f()).normalize();
+
+		float epsilon = 0.005f;
+		Vector3f dirT = new Vector3f(dir).add(new Vector3f(T).mul(epsilon)).normalize();
+		Vector3f dirB = new Vector3f(dir).add(new Vector3f(B).mul(epsilon)).normalize();
+
+		float heightT = getPlanetHeight(dirT, radius, type);
+		float heightB = getPlanetHeight(dirB, radius, type);
+
+		float dh_T = ( heightT - height ) / epsilon;
+		float dh_B = ( heightB - height ) / epsilon;
+
+		Vector3f vT = new Vector3f(T).mul(radius + height).add(new Vector3f(dir).mul(dh_T));
+		Vector3f vB = new Vector3f(B).mul(radius + height).add(new Vector3f(dir).mul(dh_B));
+
+		Vector3f normal = vT.cross(vB, new Vector3f()).normalize();
+		if (normal.dot(dir) < 0.0f) {
+			normal.negate();
+		}
+		return normal;
+	}
+
 	public static Mesh generateRing(float innerRadius, float outerRadius, int resolution) {
 		List<Float> positions = new ArrayList<>();
 		List<Float> normals = new ArrayList<>();
@@ -200,19 +214,5 @@ public class PlanetGeometry {
 		int[] indArray = ArrayUtils.convertToIntArray(indices);
 
 		return Mesh.create3D(posArray, indArray, normArray, new float[ 0 ]);
-	}
-
-	public static float getPlanetHeight(Vector3f dir, float radius, PlanetType type) {
-		if (type == PlanetType.ROCKY) {
-			float noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
-			float heightAmplitude = radius * 0.16f;
-			return ( noiseVal - 0.45f ) * heightAmplitude;
-		}
-		else if (type == PlanetType.ORGANIC) {
-			float noiseVal = Noise3D.fbm(dir.x * 3.0f, dir.y * 3.0f, dir.z * 3.0f);
-			float heightAmplitude = radius * 0.16f;
-			return ( Math.max(noiseVal, 0.45f) - 0.45f ) * heightAmplitude;
-		}
-		return 0.0f;
 	}
 }

@@ -43,6 +43,31 @@ public class StarBuilder {
 		return new Star(info);
 	}
 
+	private String generateRandomName() {
+		String[] greekLetters = {
+				"Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Sigma", "Omega" };
+		String[] constellations = {
+				"Andromedae", "Centauri", "Cygni", "Draconis", "Orionis", "Pegasi", "Lyrae" };
+		return greekLetters[ RANDOM.nextInt(greekLetters.length) ] + " " +
+			   constellations[ RANDOM.nextInt(constellations.length) ];
+	}
+
+	private float generateRadiusForType(StarType type) {
+		return switch (type) {
+			case O -> 800f + RANDOM.nextFloat() * 40f;
+			case B -> 500f + RANDOM.nextFloat() * 30f;
+			case A -> 350f + RANDOM.nextFloat() * 15f;
+			case F -> 250f + RANDOM.nextFloat() * 10f;
+			case G -> 200f + RANDOM.nextFloat() * 5f;   // Sun-like
+			case K -> 150f + RANDOM.nextFloat() * 5f;
+			case M -> 80f + RANDOM.nextFloat() * 7f;    // Red Dwarf
+		};
+	}
+
+	private float generateMassForType(StarType type) {
+		return generateRadiusForType(type) * 1.5f; // Simplified mass calculation
+	}
+
 	private Vector3f generateBaseColor(StarType type) {
 		return switch (type) {
 			case O, B -> new Vector3f(0.5f, 0.7f, 1.0f); // Blue-white
@@ -61,31 +86,6 @@ public class StarBuilder {
 			case K -> new Vector3f(0.8f, 0.2f, 0.0f);
 			case M -> new Vector3f(0.5f, 0.0f, 0.0f);
 		};
-	}
-
-	private float generateMassForType(StarType type) {
-		return generateRadiusForType(type) * 1.5f; // Simplified mass calculation
-	}
-
-	private float generateRadiusForType(StarType type) {
-		return switch (type) {
-			case O -> 800f + RANDOM.nextFloat() * 40f;
-			case B -> 500f + RANDOM.nextFloat() * 30f;
-			case A -> 350f + RANDOM.nextFloat() * 15f;
-			case F -> 250f + RANDOM.nextFloat() * 10f;
-			case G -> 200f + RANDOM.nextFloat() * 5f;   // Sun-like
-			case K -> 150f + RANDOM.nextFloat() * 5f;
-			case M -> 80f + RANDOM.nextFloat() * 7f;    // Red Dwarf
-		};
-	}
-
-	private String generateRandomName() {
-		String[] greekLetters = {
-				"Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Sigma", "Omega" };
-		String[] constellations = {
-				"Andromedae", "Centauri", "Cygni", "Draconis", "Orionis", "Pegasi", "Lyrae" };
-		return greekLetters[ RANDOM.nextInt(greekLetters.length) ] + " " +
-			   constellations[ RANDOM.nextInt(constellations.length) ];
 	}
 
 	// --- PROCEDURAL GENERATORS ---

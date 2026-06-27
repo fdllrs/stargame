@@ -35,13 +35,13 @@ public class OrbitComponent {
 		}
 	}
 
-	private static void updateAbsolutePosition(Vector3f position, float offsetX, float offsetZ) {
-		position.set(offsetX, 0, offsetZ);
-	}
-
 	private void updateRelativeToParent(Vector3f position, float offsetX, float offsetZ) {
 		assert parent != null;
 		Vector3f parentPos = parent.getPosition();
 		position.set(parentPos.x + offsetX, parentPos.y, parentPos.z + offsetZ);
+	}
+
+	private static void updateAbsolutePosition(Vector3f position, float offsetX, float offsetZ) {
+		position.set(offsetX, 0, offsetZ);
 	}
 }

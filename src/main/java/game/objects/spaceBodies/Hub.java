@@ -3,7 +3,6 @@ package game.objects.spaceBodies;
 import engine.graphics.Mesh;
 import engine.ui.text.FontAtlas;
 import game.components.OrbitComponent;
-import game.components.StorageComponent;
 import game.geometry.HubGeometry;
 import game.objects.items.ItemType;
 import game.objects.items.RawResource;

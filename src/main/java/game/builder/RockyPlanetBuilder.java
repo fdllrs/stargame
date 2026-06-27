@@ -11,11 +11,6 @@ public class RockyPlanetBuilder extends PlanetBuilder {
 	}
 
 	@Override
-	public PlanetType getType() {
-		return PlanetType.ROCKY;
-	}
-
-	@Override
 	protected RockyPlanet buildPlanet() {
 
 		basicPlanetInfo basicPlanetInfo = buildBasicPlanetInfo();
@@ -72,5 +67,10 @@ public class RockyPlanetBuilder extends PlanetBuilder {
 			colorA = hslToRgb(h1, s1, l1);
 			colorB = hslToRgb(h2, s2, l2);
 		}
+	}
+
+	@Override
+	public PlanetType getType() {
+		return PlanetType.ROCKY;
 	}
 }

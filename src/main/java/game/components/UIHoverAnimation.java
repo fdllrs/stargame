@@ -24,15 +24,20 @@ public class UIHoverAnimation {
 									   baseColor.w);
 	}
 
-	private void animateColor(float deltaTime, boolean isHovered) {
-		Vector4f color = target.getColor();
-		float t = 1.0f - (float) Math.exp(-animationSpeed * deltaTime);
-		if (isHovered) {
-			color.lerp(hoverColor, t);
-		}
-		else {
-			color.lerp(baseColor, t);
-		}
+	public void setAnimationEnabled(boolean enabled) {
+		animationEnabled = enabled;
+	}
+
+	public void setScaleEnabled(boolean enabled) {
+		scaleEnabled = enabled;
+	}
+
+	public void update(float deltaTime, boolean isHovered, boolean isEnabled) {
+		if (!animationEnabled) return;
+		if (!isEnabled) return;
+
+		animateScale(deltaTime, isHovered);
+		animateColor(deltaTime, isHovered);
 	}
 
 	private void animateScale(float deltaTime, boolean isHovered) {
@@ -47,24 +52,19 @@ public class UIHoverAnimation {
 		target.setScale(currentScale);
 	}
 
+	private void animateColor(float deltaTime, boolean isHovered) {
+		Vector4f color = target.getColor();
+		float t = 1.0f - (float) Math.exp(-animationSpeed * deltaTime);
+		if (isHovered) {
+			color.lerp(hoverColor, t);
+		}
+		else {
+			color.lerp(baseColor, t);
+		}
+	}
+
 	private float calculateScale(float deltaTime) {
 		return currentScale + ( targetScale - currentScale ) * ( 1.0f - (float) Math.exp(
 				-animationSpeed * deltaTime) );
-	}
-
-	public void setAnimationEnabled(boolean enabled) {
-		animationEnabled = enabled;
-	}
-
-	public void setScaleEnabled(boolean enabled) {
-		scaleEnabled = enabled;
-	}
-
-	public void update(float deltaTime, boolean isHovered, boolean isEnabled) {
-		if (!animationEnabled) return;
-		if (!isEnabled) return;
-		
-		animateScale(deltaTime, isHovered);
-		animateColor(deltaTime, isHovered);
 	}
 }

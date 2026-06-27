@@ -24,12 +24,12 @@ public class ResourceExtractor extends ProducerFacility {
 	}
 
 	@Override
-	public void upgrade() {
-		extractionAmount += 1;
+	protected void process(Planet planet) {
+		planet.deposit(resourceType, extractionAmount);
 	}
 
 	@Override
-	protected void process(Planet planet) {
-		planet.deposit(resourceType, extractionAmount);
+	public void upgrade() {
+		extractionAmount += 1;
 	}
 }

@@ -35,6 +35,16 @@ public class UIManager {
 										 _ -> this.updateDockingLabel(false));
 	}
 
+	private void rebuildProjection(int width, int height) {
+		uiProjection.setOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+	}
+
+	public void updateDockingLabel(boolean playerDocked) {
+		if (topText != null) {
+			topText.setText(playerDocked ? "Player Docked" : "Player Undocked");
+		}
+	}
+
 	public void addElement(UIPanel element) {
 		uiPanels.add(element);
 	}
@@ -82,10 +92,6 @@ public class UIManager {
 		}
 	}
 
-	private void rebuildProjection(int width, int height) {
-		uiProjection.setOrtho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-	}
-
 	public void renderAll() {
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
@@ -105,12 +111,6 @@ public class UIManager {
 	public void update(float mouseX, float mouseY, float deltaTime) {
 		for (UIElement element : uiPanels) {
 			element.update(mouseX, mouseY, deltaTime);
-		}
-	}
-
-	public void updateDockingLabel(boolean playerDocked) {
-		if (topText != null) {
-			topText.setText(playerDocked ? "Player Docked" : "Player Undocked");
 		}
 	}
 }

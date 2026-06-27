@@ -41,6 +41,48 @@ public class UIText extends UIElement {
 		setText(text);
 	}
 
+	public void setText(String text) {
+		this.rawText = text;
+		this.renderText = wrapText(this.currentMaxWidth);
+
+		this.width = this.currentMaxWidth;
+		this.height = getBoundingHeight();
+		updateMatrix();
+	}
+
+	private String wrapText(float maxPixelWidth) {
+		String[] words = rawText.split(" ");
+		StringBuilder wrappedText = new StringBuilder();
+		float currentLineWidth = 0;
+
+		// Pre-calculate space width to avoid doing it every loop
+		CharacterInfo spaceInfo = font.getCharacter(' ');
+		float spaceWidth = ( spaceInfo != null )
+						   ? ( spaceInfo.xAdvance() * fontSizeMultiplier )
+						   : ( 10 * fontSizeMultiplier );
+
+		for (String word : words) {
+			float wordWidth = calculateTextWidth(word); // Reuse our helper method!
+
+			if (currentLineWidth + wordWidth > maxPixelWidth && currentLineWidth > 0) {
+				wrappedText.append("\n").append(word).append(" ");
+				currentLineWidth = wordWidth + spaceWidth;
+			}
+			else {
+				wrappedText.append(word).append(" ");
+				currentLineWidth += wordWidth + spaceWidth;
+			}
+		}
+		return wrappedText.toString().trim(); // Remove the trailing space
+	}
+
+	@Override
+	public float getBoundingHeight() {
+		int numLines = this.renderText.split("\n").length;
+		float exactLineHeight = ( MAX_CHAR_HEIGHT + LINE_SPACING ) * fontSizeMultiplier;
+		return numLines * exactLineHeight + vPadding;
+	}
+
 	private float calculateTextWidth(String text) {
 		float totalWidth = 0;
 		for (int i = 0; i < text.length(); i++) {
@@ -50,28 +92,6 @@ public class UIText extends UIElement {
 			}
 		}
 		return totalWidth;
-	}
-
-	private float getAlignedStartX(String line) {
-		if (alignment == Alignment.LEFT) {
-			return this.x + hPadding;
-		}
-
-		float lineWidth = calculateTextWidth(line);
-
-		if (alignment == Alignment.CENTER) {
-			return this.x + ( ( this.width - lineWidth ) / 2.0f );
-		}
-		else { // RIGHT
-			return this.x + this.width - lineWidth - hPadding;
-		}
-	}
-
-	@Override
-	public float getBoundingHeight() {
-		int numLines = this.renderText.split("\n").length;
-		float exactLineHeight = ( MAX_CHAR_HEIGHT + LINE_SPACING ) * fontSizeMultiplier;
-		return numLines * exactLineHeight + vPadding;
 	}
 
 	@Override
@@ -123,12 +143,27 @@ public class UIText extends UIElement {
 		}
 	}
 
+	// --- ALIGNMENT MATH ---
+
+	private float getAlignedStartX(String line) {
+		if (alignment == Alignment.LEFT) {
+			return this.x + hPadding;
+		}
+
+		float lineWidth = calculateTextWidth(line);
+
+		if (alignment == Alignment.CENTER) {
+			return this.x + ( ( this.width - lineWidth ) / 2.0f );
+		}
+		else { // RIGHT
+			return this.x + this.width - lineWidth - hPadding;
+		}
+	}
+
 	@Override
 	public void update(float mouseX, float mouseY, float deltaTime) {
 
 	}
-
-	// --- ALIGNMENT MATH ---
 
 	public void setMaxWidth(float maxPixelWidth) {
 		if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f) return;
@@ -136,41 +171,6 @@ public class UIText extends UIElement {
 		this.renderText = wrapText(this.currentMaxWidth);
 		this.width = this.currentMaxWidth;
 		updateMatrix();
-	}
-
-	public void setText(String text) {
-		this.rawText = text;
-		this.renderText = wrapText(this.currentMaxWidth);
-
-		this.width = this.currentMaxWidth;
-		this.height = getBoundingHeight();
-		updateMatrix();
-	}
-
-	private String wrapText(float maxPixelWidth) {
-		String[] words = rawText.split(" ");
-		StringBuilder wrappedText = new StringBuilder();
-		float currentLineWidth = 0;
-
-		// Pre-calculate space width to avoid doing it every loop
-		CharacterInfo spaceInfo = font.getCharacter(' ');
-		float spaceWidth = ( spaceInfo != null )
-						   ? ( spaceInfo.xAdvance() * fontSizeMultiplier )
-						   : ( 10 * fontSizeMultiplier );
-
-		for (String word : words) {
-			float wordWidth = calculateTextWidth(word); // Reuse our helper method!
-
-			if (currentLineWidth + wordWidth > maxPixelWidth && currentLineWidth > 0) {
-				wrappedText.append("\n").append(word).append(" ");
-				currentLineWidth = wordWidth + spaceWidth;
-			}
-			else {
-				wrappedText.append(word).append(" ");
-				currentLineWidth += wordWidth + spaceWidth;
-			}
-		}
-		return wrappedText.toString().trim(); // Remove the trailing space
 	}
 
 	public enum Alignment {

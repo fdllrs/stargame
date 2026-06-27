@@ -25,27 +25,32 @@ public class PlanetPanelController implements InfoPanelController {
 		this.onSelectTarget = onSelectTarget;
 	}
 
-	private Runnable buildSelectHubAction() {
-		return () -> {
-			if (planet.hasHub() && onSelectTarget != null) {
-				onSelectTarget.accept(planet.getHub());
-			}
-		};
-	}
-
 	@Override
 	public void populate(List<UIElement> children,
 			Describable target,
 			FontAtlas font,
 			float width) {
 
-		children.add(sectionHeader("INFO", SECTION_HEADER_COLOR, font, width));
-		for (UIElement element : UIStatsTab.build(planet, font, width, buildSelectHubAction())) {
-			children.add(element);
-		}
+		children.add(sectionHeader(font, width));
+		children.addAll(UIStatsTab.build(planet, font, width, buildSelectHubAction()));
 	}
 
-	private UIText sectionHeader(String label, Vector4f color, FontAtlas font, float width) {
-		return new UIText("- " + label + " -", Alignment.CENTER, color, 24, 4, 6, font, width);
+	private UIText sectionHeader(FontAtlas font, float width) {
+		return new UIText("- " + "INFO" + " -",
+						  Alignment.CENTER,
+						  PlanetPanelController.SECTION_HEADER_COLOR,
+						  24,
+						  4,
+						  6,
+						  font,
+						  width);
+	}
+
+	private Runnable buildSelectHubAction() {
+		return () -> {
+			if (planet.hasHub() && onSelectTarget != null) {
+				onSelectTarget.accept(planet.getHub());
+			}
+		};
 	}
 }

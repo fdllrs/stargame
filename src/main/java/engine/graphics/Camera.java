@@ -29,6 +29,14 @@ public class Camera {
 		rebuildProjection(BASE_FOV);
 	}
 
+	private void rebuildProjection(float fov) {
+		cachedFov = fov;
+		projectionMatrix.setPerspective((float) Math.toRadians(fov),
+										aspectRatio,
+										NEAR_PLANE,
+										FAR_PLANE);
+	}
+
 	public void addRotation(float deltaX, float deltaY) {
 		rotation.x += deltaY * mouseSensitivity;
 		rotation.y += deltaX * mouseSensitivity;
@@ -41,14 +49,6 @@ public class Camera {
 			velocity.normalize(maxSpeed);
 		}
 		position.fma(deltaTime, velocity);
-	}
-
-	public Vector3f getLocalForwardDirection() {
-		float yawRad = (float) Math.toRadians(rotation.y);
-		float pitchRad = (float) Math.toRadians(rotation.x);
-		return new Vector3f((float) ( Math.sin(yawRad) * Math.cos(pitchRad) ),
-							(float) ( -Math.sin(pitchRad) ),
-							(float) ( -Math.cos(yawRad) * Math.cos(pitchRad) )).normalize();
 	}
 
 	public Vector3f getPosition() {
@@ -67,28 +67,24 @@ public class Camera {
 		return viewMatrix;
 	}
 
-	private Vector3f localRightDirection() {
-		return new Vector3f(getLocalForwardDirection().cross(new Vector3f(0, 1, 0))
-													  .normalize()).mul(
-				SIDE_VELOCITY_DOWNSCALE_FACTOR);
-	}
-
 	public void moveTo(Vector3f position) {
 		this.position = position;
 		zeroAcceleration(0);
 	}
 
+	public void zeroAcceleration(float brakeStrength) {
+
+		if (velocity.length() < 0.1f) {
+			velocity.zero();
+		}
+		else {
+			velocity.mul(brakeStrength);
+		}
+	}
+
 	public void onResize(int width, int height) {
 		this.aspectRatio = (float) width / height;
 		rebuildProjection(cachedFov);
-	}
-
-	private void rebuildProjection(float fov) {
-		cachedFov = fov;
-		projectionMatrix.setPerspective((float) Math.toRadians(fov),
-										aspectRatio,
-										NEAR_PLANE,
-										FAR_PLANE);
 	}
 
 	public void translate(float dx, float dy, float dz) {
@@ -99,12 +95,26 @@ public class Camera {
 		velocity.sub(getLocalForwardDirection().mul(acceleration));
 	}
 
+	public Vector3f getLocalForwardDirection() {
+		float yawRad = (float) Math.toRadians(rotation.y);
+		float pitchRad = (float) Math.toRadians(rotation.x);
+		return new Vector3f((float) ( Math.sin(yawRad) * Math.cos(pitchRad) ),
+							(float) ( -Math.sin(pitchRad) ),
+							(float) ( -Math.cos(yawRad) * Math.cos(pitchRad) )).normalize();
+	}
+
 	public void updateVelocityForwards(float acceleration) {
 		velocity.add(getLocalForwardDirection().mul(acceleration));
 	}
 
 	public void updateVelocityLeft(float acceleration) {
 		velocity.sub(localRightDirection().mul(acceleration));
+	}
+
+	private Vector3f localRightDirection() {
+		return new Vector3f(getLocalForwardDirection().cross(new Vector3f(0, 1, 0))
+													  .normalize()).mul(
+				SIDE_VELOCITY_DOWNSCALE_FACTOR);
 	}
 
 	public void updateVelocityRight(float acceleration) {
@@ -118,15 +128,5 @@ public class Camera {
 		viewMatrix.rotateX((float) Math.toRadians(rotation.x));
 		viewMatrix.rotateY((float) Math.toRadians(rotation.y));
 		viewMatrix.translate(-position.x, -position.y, -position.z);
-	}
-
-	public void zeroAcceleration(float brakeStrength) {
-
-		if (velocity.length() < 0.1f) {
-			velocity.zero();
-		}
-		else {
-			velocity.mul(brakeStrength);
-		}
 	}
 }
