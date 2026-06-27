@@ -161,7 +161,7 @@ public class Game {
 	}
 
 	private void initUIManager(FontAtlas fontAtlas) {
-		uiManager = new UIManager(windowHandle);
+		uiManager = new UIManager(windowHandle, fontAtlas);
 		uiManager.addElement(infoPanel);
 		uiManager.addElement(planetDockPanel);
 		uiManager.addElement(playerResourcesPanel);
@@ -200,10 +200,10 @@ public class Game {
 		float mouseY = input.getMouseY();
 		input.update();
 		if (input.isCursorEnabled()) {
-			uiManager.update(mouseX, mouseY, deltaTime);
+			uiManager.update(mouseX, mouseY, deltaTime, camera);
 		}
 		else {
-			uiManager.update(-1f, -1f, deltaTime);
+			uiManager.update(-1f, -1f, deltaTime, camera);
 		}
 
 		double scrollY = input.getScrollDeltaY();

@@ -8,19 +8,35 @@ import game.components.UIHoverAnimation;
 import org.joml.Vector4f;
 
 public class UIButton extends UIElement {
-	private final Runnable onClick;
+
+	private final ButtonCallback onClick;
 	private final UIHoverAnimation animationComponent;
 	private UIText textLabel;
 	private UIElement content;
 	private boolean isEnabled = true;
 	private boolean isHovered = false;
-
 	public UIButton(float width,
 			float height,
 			Vector4f backgroundColor,
 			Vector4f textColor,
 			String textLabel,
 			Runnable onClick,
+			FontAtlas fontAtlas) {
+		this(width,
+			 height,
+			 backgroundColor,
+			 textColor,
+			 textLabel,
+			 (x, y) -> { if (onClick != null) onClick.run(); },
+			 fontAtlas);
+	}
+
+	public UIButton(float width,
+			float height,
+			Vector4f backgroundColor,
+			Vector4f textColor,
+			String textLabel,
+			ButtonCallback onClick,
 			FontAtlas fontAtlas) {
 		super(0, 0, width, height, backgroundColor);
 
@@ -57,7 +73,7 @@ public class UIButton extends UIElement {
 			UIElement content,
 			Runnable onClick) {
 		super(0, 0, width, height, backgroundColor);
-		this.onClick = onClick;
+		this.onClick = (x, y) -> { if (onClick != null) onClick.run(); };
 		this.vPadding = 15;
 		this.hPadding = 10;
 		this.content = content;
@@ -73,7 +89,7 @@ public class UIButton extends UIElement {
 	@Override
 	public void handleClick(float mouseX, float mouseY) {
 		if (isEnabled && onClick != null) {
-			onClick.run();
+			onClick.onClick(mouseX, mouseY);
 		}
 	}
 
@@ -133,5 +149,10 @@ public class UIButton extends UIElement {
 
 	public void setHoverScaleEnabled(boolean enabled) {
 		animationComponent.setScaleEnabled(enabled);
+	}
+
+	@FunctionalInterface
+	public interface ButtonCallback {
+		void onClick(float mouseX, float mouseY);
 	}
 }
