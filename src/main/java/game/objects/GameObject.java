@@ -13,6 +13,7 @@ public class GameObject extends GameEntity {
 	protected final Vector3f rotation; // Stored in Euler angles (Degrees or Radians)
 	protected final Vector3f scale;
 	protected final Matrix4f modelMatrix;
+	protected final Matrix3f normalMatrix;
 	protected Mesh mesh;
 	protected boolean isSelected = false;
 
@@ -23,6 +24,7 @@ public class GameObject extends GameEntity {
 		this.rotation = new Vector3f(0, 0, 0);
 		this.scale = new Vector3f(1, 1, 1);
 		this.modelMatrix = new Matrix4f();
+		this.normalMatrix = new Matrix3f();
 		updateModelMatrix();
 	}
 
@@ -53,7 +55,7 @@ public class GameObject extends GameEntity {
 	}
 
 	protected Matrix3f computeNormalMatrix() {
-		return new Matrix3f(modelMatrix).invert().transpose();
+		return normalMatrix.set(modelMatrix).invert().transpose();
 	}
 
 	public Mesh getMesh() {

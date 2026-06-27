@@ -20,15 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PlayerResourcesPanel extends UIPanel {
+public class InventoryPanel extends UIPanel {
 	private final StorageComponent storageComponent;
 	private final Map<ItemType, UIText> resourceLabels;
 	private final float expandedHeight;
+	private final game.components.UISlideAnimation slideAnimation;
 	private float expandedY;
 	private UIText storageFillText;
 	private boolean expanded;
+	private UIScrollArea scrollArea;
+	private boolean isDocked = false;
 
-	public PlayerResourcesPanel(float x,
+	public InventoryPanel(float x,
 			float y,
 			float width,
 			float height,
@@ -40,6 +43,17 @@ public class PlayerResourcesPanel extends UIPanel {
 		this.storageComponent = storageComponent;
 		this.expandedHeight = height;
 		this.expandedY = y;
+		this.slideAnimation = new game.components.UISlideAnimation(this, 10.0f);
+
+		engine.events.EventBus.subscribe(game.events.PlayerDockedEvent.class, event -> {
+			isDocked = true;
+			slideAnimation.slideOut(false);
+		});
+
+		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class, event -> {
+			isDocked = false;
+			slideAnimation.slideIn(false);
+		});
 
 		testGiveAllResources();
 		setExpanded(false);
@@ -48,7 +62,13 @@ public class PlayerResourcesPanel extends UIPanel {
 	private void addResourceAmountsText() {
 		List<ItemType> allItems = getAllItems();
 		float scrollAreaHeight = this.height - 75;
-		UIScrollArea scrollArea = new UIScrollArea(width, scrollAreaHeight, 0);
+
+		if (scrollArea == null) {
+			scrollArea = new UIScrollArea(width, scrollAreaHeight, 0);
+		}
+		else {
+			scrollArea.clearElements();
+		}
 
 		for (ItemType type : allItems) {
 			String text = getNameAndAmountText(type);
@@ -94,54 +114,6 @@ public class PlayerResourcesPanel extends UIPanel {
 		return allItems;
 	}
 
-	@NotNull
-	private String getNameAndAmountText(ItemType type) {
-		return type.name() + ": " + storageComponent.getAmount(type);
-	}
-
-	public boolean isExpanded() {
-		return expanded;
-	}
-
-	public void setExpanded(boolean expanded) {
-		this.expanded = expanded;
-		if (expanded) {
-			setSize(width, expandedHeight);
-			setPosition(x, expandedY);
-			rebuildElements();
-		}
-		else {
-			setSize(width, 80);
-			setPosition(x, expandedY + ( expandedHeight - 80 ));
-			rebuildElements();
-		}
-	}
-
-	@Override
-	public void onResize(int screenWidth, int screenHeight) {
-		this.expandedY = screenHeight - this.expandedHeight - 20;
-		if (expanded) {
-			setPosition(screenWidth - this.width - 20, expandedY);
-		}
-		else {
-			setPosition(screenWidth - this.width - 20, expandedY + ( expandedHeight - 80 ));
-		}
-	}
-
-	@Override
-	protected void rebuildElements() {
-		children.clear();
-		resourceLabels.clear();
-
-		setPanelTitle("Inventory");
-		addStorageCapacityText();
-
-		if (expanded) {
-			addResourceAmountsText();
-		}
-		layout();
-	}
-
 	@Override
 	public float getBoundingHeight() {
 		float currentY = this.y + vPadding;
@@ -156,6 +128,85 @@ public class PlayerResourcesPanel extends UIPanel {
 		setExpanded(!expanded);
 
 		super.handleClick(mouseX, mouseY);
+	}
+
+	@Override
+	public void update(float mouseX, float mouseY, float deltaTime) {
+		slideAnimation.update(deltaTime);
+		if (shouldRender()) {
+			super.update(mouseX, mouseY, deltaTime);
+		}
+	}
+
+	@Override
+	public void rebuildElements() {
+		children.clear();
+		resourceLabels.clear();
+
+		setPanelTitle("Inventory");
+		addStorageCapacityText();
+
+		if (expanded) {
+			addResourceAmountsText();
+		}
+
+		super.rebuildElements();
+		layout();
+	}
+
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		this.expandedY = screenHeight - this.expandedHeight - 20;
+		float newX = screenWidth - this.width - 20;
+		this.x = newX;
+
+		float currentAnchorY = expanded ? expandedY : expandedY + ( expandedHeight - 80 );
+		float currentHiddenY = screenHeight + 50;
+		slideAnimation.configSlideY(currentAnchorY, currentHiddenY);
+
+		if (isDocked) {
+			slideAnimation.forceY(currentHiddenY);
+		}
+		else {
+			slideAnimation.forceY(currentAnchorY);
+		}
+		setPosition(newX, this.y);
+
+		if (scrollArea != null) {
+			scrollArea.setSize(this.width, this.height - 75);
+		}
+		super.onResize(screenWidth, screenHeight);
+	}
+
+	@Override
+	public boolean shouldRender() {
+		return !isDocked || slideAnimation.isAnimatingY();
+	}
+
+	@NotNull
+	private String getNameAndAmountText(ItemType type) {
+		return type.name() + ": " + storageComponent.getAmount(type);
+	}
+
+	public boolean isExpanded() {
+		return expanded;
+	}
+
+	public void setExpanded(boolean expanded) {
+		this.expanded = expanded;
+		float currentAnchorY = expanded ? expandedY : expandedY + ( expandedHeight - 80 );
+		float currentHiddenY = expandedY + expandedHeight + 50;
+		slideAnimation.configSlideY(currentAnchorY, currentHiddenY);
+
+		if (isDocked) {
+			slideAnimation.slideOut(true);
+		}
+		else {
+			slideAnimation.slideIn(true);
+		}
+
+		setSize(width, expanded ? expandedHeight : 80);
+		rebuildElements();
 	}
 
 	public void refreshAmounts() {

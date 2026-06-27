@@ -65,11 +65,9 @@ public class Hub extends SpaceBody implements Describable {
 	}
 
 	@Override
-	public InfoPanelController getPanelController(StorageComponent playerStorage,
-			FontAtlas font,
+	public InfoPanelController getPanelController(FontAtlas font,
 			float width,
-			Runnable onRebuild,
 			Consumer<SpaceBody> onSelectTarget) {
-		return new HubPanelController(this, playerStorage, font, width, onRebuild);
+		return new HubPanelController(this, font, width);
 	}
 }

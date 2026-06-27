@@ -134,6 +134,8 @@ public class UIText extends UIElement {
 		if (Math.abs(this.currentMaxWidth - maxPixelWidth) < 0.1f) return;
 		this.currentMaxWidth = maxPixelWidth;
 		this.renderText = wrapText(this.currentMaxWidth);
+		this.width = this.currentMaxWidth;
+		updateMatrix();
 	}
 
 	public void setText(String text) {

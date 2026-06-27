@@ -24,6 +24,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public abstract class Planet extends SpaceBody implements Describable {
@@ -208,17 +209,10 @@ public abstract class Planet extends SpaceBody implements Describable {
 	}
 
 	@Override
-	public InfoPanelController getPanelController(StorageComponent playerStorage,
-			FontAtlas font,
+	public InfoPanelController getPanelController(FontAtlas font,
 			float width,
-			Runnable onRebuild,
 			Consumer<SpaceBody> onSelectTarget) {
-		return new PlanetPanelController(this,
-										 playerStorage,
-										 font,
-										 width,
-										 onRebuild,
-										 onSelectTarget);
+		return new PlanetPanelController(this, onSelectTarget);
 	}
 
 	public PlanetInfo getPlanetInfo() {

@@ -28,7 +28,7 @@ public class Player extends GameObject {
 	}
 
 	public float getBrakeStrength() {
-		return 0.95f;
+		return 0.98f;
 	}
 
 	public float getMaxSpeed() {

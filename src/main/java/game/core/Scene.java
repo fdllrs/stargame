@@ -25,6 +25,9 @@ public class Scene {
 	private final Player player;
 	private final Starfield starfield;
 	private final Vector3f dockedBodyLastPos = new Vector3f();
+	private final Vector3f collisionNormal = new Vector3f();
+	private final Vector3f tempCorrectedPos = new Vector3f();
+	private final Vector3f tempNormalMul = new Vector3f();
 	private StarSystem starSystem;
 	private SpaceBody selectedObject;
 	private Planet dockedPlanet;
@@ -33,6 +36,10 @@ public class Scene {
 		player = new Player();
 		starSystem = StarSystem.generateStartingSystem();
 		starfield = new Starfield(500, 10000);
+
+		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class, _ -> {
+			this.updateSelectedObject(null);
+		});
 	}
 
 	private SpaceBody calculateClosestObject(Vector3f rayOrigin, Vector3f rayDirection) {
@@ -105,22 +112,21 @@ public class Scene {
 
 			if (distance >= minDistance) continue;
 
-			Vector3f normal = new Vector3f();
 			if (distance > 0.001f) {
-				playerPos.sub(bodyPos, normal).normalize();
+				playerPos.sub(bodyPos, collisionNormal).normalize();
 			}
 			else {
-				normal.set(0.0f, 0.0f, 1.0f);
+				collisionNormal.set(0.0f, 0.0f, 1.0f);
 			}
 
-			Vector3f correctedPos =
-					new Vector3f(bodyPos).add(new Vector3f(normal).mul(minDistance));
-			camera.position.set(correctedPos);
+			tempCorrectedPos.set(collisionNormal).mul(minDistance).add(bodyPos);
+			camera.position.set(tempCorrectedPos);
 
-			float velocityDotNormal = velocity.dot(normal);
+			float velocityDotNormal = velocity.dot(collisionNormal);
 			if (velocityDotNormal < 0.0f) {
 				float restitution = 0.3f;
-				velocity.sub(new Vector3f(normal).mul(( 1.0f + restitution ) * velocityDotNormal))
+				tempNormalMul.set(collisionNormal).mul(( 1.0f + restitution ) * velocityDotNormal);
+				velocity.sub(tempNormalMul)
 						.mul(0.7f);
 			}
 		}
@@ -243,10 +249,6 @@ public class Scene {
 		player.syncWithCamera(camera, isMoving);
 	}
 
-	/**
-	 * Automatically dock to a nearby body when the player slows down,
-	 * and undock when they accelerate away.
-	 */
 	private void updateDocking(Camera camera) {
 		float speed = camera.getVelocity().length();
 
@@ -256,12 +258,12 @@ public class Scene {
 		}
 
 		if (dockedPlanet != null) {
+
 			Vector3f currentPos = dockedPlanet.getPosition();
 			camera.translate(currentPos.x - dockedBodyLastPos.x,
 							 currentPos.y - dockedBodyLastPos.y,
 							 currentPos.z - dockedBodyLastPos.z);
 			dockedBodyLastPos.set(currentPos);
-
 			return;
 		}
 
@@ -271,12 +273,14 @@ public class Scene {
 			if (camPos.distance(planet.getPosition()) < dockRange) {
 				dockedPlanet = planet;
 				dockedBodyLastPos.set(dockedPlanet.getPosition());
+
 				return;
 			}
 		}
 	}
 
 	public void updateSelectedObject(SpaceBody clicked) {
+
 		if (selectedObject != null) {
 			selectedObject.setSelected(false);
 		}

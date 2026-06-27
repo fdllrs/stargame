@@ -68,11 +68,9 @@ public class Moon extends Planet {
 	}
 
 	@Override
-	public InfoPanelController getPanelController(StorageComponent playerStorage,
-			FontAtlas font,
+	public InfoPanelController getPanelController(FontAtlas font,
 			float width,
-			Runnable onRebuild,
 			Consumer<SpaceBody> onSelectTarget) {
-		return new DefaultPanelController();
+		return super.getPanelController(font, width, onSelectTarget);
 	}
 }

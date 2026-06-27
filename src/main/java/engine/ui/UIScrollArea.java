@@ -10,16 +10,27 @@ import java.util.List;
 public class UIScrollArea extends UIElement {
 	private final List<UIElement> elements = new ArrayList<>();
 	private final float gap;
+	private final int[] viewport = new int[ 4 ];
 	private float scrollY = 0;
 	private float maxScrollY = 0;
 
 	public UIScrollArea(float width, float height, float gap) {
 		super(0, 0, width, height, new Vector4f(0, 0, 0, 0)); // transparent background
 		this.gap = gap;
+		this.visible = true;
 	}
 
 	public void addElement(UIElement element) {
 		elements.add(element);
+	}
+
+	private void clampScrollY() {
+		if (scrollY < 0) scrollY = 0;
+		if (scrollY > maxScrollY) scrollY = maxScrollY;
+	}
+
+	public void clearElements() {
+		elements.clear();
 	}
 
 	@Override
@@ -39,11 +50,17 @@ public class UIScrollArea extends UIElement {
 	}
 
 	@Override
+	public void rebuildElements() {
+		for (UIElement element : elements) {
+			element.rebuildElements();
+		}
+	}
+
+	@Override
 	public void render(ShaderProgram shader, Mesh uiQuad) {
 		if (!visible) return;
 
 		// 1. Get current screen viewport to map scissor coordinates
-		int[] viewport = new int[ 4 ];
 		org.lwjgl.opengl.GL11C.glGetIntegerv(org.lwjgl.opengl.GL11C.GL_VIEWPORT, viewport);
 		int screenHeight = viewport[ 3 ];
 
@@ -90,15 +107,32 @@ public class UIScrollArea extends UIElement {
 		// Scroll internal content if not handled by a child
 		if (!childHandled && maxScrollY > 0) {
 			this.scrollY -= (float) ( yOffset * 40.0f );
-			if (scrollY < 0) scrollY = 0;
-			if (scrollY > maxScrollY) scrollY = maxScrollY;
+			clampScrollY();
 			layout();
+		}
+	}
+
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		layout();
+		for (UIElement element : elements) {
+			element.onResize(screenWidth, screenHeight);
 		}
 	}
 
 	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
+		layout();
+	}
+
+	public float getScrollY() {
+		return scrollY;
+	}
+
+	public void setScrollY(float scrollY) {
+		this.scrollY = scrollY;
+		clampScrollY();
 		layout();
 	}
 

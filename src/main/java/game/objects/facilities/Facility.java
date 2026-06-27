@@ -10,6 +10,13 @@ import org.joml.Vector3f;
 
 public abstract class Facility extends GameObject {
 	protected Vector3f localPosition;
+	protected final Vector3f surfaceNormal = new Vector3f();
+	protected final Quaternionf alignmentRotation = new Quaternionf();
+	private final Matrix4f buildingModelMatrix = new Matrix4f();
+	private final Matrix3f normalMatrix = new Matrix3f();
+	private final Vector3f colorA = new Vector3f();
+	private final Vector3f colorB = new Vector3f();
+	private static final Vector3f UP_VECTOR = new Vector3f(0.0f, 1.0f, 0.0f);
 	protected float efficiency = 1.0f;
 	protected float progressAccumulator = 0.0f;
 	protected int level = 1;
@@ -44,27 +51,27 @@ public abstract class Facility extends GameObject {
 
 		float height = planet.getTerrainHeight(randomDir);
 		this.localPosition = randomDir.mul(planet.getRadius() + height - 0.1f);
+
+		surfaceNormal.set(localPosition).normalize();
+		alignmentRotation.identity().rotateTo(UP_VECTOR, surfaceNormal);
 	}
 
 	public void render(ShaderProgram shader, Matrix4f planetModelMatrix) {
 		if (mesh == null) return;
 
-		Vector3f surfaceNormal = new Vector3f(localPosition).normalize();
-		Quaternionf alignmentRotation = new Quaternionf().rotateTo(new Vector3f(0, 1, 0),
-																   surfaceNormal);
-
-		Matrix4f buildingModelMatrix = new Matrix4f(planetModelMatrix).translate(localPosition)
-																	  .rotate(alignmentRotation)
-																	  .scale(1.0f);
+		buildingModelMatrix.set(planetModelMatrix).translate(localPosition)
+												  .rotate(alignmentRotation);
 
 		shader.setUniform("isLightSource", 0);
 		shader.setUniform("model", buildingModelMatrix);
 
-		Matrix3f normalMatrix = new Matrix3f(buildingModelMatrix).invert().transpose();
+		normalMatrix.set(buildingModelMatrix).invert().transpose();
 		shader.setUniform("normalMatrix", normalMatrix);
 
-		shader.setUniform("colorA", new org.joml.Vector3f(color));
-		shader.setUniform("colorB", new org.joml.Vector3f(color).mul(0.7f));
+		colorA.set(color);
+		colorB.set(color).mul(0.7f);
+		shader.setUniform("colorA", colorA);
+		shader.setUniform("colorB", colorB);
 		shader.setUniform("noiseScale", 0.0f);
 		shader.setUniform("useVertexColor", mesh.hasVertexColors() ? 1 : 0);
 

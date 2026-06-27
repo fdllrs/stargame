@@ -41,6 +41,13 @@ public class UIRow extends UIElement {
 	}
 
 	@Override
+	public void rebuildElements() {
+		for (UIElement element : elements) {
+			element.rebuildElements();
+		}
+	}
+
+	@Override
 	public void render(ShaderProgram shader, Mesh uiQuad) {
 		for (UIElement element : elements) {
 			element.render(shader, uiQuad);

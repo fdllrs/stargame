@@ -2,6 +2,7 @@ package game.ui.panel;
 
 import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
+import engine.ui.UIBackgroundRenderer;
 import engine.ui.UIElement;
 import engine.ui.UIRow;
 import engine.ui.text.FontAtlas;
@@ -13,8 +14,6 @@ import java.util.List;
 public abstract class UIPanel extends UIElement {
 	protected final List<UIElement> children = new java.util.ArrayList<>();
 	protected final FontAtlas font;
-
-	protected abstract void rebuildElements();
 
 	public UIPanel(float x, float y, float width, float height, Vector4f color, FontAtlas font) {
 		super(x, y, width, height, color);
@@ -44,9 +43,7 @@ public abstract class UIPanel extends UIElement {
 		if (!shouldRender()) return;
 
 		shader.setUniform("useTexture", 0);
-		shader.setUniform("uiColor", this.color);
-		shader.setUniform("model", this.modelMatrix);
-		uiQuad.render();
+		UIBackgroundRenderer.renderFuturisticBackground(this, shader, uiQuad, 3.0f);
 
 		for (UIElement child : children) {
 			child.render(shader, uiQuad);
@@ -57,6 +54,13 @@ public abstract class UIPanel extends UIElement {
 	public void update(float mouseX, float mouseY, float deltaTime) {
 		for (UIElement element : children) {
 			element.update(mouseX, mouseY, deltaTime);
+		}
+	}
+
+	@Override
+	public void rebuildElements() {
+		for (UIElement child : children) {
+			child.rebuildElements();
 		}
 	}
 
@@ -116,6 +120,13 @@ public abstract class UIPanel extends UIElement {
 									 10,
 									 font,
 									 width));
+	}
+
+	@Override
+	public void onResize(int screenWidth, int screenHeight) {
+		for (UIElement child : children) {
+			child.onResize(screenWidth, screenHeight);
+		}
 	}
 
 	protected boolean shouldRender() {

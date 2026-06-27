@@ -69,6 +69,9 @@ public abstract class UIElement {
 	public void onResize(int screenWidth, int screenHeight) {
 	}
 
+	public void rebuildElements() {
+	}
+
 	public void setOpacity(float opacity) {
 		this.color.w = opacity;
 	}

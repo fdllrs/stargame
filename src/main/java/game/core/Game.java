@@ -1,15 +1,17 @@
 package game.core;
 
 import engine.graphics.Camera;
+import engine.state.GameStateMachine;
 import engine.ui.UIManager;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
 import engine.ui.text.UIText.Alignment;
 import engine.window.Window;
 import game.objects.Player;
-import game.objects.spaceBodies.SpaceBody;
+import game.states.FlightState;
 import game.ui.panel.InfoPanel;
-import game.ui.panel.PlayerResourcesPanel;
+import game.ui.panel.InventoryPanel;
+import game.ui.panel.PlanetDockPanel;
 import game.ui.panel.UIMapPanel;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -31,9 +33,10 @@ public class Game {
 	private Renderer renderer;
 	private UIManager uiManager;
 	private InfoPanel infoPanel;
-	private PlayerResourcesPanel playerResourcesPanel;
+	private PlanetDockPanel planetDockPanel;
+	private InventoryPanel playerResourcesPanel;
 	private UIMapPanel uiMapPanel;
-	private boolean wasCursorEnabledBeforeMap = false;
+	private GameStateMachine<Game> stateMachine;
 
 	private void cleanup() {
 		scene.cleanup();
@@ -65,6 +68,24 @@ public class Game {
 		}
 	}
 
+	public Camera getCamera() { return camera; }
+
+	public InfoPanel getInfoPanel() { return infoPanel; }
+
+	public Input getInput() { return input; }
+
+	public InventoryPanel getPlayerResourcesPanel() { return playerResourcesPanel; }
+
+	public Scene getScene() { return scene; }
+
+	public GameStateMachine<Game> getStateMachine() { return stateMachine; }
+
+	public UIManager getUIManager() { return uiManager; }
+
+	public UIMapPanel getUiMapPanel() { return uiMapPanel; }
+
+	public long getWindowHandle() { return windowHandle; }
+
 	public void handleCameraMovement(float deltaTime) {
 
 		float playerAcceleration = player.accelerate(deltaTime);
@@ -87,88 +108,33 @@ public class Game {
 		}
 	}
 
-	private void handleEscapeKey() {
-		if (uiMapPanel.isVisible()) {
-			toggleMap();
-		}
-		else if (infoPanel.shouldRender()) {
-			scene.updateSelectedObject(null);
-			infoPanel.setTarget(null);
-		}
-		else if (playerResourcesPanel.isExpanded()) {
-			playerResourcesPanel.setExpanded(false);
-		}
-		else if (input.isCursorEnabled()) {
-			input.toggleCursor();
-		}
-	}
-
-	private void handleLeftClick() {
-		float mouseX = input.getMouseX();
-		float mouseY = input.getMouseY();
-
-		if (uiManager.objectClicked(mouseX, mouseY)) {
-			playerResourcesPanel.refreshAmounts();
-		}
-		else if (!uiMapPanel.isVisible()) {
-			SpaceBody clicked = scene.objectClicked(mouseX, mouseY, windowHandle, camera);
-			scene.updateSelectedObject(clicked);
-			infoPanel.setTarget(clicked);
-		}
-		else if (!uiMapPanel.contains(mouseX, mouseY)) {
-			uiMapPanel.setVisible(false);
-			input.toggleCursor();
-		}
-	}
-
 	private void init() {
-		window = new Window();
-		window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
-		windowHandle = window.windowHandle;
+		initWindow();
 
 		camera = new Camera((float) INITIAL_WIDTH / INITIAL_HEIGHT);
 		scene = new Scene();
 		renderer = new Renderer(windowHandle);
 		player = scene.getPlayer();
 		FontAtlas fontAtlas = new FontAtlas(FONT_FILE, FONT_TEXTURE);
-		uiManager = new UIManager(windowHandle);
-		infoPanel = new InfoPanel(10,
-								  25,
-								  INITIAL_WIDTH * 0.4f,
-								  INITIAL_HEIGHT - 100,
-								  new Vector4f(0.2f, 0.2f, 0.2f, 0.8f),
-								  fontAtlas,
-								  scene.getPlayer().getStorage());
-
-		playerResourcesPanel = new PlayerResourcesPanel(INITIAL_WIDTH - 400,
-														INITIAL_HEIGHT - 220,
-														380,
-														200,
-														fontAtlas,
-														scene.getPlayer().getStorage(),
-														new Vector4f(0.2f, 0.2f, 0.2f, 0.8f));
 
 		input = new Input(windowHandle);
-		infoPanel.setOnSelectTarget(body -> {
-			scene.updateSelectedObject(body);
-			infoPanel.setTarget(body);
-		});
+
+		initUIPanels(fontAtlas);
+		initUIManager(fontAtlas);
+
+		setupStateMachine();
+
+		registerResizeCallback();
+		placePlayerAtSecondPlanet();
+	}
+
+	private void initUIManager(FontAtlas fontAtlas) {
+		uiManager = new UIManager(windowHandle);
 		uiManager.addElement(infoPanel);
-
+		uiManager.addElement(planetDockPanel);
 		uiManager.addElement(playerResourcesPanel);
-
-		uiMapPanel = new UIMapPanel(INITIAL_WIDTH * 0.1f,
-									INITIAL_HEIGHT * 0.1f,
-									INITIAL_WIDTH * 0.8f,
-									INITIAL_HEIGHT * 0.8f,
-									new Vector4f(0.05f, 0.06f, 0.08f, 0.85f),
-									fontAtlas,
-									scene,
-									infoPanel,
-									input,
-									windowHandle);
 		uiManager.addElement(uiMapPanel);
-		UIText dockedLabel = new UIText("Not currently Docked",
+		UIText dockedLabel = new UIText("",
 										Alignment.CENTER,
 										new Vector4f(1f, 1f, 1f, 1f),
 										32,
@@ -177,16 +143,59 @@ public class Game {
 										fontAtlas,
 										INITIAL_WIDTH);
 		uiManager.addTopText(dockedLabel);
-		registerResizeCallback();
-		placePlayerAtPlanetNumber(2);
 	}
 
-	private void placePlayerAtPlanetNumber(int planetNumber) {
+	private void initUIPanels(FontAtlas fontAtlas) {
+		infoPanel = new InfoPanel(10,
+								  25,
+								  380,
+								  INITIAL_HEIGHT - 100,
+								  new Vector4f(0.2f, 0.2f, 0.2f, 0.95f),
+								  fontAtlas);
+
+		planetDockPanel = new PlanetDockPanel(INITIAL_WIDTH - 400,
+											  25,
+											  380,
+											  INITIAL_HEIGHT - 100,
+											  new Vector4f(0.15f, 0.2f, 0.25f, 0.95f),
+											  fontAtlas,
+											  scene.getPlayer().getStorage(),
+											  () -> planetDockPanel.markDirty());
+
+		playerResourcesPanel = new InventoryPanel(INITIAL_WIDTH - 400,
+												  INITIAL_HEIGHT - 220,
+												  380,
+												  200,
+												  fontAtlas,
+												  scene.getPlayer().getStorage(),
+												  new Vector4f(0.2f, 0.2f, 0.2f, 0.95f));
+
+		infoPanel.setOnSelectTarget(body -> {
+			scene.updateSelectedObject(body);
+			infoPanel.setTarget(body);
+		});
+
+		uiMapPanel = new UIMapPanel(INITIAL_WIDTH * 0.1f,
+									INITIAL_HEIGHT * 0.1f,
+									INITIAL_WIDTH * 0.8f,
+									INITIAL_HEIGHT * 0.8f,
+									new Vector4f(0.05f, 0.06f, 0.08f, 0.95f),
+									fontAtlas,
+									scene,
+									infoPanel,
+									input,
+									windowHandle);
+	}
+
+	private void initWindow() {
+		window = new Window();
+		window.init(INITIAL_WIDTH, INITIAL_HEIGHT);
+		windowHandle = window.windowHandle;
+	}
+
+	private void placePlayerAtSecondPlanet() {
 		scene.update(camera, false, 0f);
-		camera.moveTo(scene.getPlanets()
-						   .get(planetNumber)
-						   .getPosition()
-						   .add(0, 20, 0, new Vector3f()));
+		camera.moveTo(scene.getPlanets().get(2).getPosition().add(0, 100, 0, new Vector3f()));
 	}
 
 	private void registerResizeCallback() {
@@ -203,21 +212,9 @@ public class Game {
 		cleanup();
 	}
 
-	private void toggleMap() {
-		boolean nextState = !uiMapPanel.isVisible();
-		uiMapPanel.setVisible(nextState);
-
-		if (nextState) {
-			wasCursorEnabledBeforeMap = input.isCursorEnabled();
-			if (!wasCursorEnabledBeforeMap) {
-				input.toggleCursor();
-			}
-		}
-		else {
-			if (input.isCursorEnabled() != wasCursorEnabledBeforeMap) {
-				input.toggleCursor();
-			}
-		}
+	private void setupStateMachine() {
+		stateMachine = new GameStateMachine<>(this);
+		stateMachine.changeState(new FlightState());
 	}
 
 	private void update(float deltaTime) {
@@ -227,20 +224,8 @@ public class Game {
 		if (input.isCursorEnabled()) {
 			uiManager.update(mouseX, mouseY, deltaTime);
 		}
-		if (input.isKeyJustPressed(GLFW_KEY_M)) {
-			toggleMap();
-		}
-
-		if (input.isKeyJustPressed(GLFW_KEY_TAB)) {
-			input.toggleCursor();
-		}
-
-		if (input.consumeMouseButtonJustPressed(GLFW_MOUSE_BUTTON_LEFT)) {
-			handleLeftClick();
-		}
-
-		if (input.isKeyJustPressed(GLFW_KEY_ESCAPE)) {
-			handleEscapeKey();
+		else {
+			uiManager.update(-1f, -1f, deltaTime);
 		}
 
 		double scrollY = input.getScrollDeltaY();
@@ -252,23 +237,22 @@ public class Game {
 			}
 		}
 
-		if (!uiMapPanel.isVisible()) {
-			updateCameraFromInput(deltaTime);
-		}
+		stateMachine.handleInput();
+		stateMachine.update(deltaTime);
 
 		if (input.isKeyJustPressed(GLFW_KEY_O)) {
 			infoPanel.setTarget(null);
 			scene.recreateStarSystem();
-			placePlayerAtPlanetNumber(2);
+			placePlayerAtSecondPlanet();
 		}
 
 		camera.applyMovement(deltaTime, player.getMaxSpeed());
 		scene.update(camera, input.isForwardMovementPressed(), deltaTime);
-		uiManager.updateDockingLabel(scene.isPlayerDocked());
+
 		camera.updateViewMatrix();
 	}
 
-	private void updateCameraFromInput(float deltaTime) {
+	public void updateCameraFromInput(float deltaTime) {
 		handleCameraRotation();
 		handleCameraMovement(deltaTime);
 	}

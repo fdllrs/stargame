@@ -5,6 +5,7 @@ import game.ui.panel.controller.InfoPanelController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 /**
  * Implemented by any game object that can display its properties in a UI info panel.
@@ -22,10 +23,8 @@ public interface Describable {
 	/**
 	 * Returns the panel controller layout manager for this describable target.
 	 */
-	default InfoPanelController getPanelController(game.components.StorageComponent playerStorage,
-			engine.ui.text.FontAtlas font,
+	default InfoPanelController getPanelController(engine.ui.text.FontAtlas font,
 			float width,
-			Runnable onRebuild,
 			java.util.function.Consumer<game.objects.spaceBodies.SpaceBody> onSelectTarget) {
 		return new DefaultPanelController();
 	}

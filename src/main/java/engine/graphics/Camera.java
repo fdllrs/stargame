@@ -13,6 +13,7 @@ public class Camera {
 	private static final float distanceFromPlayer = 3.75f;
 	private final Vector3f velocity = new Vector3f();
 	private final Matrix4f projectionMatrix;
+	private final float currentPanX = 0.0f;
 	public Vector3f position;
 	public Vector3f rotation;
 	Matrix4f viewMatrix;
@@ -77,9 +78,6 @@ public class Camera {
 		zeroAcceleration(0);
 	}
 
-	/**
-	 * Call when the framebuffer is resized to keep the projection matrix in sync.
-	 */
 	public void onResize(int width, int height) {
 		this.aspectRatio = (float) width / height;
 		rebuildProjection(cachedFov);
@@ -93,9 +91,6 @@ public class Camera {
 										FAR_PLANE);
 	}
 
-	/**
-	 * Shift the camera position by a world-space delta without affecting velocity.
-	 */
 	public void translate(float dx, float dy, float dz) {
 		position.add(dx, dy, dz);
 	}
@@ -118,21 +113,16 @@ public class Camera {
 
 	public void updateViewMatrix() {
 		viewMatrix.identity();
-		viewMatrix.translate(0, 0, -distanceFromPlayer);
+		viewMatrix.translate(0, -0.5f, -distanceFromPlayer);
+
 		viewMatrix.rotateX((float) Math.toRadians(rotation.x));
 		viewMatrix.rotateY((float) Math.toRadians(rotation.y));
 		viewMatrix.translate(-position.x, -position.y, -position.z);
-
-		// Only rebuild the projection when FOV actually changes (driven by speed).
-		float targetFov = BASE_FOV + velocity.length() * FOV_SPEED_FACTOR;
-		if (Math.abs(targetFov - cachedFov) > 0.01f) {
-			rebuildProjection(targetFov);
-		}
 	}
 
 	public void zeroAcceleration(float brakeStrength) {
 
-		if (velocity.length() < 0.5f) {
+		if (velocity.length() < 0.1f) {
 			velocity.zero();
 		}
 		else {

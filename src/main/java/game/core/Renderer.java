@@ -42,6 +42,14 @@ public class Renderer {
 	private final int shadowFbo;
 	private final int shadowDepthTex;
 	private final Matrix4f currentLightSpaceMatrix = new Matrix4f();
+	private final Matrix4f outlineShellMatrix = new Matrix4f();
+	private static final Vector3f OUTLINE_COLOR = new Vector3f(0.0f, 1.0f, 1.0f);
+	private static final Vector3f UP_VECTOR = new Vector3f(0.0f, 1.0f, 0.0f);
+	private final Vector3f shadowLightDir = new Vector3f();
+	private final Vector3f shadowLightPos = new Vector3f();
+	private final Vector3f tempLightDirMul = new Vector3f();
+	private final Matrix4f shadowLightView = new Matrix4f();
+	private final Matrix4f shadowLightProjection = new Matrix4f();
 	private Framebuffer fbo;
 
 	public Renderer(long windowHandle) {
@@ -150,11 +158,11 @@ public class Renderer {
 			glStencilMask(0x00);
 			glDisable(GL_DEPTH_TEST);
 
-			Matrix4f shellMatrix = new Matrix4f(selected.getModelMatrix());
-			shellMatrix.scale(1.02f);
+			outlineShellMatrix.set(selected.getModelMatrix());
+			outlineShellMatrix.scale(1.02f);
 
-			shaderOutline.setUniform("model", shellMatrix);
-			shaderOutline.setUniform("outlineColor", new Vector3f(0.0f, 1.0f, 1.0f));
+			shaderOutline.setUniform("model", outlineShellMatrix);
+			shaderOutline.setUniform("outlineColor", OUTLINE_COLOR);
 
 			selected.getMesh().render();
 
@@ -192,20 +200,21 @@ public class Renderer {
 
 		// 1. Calculate direction vector from Star (0,0,0) to player/camera
 		Vector3f cameraPos = camera.getPosition();
-		Vector3f lightDir = new Vector3f(cameraPos).normalize();
+		shadowLightDir.set(cameraPos).normalize();
 
 		// 2. Position light camera at a distance behind player (closer to the star)
-		Vector3f lightPos = new Vector3f(cameraPos).sub(new Vector3f(lightDir).mul(350.0f));
+		tempLightDirMul.set(shadowLightDir).mul(350.0f);
+		shadowLightPos.set(cameraPos).sub(tempLightDirMul);
 
-		Matrix4f lightView = new Matrix4f().lookAt(lightPos, cameraPos, new Vector3f(0, 1, 0));
-		Matrix4f lightProjection = new Matrix4f().ortho(-120.0f,
-														120.0f,
-														-120.0f,
-														120.0f,
-														200.0f,
-														500.0f);
+		shadowLightView.identity().lookAt(shadowLightPos, cameraPos, UP_VECTOR);
+		shadowLightProjection.identity().ortho(-120.0f,
+											   120.0f,
+											   -120.0f,
+											   120.0f,
+											   200.0f,
+											   500.0f);
 
-		currentLightSpaceMatrix.set(lightProjection).mul(lightView);
+		currentLightSpaceMatrix.set(shadowLightProjection).mul(shadowLightView);
 		shaderShadow.setUniform("lightSpaceMatrix", currentLightSpaceMatrix);
 
 		for (Planet planet : scene.getPlanets()) {

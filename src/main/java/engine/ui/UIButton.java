@@ -4,13 +4,14 @@ import engine.graphics.Mesh;
 import engine.graphics.ShaderProgram;
 import engine.ui.text.FontAtlas;
 import engine.ui.text.UIText;
-import game.components.UIAnimationComponent;
+import game.components.UIHoverAnimation;
 import org.joml.Vector4f;
 
 public class UIButton extends UIElement {
 	private final Runnable onClick;
-	private final UIText textLabel;
-	private final UIAnimationComponent animationComponent;
+	private final UIHoverAnimation animationComponent;
+	private UIText textLabel;
+	private UIElement content;
 	private boolean isEnabled = true;
 	private boolean isHovered = false;
 
@@ -26,21 +27,40 @@ public class UIButton extends UIElement {
 		this.onClick = onClick;
 		this.vPadding = 15;
 		this.hPadding = 10;
-		this.textLabel = new UIText(textLabel,
-									UIText.Alignment.CENTER,
-									textColor,
-									15,
-									10,
-									5,
-									fontAtlas,
-									width);
-		animationComponent = new UIAnimationComponent(this, 15f);
-		alignText();
+		if (textLabel != null) {
+			this.textLabel = new UIText(textLabel,
+										UIText.Alignment.CENTER,
+										textColor,
+										15,
+										10,
+										5,
+										fontAtlas,
+										width);
+		}
+		animationComponent = new UIHoverAnimation(this, 15f);
+		alignContent();
 	}
 
-	private void alignText() {
+	public UIButton(float width,
+			float height,
+			Vector4f backgroundColor,
+			UIElement content,
+			Runnable onClick) {
+		super(0, 0, width, height, backgroundColor);
+		this.onClick = onClick;
+		this.vPadding = 15;
+		this.hPadding = 10;
+		this.content = content;
+		animationComponent = new UIHoverAnimation(this, 15f);
+		alignContent();
+	}
+
+	private void alignContent() {
 		if (textLabel != null) {
 			textLabel.setPosition(x, y + ( height - textLabel.getBoundingHeight() ) / 2);
+		}
+		if (content != null) {
+			content.setPosition(x + ( width - content.getSize().x ) / 2, y + ( height - content.getBoundingHeight() ) / 2);
 		}
 	}
 
@@ -57,18 +77,31 @@ public class UIButton extends UIElement {
 	}
 
 	@Override
-	public void render(ShaderProgram shader, Mesh uiQuad) {
-		shader.setUniform("useTexture", 0);
-		shader.setUniform("uiColor", this.color);
-		shader.setUniform("model", this.modelMatrix);
-		uiQuad.render();
-
-		textLabel.render(shader, uiQuad);
+	public void rebuildElements() {
+		if (content != null) content.rebuildElements();
 	}
 
+	@Override
+	public void render(ShaderProgram shader, Mesh uiQuad) {
+		shader.setUniform("useTexture", 0);
+
+		UIBackgroundRenderer.renderFuturisticBackground(this, shader, uiQuad, 3.0f);
+
+		if (textLabel != null) {
+			textLabel.render(shader, uiQuad);
+		}
+		if (content != null) {
+			content.render(shader, uiQuad);
+		}
+	}
+
+	@Override
 	public void update(float mouseX, float mouseY, float deltaTime) {
 		isHovered = contains(mouseX, mouseY);
-		animationComponent.update(mouseX, mouseY, deltaTime, isHovered, isEnabled);
+		animationComponent.update(deltaTime, isHovered, isEnabled);
+		if (content != null) {
+			content.update(mouseX, mouseY, deltaTime);
+		}
 	}
 
 	@Override
@@ -79,7 +112,7 @@ public class UIButton extends UIElement {
 	@Override
 	public void setPosition(float x, float y) {
 		super.setPosition(x, y);
-		alignText();
+		alignContent();
 	}
 
 	public void setAnimationEnabled(boolean enabled) {
@@ -92,5 +125,12 @@ public class UIButton extends UIElement {
 		if (this.textLabel != null) {
 			this.textLabel.setOpacity(enabled ? 1.0f : 0.3f);
 		}
+		if (this.content != null) {
+			this.content.setOpacity(enabled ? 1.0f : 0.3f);
+		}
+	}
+
+	public void setHoverScaleEnabled(boolean enabled) {
+		animationComponent.setScaleEnabled(enabled);
 	}
 }

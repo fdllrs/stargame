@@ -18,6 +18,7 @@ import static org.lwjgl.opengl.GL32C.GL_PROGRAM_POINT_SIZE;
 public class Starfield {
     private final int vaoId;
     private final int starCount;
+    private final Matrix4f skyboxView = new Matrix4f();
 
     public Starfield(int count, float radius) {
         this.starCount = count;
@@ -80,7 +81,7 @@ public class Starfield {
                        Matrix4f projectionMatrix) {
         shader.bind();
 
-        Matrix4f skyboxView = new Matrix4f(viewMatrix);
+        skyboxView.set(viewMatrix);
         skyboxView.m30(0);
         skyboxView.m31(0);
         skyboxView.m32(0);

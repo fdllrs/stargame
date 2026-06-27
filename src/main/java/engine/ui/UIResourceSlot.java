@@ -7,6 +7,8 @@ import engine.ui.text.UIText;
 import game.components.StorageComponent;
 import game.objects.items.ItemIconRegistry;
 import game.objects.items.ItemType;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class UIResourceSlot extends UIElement {
@@ -36,16 +38,16 @@ public class UIResourceSlot extends UIElement {
 		this.labelName = new UIText(itemType.name(),
 									UIText.Alignment.LEFT,
 									new Vector4f(1.0f, 1.0f, 1.0f, 1.0f),
-									20,
-									52,
+									14,
+									5,
 									5,
 									font,
 									width);
 		this.labelAmounts = new UIText(getAmountsText(),
 									   UIText.Alignment.RIGHT,
 									   new Vector4f(1f, 1f, 1f, 1.0f),
-									   22,
-									   10,
+									   15,
+									   5,
 									   5,
 									   font,
 									   width);
@@ -66,24 +68,30 @@ public class UIResourceSlot extends UIElement {
 	public void handleClick(float mouseX, float mouseY) {
 	}
 
+	private static final Vector2f CONST_UV_SCALE = new Vector2f(1, 1);
+	private static final Vector2f CONST_UV_OFFSET = new Vector2f(0, 0);
+	private static final Vector4f CONST_COLOR_WHITE = new Vector4f(1, 1, 1, 1);
+	private final Matrix4f iconModel = new Matrix4f();
+
 	@Override
 	public void render(ShaderProgram shader, Mesh uiQuad) {
 		shader.setUniform("useTexture", 0);
-		shader.setUniform("uiColor", this.color);
-		shader.setUniform("model", this.modelMatrix);
-		uiQuad.render();
+
+		UIBackgroundRenderer.renderFuturisticBackground(this, shader, uiQuad, 3.0f);
 
 		engine.graphics.Texture iconTex = ItemIconRegistry.getIcon(itemType);
 		if (iconTex != null) {
 			shader.setUniform("useTexture", 1);
 			shader.setUniform("uiTexture", 0);
-			shader.setUniform("uvScale", new org.joml.Vector2f(1, 1));
-			shader.setUniform("uvOffset", new org.joml.Vector2f(0, 0));
-			shader.setUniform("uiColor", new Vector4f(1, 1, 1, 1));
+			shader.setUniform("uvScale", CONST_UV_SCALE);
+			shader.setUniform("uvOffset", CONST_UV_OFFSET);
+			shader.setUniform("uiColor", CONST_COLOR_WHITE);
 
-			org.joml.Matrix4f iconModel = new org.joml.Matrix4f();
+			iconModel.identity();
 			iconModel.translate(this.x + 10, this.y + ( this.height - 32 ) / 2, 0);
 			iconModel.scale(32, 32, 1);
+			labelName.setPosition(this.x + 50,
+								  this.y + ( this.height - labelName.getBoundingHeight() ) / 2);
 			shader.setUniform("model", iconModel);
 
 			iconTex.bind();
@@ -97,6 +105,11 @@ public class UIResourceSlot extends UIElement {
 
 	@Override
 	public void update(float mouseX, float mouseY, float deltaTime) {
+	}
+
+	@Override
+	public LayoutAlignment getLayoutAlignment() {
+		return LayoutAlignment.CENTER;
 	}
 
 	@Override

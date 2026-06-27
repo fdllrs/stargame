@@ -27,6 +27,12 @@ public class UIManager {
 		Vector2i windowSize = Window.getWindowSize(windowHandle);
 		uiProjection = new Matrix4f();
 		rebuildProjection(windowSize.x, windowSize.y);
+
+		engine.events.EventBus.subscribe(game.events.PlayerDockedEvent.class, _ ->
+
+				this.updateDockingLabel(true));
+		engine.events.EventBus.subscribe(game.events.PlayerUndockedEvent.class,
+										 _ -> this.updateDockingLabel(false));
 	}
 
 	public void addElement(UIPanel element) {
@@ -71,6 +77,9 @@ public class UIManager {
 		for (UIElement element : uiPanels) {
 			element.onResize(width, height);
 		}
+		if (topText != null) {
+			topText.setMaxWidth(width);
+		}
 	}
 
 	private void rebuildProjection(int width, int height) {
@@ -85,7 +94,6 @@ public class UIManager {
 		uiShader.bind();
 		uiShader.setUniform("projection", uiProjection);
 
-		// Tell every element to draw itself!
 		for (UIElement element : uiPanels) {
 			element.render(uiShader, uiQuad);
 		}
