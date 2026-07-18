@@ -33,7 +33,8 @@ public class ResourceExtractor extends ProducerFacility {
 		worldPos.set(localPos4.x, localPos4.y, localPos4.z);
 
 		org.joml.Vector4f textCol = new org.joml.Vector4f(0.2f, 1.0f, 0.2f, 1.0f);
-		engine.events.EventBus.publish(new game.events.SpawnFloatingTextEvent("+" + extractionAmount, worldPos, planet.getPosition(), textCol));
+		engine.events.EventBus.publish(new game.events.SpawnFloatingTextEvent(
+				"+" + extractionAmount, worldPos, planet.getPosition(), textCol));
 	}
 
 	@Override

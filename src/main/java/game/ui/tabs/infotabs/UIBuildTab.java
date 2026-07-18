@@ -83,7 +83,12 @@ public class UIBuildTab {
 										"Mine " + resource.name(),
 										(mouseX, mouseY) -> {
 											planet.deposit(resource, MANUAL_MINING_AMOUNT);
-											engine.events.EventBus.publish(new game.events.SpawnFloatingTextEvent("+" + MANUAL_MINING_AMOUNT, mouseX, mouseY, new org.joml.Vector4f(0.2f, 1.0f, 0.2f, 1.0f)));
+											engine.events.EventBus.publish(new game.events.SpawnFloatingTextEvent(
+													"+" + MANUAL_MINING_AMOUNT,
+													mouseX,
+													mouseY,
+													new org.joml.Vector4f(0.2f, 1.0f, 0.2f,
+																		  1.0f)));
 											onRebuild.run();
 										},
 										font));

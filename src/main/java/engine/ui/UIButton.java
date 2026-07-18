@@ -14,7 +14,7 @@ public class UIButton extends UIElement {
 	private UIText textLabel;
 	private UIElement content;
 	private boolean isEnabled = true;
-	private boolean isHovered = false;
+
 	public UIButton(float width,
 			float height,
 			Vector4f backgroundColor,
@@ -27,7 +27,7 @@ public class UIButton extends UIElement {
 			 backgroundColor,
 			 textColor,
 			 textLabel,
-			 (x, y) -> { if (onClick != null) onClick.run(); },
+			 (_, _) -> { if (onClick != null) onClick.run(); },
 			 fontAtlas);
 	}
 
@@ -73,7 +73,7 @@ public class UIButton extends UIElement {
 			UIElement content,
 			Runnable onClick) {
 		super(0, 0, width, height, backgroundColor);
-		this.onClick = (x, y) -> { if (onClick != null) onClick.run(); };
+		this.onClick = (_, _) -> { if (onClick != null) onClick.run(); };
 		this.vPadding = 15;
 		this.hPadding = 10;
 		this.content = content;
@@ -109,7 +109,7 @@ public class UIButton extends UIElement {
 
 	@Override
 	public void update(float mouseX, float mouseY, float deltaTime) {
-		isHovered = contains(mouseX, mouseY);
+		boolean isHovered = contains(mouseX, mouseY);
 		animationComponent.update(deltaTime, isHovered, isEnabled);
 		if (content != null) {
 			content.update(mouseX, mouseY, deltaTime);
